@@ -68,6 +68,7 @@ var loop_start = 0;
 var loop_end = 0;
 var buffer_size = max_time;
 var offset = 240;
+var slave = false;
 
 var fadetime = 100;
 var speed = 1.;
@@ -89,7 +90,8 @@ var POBJ = ['bufferloop', 'bufferundo', 'pokeloop', 'looper',
 			'offset', 'tapeinertia', 'volout', 'feedback', 'input',
 			'overdub', 'reverse', 'undo', 'clear', 'speed', 'inertia', 'mute',
 			'quantizerecord', 'loop', 'quantizemenu', 'fadein', 'fadetime', 
-			'relativerecord', 'state', 'position', 'position_remote', 'state_remote']; 
+			'relativerecord', 'state', 'position', 'position_remote', 'state_remote',
+			'master', 'slave']; 
 			// 'record', 'buffetin', 'bufferin', 'groovelength', 'latency', 'inloop', 'frommaster',
 			//'copybuffer', 'calc_record', 'drivesource', 'buffetloop', 'buffetundo', 
 var TOBJ = ['relativetimer',  'metro'];
@@ -100,6 +102,9 @@ var stored_messages = [];
 //var del_chan = new Task(change_poke_channel, this);
 
 var Mod = ModComponent.bind(script);
+
+var master = new Global('master');
+master.looper = [];
 
 function mod_callback(args)
 {
@@ -602,6 +607,39 @@ function change_state(val)
 	state = val;
 	looper.state.message('int', ['recording', 'empty', 'playing', 'overdubbing', 'awaiting_record', 'muted'].indexOf(val));
 	debug('state', state);
+}
+
+function set_master(val)
+{
+	if(val)
+	{
+		if('set_master' in master.looper)
+		{
+			master.looper.set_master(0);
+		}
+		master.looper = script;
+	}
+	else
+	{
+		if(master.looper == script)
+		{
+			master.looper = [];
+		}
+	}
+	this.patcher.getnamed('master').message('int', master.looper == script);
+}
+
+function set_slave(val)
+{
+	if(master.looper == script)
+	{
+		slave = false;
+		this.patcher.getnamed('slave').message('int', 0);
+	}
+	else
+	{
+		slave = val>0;
+	}
 }
 
 function setup_translations()

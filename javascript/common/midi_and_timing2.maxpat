@@ -4,12 +4,12 @@
 		"appversion" : 		{
 			"major" : 7,
 			"minor" : 0,
-			"revision" : 0,
+			"revision" : 2,
 			"architecture" : "x86",
 			"modernui" : 1
 		}
 ,
-		"rect" : [ 34.0, 79.0, 1298.0, 651.0 ],
+		"rect" : [ 34.0, 79.0, 298.0, 103.0 ],
 		"bgcolor" : [ 0.168627, 0.168627, 0.168627, 1.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 1,
@@ -47,7 +47,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 3,
 					"outlettype" : [ "", "", "" ],
-					"patching_rect" : [ 838.5, 396.0, 46.0, 19.0 ],
+					"patching_rect" : [ 937.5, 421.0, 46.0, 19.0 ],
 					"saved_attribute_attributes" : 					{
 						"valueof" : 						{
 							"parameter_initial" : [ "Off" ],
@@ -69,7 +69,7 @@
 ,
 					"style" : "",
 					"text" : "pattr",
-					"varname" : "u975000584"
+					"varname" : "u480000702"
 				}
 
 			}
@@ -83,7 +83,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 892.5, 461.5, 66.0, 19.0 ],
+					"patching_rect" : [ 991.5, 486.5, 66.0, 19.0 ],
 					"style" : "",
 					"text" : "prepend input"
 				}
@@ -91,8 +91,6 @@
 			}
 , 			{
 				"box" : 				{
-					"fontface" : 0,
-					"fontname" : "Arial",
 					"fontsize" : 10.0,
 					"id" : "obj-33",
 					"items" : [ "Off", ",", "IAC Driver Bus 1", ",", "from Max 1", ",", "from Max 2" ],
@@ -101,7 +99,7 @@
 					"numoutlets" : 3,
 					"outlettype" : [ "int", "", "" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 852.0, 433.0, 100.0, 20.0 ],
+					"patching_rect" : [ 951.0, 458.0, 100.0, 20.0 ],
 					"pattrmode" : 1,
 					"presentation" : 1,
 					"presentation_rect" : [ 9.0, 49.5, 85.0, 20.0 ],
@@ -117,7 +115,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 454.75, 376.5, 66.0, 19.0 ],
+					"patching_rect" : [ 538.5, 399.0, 66.0, 19.0 ],
 					"style" : "",
 					"text" : "prepend send"
 				}
@@ -132,7 +130,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 3,
 					"outlettype" : [ "", "", "" ],
-					"patching_rect" : [ 662.0, 376.5, 46.0, 19.0 ],
+					"patching_rect" : [ 787.0, 421.0, 46.0, 19.0 ],
 					"saved_attribute_attributes" : 					{
 						"valueof" : 						{
 							"parameter_initial" : [ "Off" ],
@@ -154,7 +152,7 @@
 ,
 					"style" : "",
 					"text" : "pattr",
-					"varname" : "u335000329"
+					"varname" : "u594000707"
 				}
 
 			}
@@ -373,7 +371,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 7,
 					"outlettype" : [ "", "", "", "int", "int", "int", "int" ],
-					"patching_rect" : [ 762.0, 271.0, 100.0, 19.0 ],
+					"patching_rect" : [ 762.0, 279.0, 100.0, 19.0 ],
 					"style" : "",
 					"text" : "midiparse"
 				}
@@ -719,7 +717,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 648.5, 439.0, 71.0, 19.0 ],
+					"patching_rect" : [ 841.0, 486.5, 71.0, 19.0 ],
 					"style" : "",
 					"text" : "prepend output"
 				}
@@ -727,8 +725,6 @@
 			}
 , 			{
 				"box" : 				{
-					"fontface" : 0,
-					"fontname" : "Arial",
 					"fontsize" : 10.0,
 					"id" : "obj-78",
 					"items" : [ "Off", ",", "IAC Driver Bus 1", ",", "to Max 1", ",", "to Max 2" ],
@@ -737,7 +733,7 @@
 					"numoutlets" : 3,
 					"outlettype" : [ "int", "", "" ],
 					"parameter_enable" : 0,
-					"patching_rect" : [ 608.0, 409.5, 100.0, 20.0 ],
+					"patching_rect" : [ 800.5, 458.0, 100.0, 20.0 ],
 					"pattrmode" : 1,
 					"presentation" : 1,
 					"presentation_rect" : [ 205.0, 49.5, 84.0, 20.0 ],
@@ -756,7 +752,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 4,
 					"outlettype" : [ "", "", "", "" ],
-					"patching_rect" : [ 538.5, 409.5, 50.5, 18.0 ],
+					"patching_rect" : [ 538.5, 443.5, 50.5, 18.0 ],
 					"style" : "",
 					"text" : "midi4l"
 				}
@@ -1239,7 +1235,7 @@
 						"appversion" : 						{
 							"major" : 7,
 							"minor" : 0,
-							"revision" : 0,
+							"revision" : 2,
 							"architecture" : "x86",
 							"modernui" : 1
 						}
@@ -1409,9 +1405,6 @@
 							}
 , 							{
 								"box" : 								{
-									"fontface" : 0,
-									"fontname" : "Arial",
-									"fontsize" : 9.0,
 									"id" : "obj-11",
 									"items" : [ "4n", ",", "4nt", ",", "8n", ",", "8nt", ",", "16n", ",", "16nt" ],
 									"maxclass" : "umenu",
@@ -2520,7 +2513,7 @@
 					"maxclass" : "hint",
 					"numinlets" : 1,
 					"numoutlets" : 0,
-					"patching_rect" : [ 987.5, 443.5, 39.0, 17.0 ],
+					"patching_rect" : [ 1085.5, 198.5, 39.0, 17.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 250.0, 73.0, 39.0, 17.0 ],
 					"varname" : "hint[0]"
@@ -3112,6 +3105,7 @@
 					"destination" : [ "obj-99", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
+					"midpoints" : [ 1001.0, 522.5, 752.5, 522.5, 752.5, 432.5, 548.0, 432.5 ],
 					"source" : [ "obj-17", 0 ]
 				}
 
@@ -3417,7 +3411,7 @@
 					"destination" : [ "obj-99", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
-					"midpoints" : [ 658.0, 463.0, 738.5, 463.0, 738.5, 366.5, 548.0, 366.5 ],
+					"midpoints" : [ 850.5, 521.0, 756.5, 521.0, 756.5, 432.5, 548.0, 432.5 ],
 					"source" : [ "obj-64", 0 ]
 				}
 
@@ -3791,6 +3785,7 @@
 					"destination" : [ "obj-33", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
+					"midpoints" : [ 569.0, 471.5, 656.75, 471.5, 656.75, 452.0, 960.5, 452.0 ],
 					"source" : [ "obj-99", 2 ]
 				}
 
@@ -3800,6 +3795,7 @@
 					"destination" : [ "obj-39", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
+					"midpoints" : [ 548.0, 474.0, 518.0, 474.0, 518.0, 374.0, 342.0, 374.0, 342.0, 114.0, 104.5, 114.0 ],
 					"source" : [ "obj-99", 0 ]
 				}
 
@@ -3809,40 +3805,12 @@
 					"destination" : [ "obj-78", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
-					"midpoints" : [ 579.5, 398.5, 617.5, 398.5 ],
+					"midpoints" : [ 579.5, 471.0, 655.0, 471.0, 655.0, 452.0, 810.0, 452.0 ],
 					"source" : [ "obj-99", 3 ]
 				}
 
 			}
- ],
-		"parameters" : 		{
-			"obj-10" : [ "outport", "outport", 0 ],
-			"obj-7" : [ "inport", "inport", 0 ],
-			"obj-44" : [ "midi_input_menu", "midi_input_menu", 409 ],
-			"obj-61" : [ "nomechan[1]", "nomechan", 100 ],
-			"obj-40" : [ "midi_thru", "midi_thru", 411 ],
-			"obj-83::obj-143" : [ "timing[2]", "timing", 2 ],
-			"obj-28" : [ "start", "start", 414 ],
-			"obj-187" : [ "timing_master[1]", "timing_master", 415 ],
-			"obj-58" : [ "midi_output_menu[1]", "midi_input_menu", 100 ],
-			"obj-80" : [ "swing[2]", "swing", 3 ],
-			"obj-29" : [ "in_channel", "in_channel", 406 ],
-			"obj-159" : [ "beat", "beat", 416 ]
-		}
-,
-		"dependency_cache" : [ 			{
-				"name" : "timing_b992.maxpat",
-				"bootpath" : "~/Documents/Max 7/Packages/mod/javascript/common",
-				"patcherrelativepath" : ".",
-				"type" : "JSON",
-				"implicit" : 1
-			}
-, 			{
-				"name" : "midi4l.mxo",
-				"type" : "iLaX"
-			}
- ],
-		"embedsnapshot" : 0
+ ]
 	}
 
 }
