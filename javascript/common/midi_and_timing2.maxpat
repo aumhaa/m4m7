@@ -9,7 +9,7 @@
 			"modernui" : 1
 		}
 ,
-		"rect" : [ 34.0, 79.0, 298.0, 103.0 ],
+		"rect" : [ 251.0, 313.0, 298.0, 105.0 ],
 		"bgcolor" : [ 0.168627, 0.168627, 0.168627, 1.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 1,
@@ -40,6 +40,32 @@
 		"title" : "plinko",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-8",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 573.0, 365.0, 66.0, 19.0 ],
+					"style" : "",
+					"text" : "prepend send"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-18",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "bang" ],
+					"patching_rect" : [ 539.75, 403.0, 48.0, 19.0 ],
+					"style" : "",
+					"text" : "loadbang"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"fontname" : "Arial",
 					"fontsize" : 9.0,
 					"id" : "obj-7",
@@ -69,7 +95,7 @@
 ,
 					"style" : "",
 					"text" : "pattr",
-					"varname" : "u480000702"
+					"varname" : "u753000715"
 				}
 
 			}
@@ -93,7 +119,7 @@
 				"box" : 				{
 					"fontsize" : 10.0,
 					"id" : "obj-33",
-					"items" : [ "Off", ",", "IAC Driver Bus 1", ",", "from Max 1", ",", "from Max 2" ],
+					"items" : [ "IAC Bus Bus 1", ",", "Ableton Push Live Port", ",", "Ableton Push User Port", ",", "from Max 1", ",", "from Max 2", ",", "<none>" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
@@ -104,7 +130,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 9.0, 49.5, 85.0, 20.0 ],
 					"style" : "",
-					"varname" : "lh_input_port"
+					"varname" : "external_input_port"
 				}
 
 			}
@@ -115,7 +141,7 @@
 					"numinlets" : 2,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 538.5, 399.0, 66.0, 19.0 ],
+					"patching_rect" : [ 603.0, 403.0, 66.0, 19.0 ],
 					"style" : "",
 					"text" : "prepend send"
 				}
@@ -152,7 +178,7 @@
 ,
 					"style" : "",
 					"text" : "pattr",
-					"varname" : "u594000707"
+					"varname" : "u120000720"
 				}
 
 			}
@@ -601,10 +627,10 @@
 						"valueof" : 						{
 							"parameter_order" : 100,
 							"parameter_linknames" : 1,
-							"parameter_longname" : "midi_output_menu[1]",
-							"parameter_shortname" : "midi_input_menu",
+							"parameter_longname" : "midi_output_menu",
+							"parameter_shortname" : "midi_output_menu",
 							"parameter_type" : 2,
-							"parameter_enum" : [ "Plugin", "lh_midi", "Nome" ],
+							"parameter_enum" : [ "Plugin", "External", "Nome" ],
 							"parameter_initial_enable" : 1,
 							"parameter_initial" : [ 0.0 ],
 							"parameter_defer" : 1,
@@ -613,7 +639,7 @@
 
 					}
 ,
-					"varname" : "midi_output_menu[1]"
+					"varname" : "midi_output_menu"
 				}
 
 			}
@@ -660,8 +686,8 @@
 						"valueof" : 						{
 							"parameter_order" : 100,
 							"parameter_linknames" : 1,
-							"parameter_longname" : "nomechan[1]",
-							"parameter_shortname" : "nomechan",
+							"parameter_longname" : "out_channel",
+							"parameter_shortname" : "out_channel",
 							"parameter_type" : 1,
 							"parameter_mmin" : 1.0,
 							"parameter_mmax" : 16.0,
@@ -673,7 +699,7 @@
 
 					}
 ,
-					"varname" : "nomechan[1]"
+					"varname" : "out_channel"
 				}
 
 			}
@@ -727,7 +753,7 @@
 				"box" : 				{
 					"fontsize" : 10.0,
 					"id" : "obj-78",
-					"items" : [ "Off", ",", "IAC Driver Bus 1", ",", "to Max 1", ",", "to Max 2" ],
+					"items" : [ "IAC Bus Bus 1", ",", "Ableton Push Live Port", ",", "Ableton Push User Port", ",", "to Max 1", ",", "to Max 2", ",", "<none>" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
@@ -738,7 +764,7 @@
 					"presentation" : 1,
 					"presentation_rect" : [ 205.0, 49.5, 84.0, 20.0 ],
 					"style" : "",
-					"varname" : "lh_output_port"
+					"varname" : "external_output_port"
 				}
 
 			}
@@ -2478,7 +2504,7 @@
 							"parameter_longname" : "midi_input_menu",
 							"parameter_shortname" : "midi_input_menu",
 							"parameter_type" : 2,
-							"parameter_enum" : [ "Off", "Plugin", "lh_midi", "Merged" ],
+							"parameter_enum" : [ "Off", "Plugin", "External", "Merged" ],
 							"parameter_initial_enable" : 1,
 							"parameter_initial" : [ 1 ],
 							"parameter_defer" : 1,
@@ -2608,7 +2634,7 @@
 						"valueof" : 						{
 							"parameter_order" : 415,
 							"parameter_linknames" : 1,
-							"parameter_longname" : "timing_master[1]",
+							"parameter_longname" : "timing_master",
 							"parameter_shortname" : "timing_master",
 							"parameter_type" : 2,
 							"parameter_mmax" : 1.0,
@@ -2623,7 +2649,7 @@
 ,
 					"text" : "Internal",
 					"texton" : "External",
-					"varname" : "timing_master[1]"
+					"varname" : "timing_master"
 				}
 
 			}
@@ -3000,7 +3026,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-20", 0 ],
+					"destination" : [ "obj-8", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
 					"source" : [ "obj-118", 0 ]
@@ -3112,6 +3138,15 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-99", 0 ],
+					"disabled" : 0,
+					"hidden" : 0,
+					"source" : [ "obj-18", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-3", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
@@ -3152,6 +3187,7 @@
 					"destination" : [ "obj-99", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
+					"midpoints" : [ 612.5, 432.25, 548.0, 432.25 ],
 					"source" : [ "obj-20", 0 ]
 				}
 
@@ -3600,6 +3636,16 @@
 					"disabled" : 0,
 					"hidden" : 0,
 					"source" : [ "obj-79", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-99", 0 ],
+					"disabled" : 0,
+					"hidden" : 0,
+					"midpoints" : [ 582.5, 432.25, 548.0, 432.25 ],
+					"source" : [ "obj-8", 0 ]
 				}
 
 			}

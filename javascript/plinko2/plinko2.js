@@ -6,9 +6,9 @@ inlets = 1;
 var script = this;
 
 
-var DEBUG = false;
+var DEBUG = true;
 var SHOW_STORAGE = false;
-var FORCELOAD = false;
+var FORCELOAD = false ;
 
 var debug = (DEBUG&&Debug) ? Debug : function(){};
 var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
@@ -18,7 +18,7 @@ var mod;
 var mod_finder;
 var Mod = ModComponent.bind(script);
 
-var bgcolors = {'OFF': [0, 0, 0, 1], 'WHITE':[1, 1, 1, 1], 'YELLOW':[1, 1, 0, 1], 'CYAN':[0, 1, 1, 1], 
+var bgcolors = {'OFF': [0, 0, 0, 1], 'WHITE':[1, 1, 1, 1], 'YELLOW':[1, 1, 0, 1], 'CYAN':[0, 1, 1, 1],
 				'MAGENTA':[1, 0, 1, 1], 'RED':[1, 0, 0, 1], 'GREEN':[0, 1, 0, 1], 'BLUE':[0, 0, 1, 1],
 				'INVISIBLE':[1, 1, 1, 0]};
 
@@ -295,6 +295,46 @@ function Key(name, call, x, parent)
 
 }
 
+function Labels(name, call, width)
+{
+	var self = this;
+	this._name = name;
+	this.width = function(){return width;}
+	this.Label = [];
+	for(var x=0;x<width;x++)
+	{
+		this.Label[x] = new Label(name + '_Cell_'+x, call,  x, this);
+	}
+	this.send = function(val)
+	{
+		mod.Send( call, 'all', val);
+		for(var i in self.Label)
+		{
+			self.Label[i]._value = val;
+		}
+	}
+}
+
+function Label(name, call, x, parent)
+{
+	var self = this;
+	this._name = name;
+	this._parent = parent;
+	this._value = 0;
+	this._x = x;
+	this._num = x;
+	this.pressed = false;
+	this.send = function(val, force)
+	{
+		if(force||(val!=self._val))
+		{
+			mod.Send( call, 'value', self._x, val);
+			self._value = val;
+		}
+	}
+
+}
+
 function Display()
 {
 	var self = this;
@@ -403,12 +443,15 @@ var channel = 0;
 var speed = [0, 0, 0, 0];
 var matrix = new Grid('Grid', 'grid', 16, 16);
 var keys = new Keys('Keys', 'key', 8);
+var labels = new Labels('Labels', 'push_name_display', 8);
 var display;
 var node;
 
 //this array contains the scripting names of objects in the top level patcher.	To include an new object to be addressed 
 //in this script, it's only necessary to add its name to this array.  It can then be addressed as a direct variable
-var Vars = ['plinko2', 'storage_defer', 'timingmultiplier', 'program_window', 'restart', 'length', 'midi', 'viewer'];
+var Vars = ['plinko2', 'storage_defer', 'timingmultiplier', 'program_window', 'restart', 'length', 'midi', 'viewer',
+ 			'bank_var', 'voice_var', 'plane_var'];
+
 var viewer_matrix;
 
 //this array contains the scripting names of pattr-linked objects in each of the polys.	To include an new object to be addressed 
@@ -447,7 +490,7 @@ function mod_callback(args)
 {
 	if((args[0]=='value')&&(args[1]!='bang'))
 	{
-		debug('mod callback:', args);
+		//debug('mod callback:', args);
 		if(args[1] in script)
 		{
 			script[args[1]].apply(script, args.slice(2));
@@ -507,6 +550,7 @@ function initialize(val)
 		shift(0);
 		alt(0);
 		mod.Send( 'set_legacy', 1);
+		display_gameboard();
 	}
 	else
 	{
@@ -631,6 +675,7 @@ function _grid(x, y, val)
 
 function _shift(val)
 {
+	debug('shifted:', val);
 	shifted = (val>0);
 	display_keys();
 }
@@ -714,7 +759,7 @@ function display_node(num)
 	var x_offset = (x<4)*5;
 	clear_surface();
 	matrix.button[x][y].send(node[num].start > 0 ? colors.NODE_START : colors.NODE_SELECTED, true);
-
+	
 	var i=7;do{
 		var adj = num+coordMath[i];
 		if(inRange(adj, 0, 256))
@@ -727,6 +772,12 @@ function display_node(num)
 		matrix.button[x_offset+2][i].mask(plane[i], true);
 		
 	}while(i--);
+
+	this.patcher.getnamed('bank_var').message('set', node[num].get_single('voice'));
+	this.patcher.getnamed('voice_var').message('set', (node[num].get_single('note') + 1));
+	this.patcher.getnamed('plane_var').message('set', (node[num]._edit_plane + 1));
+
+
 	/*mod.Send( 'push_grid', 'mask_batch_column', x_offset, packFader(node[num].get_single('voice'), colors.VOICE_FADER));
 	debug(0, 'push_grid', 'mask_batch_column', x_offset, packFader(node[num].get_single('voice'), colors.VOICE_FADER))
 	mod.Send( 'push_grid', 'mask_batch_column', x_offset+1, packFader(node[num].get_single('note'), colors.NOTE_FADER));
@@ -771,24 +822,37 @@ function display_gameboard()
 
 function display_keys()
 {
+	labels.Label[0].send('Start');
+	labels.Label[1].send('Wormhole');
+	labels.Label[2].send('Note');
+	labels.Label[3].send('---');
 	keys.button[0].send(6);
 	keys.button[1].send(7);	
 	keys.button[2].send(2);
 	keys.button[3].send(5);
-
+	
 	if(shifted)
 	{
+		labels.Label[4].send('4n');
+		labels.Label[5].send('8n');
+		labels.Label[6].send('16n');
+		labels.Label[7].send('trip');
 		var i=3;do{
 			keys.button[i+4].send(speed[i]);
 		}while(i--);	
 	}
 	else
 	{
+		labels.Label[4].send('Gameboard');
+		labels.Label[5].send('Presets');
+		labels.Label[6].send('---');
+		labels.Label[7].send('Trigger');
 		keys.button[4].send(1);
 		keys.button[5].send(0);
 		keys.button[6].send(3);
 		keys.button[7].send(trigger_mode ? 5 : 4);
 	}
+	
 }
 
 function display_wormhole()
@@ -961,6 +1025,28 @@ function lock()
 	viewer.window('exec');
 }
 
+function dial_input(num, val)
+{
+	//debug('dial input', num, val);
+	if(pressed > -1)
+	{
+		var func = alted ? 'set_single_fill' : shifted ? 'set_single' : 'set_single_replace';
+		switch(num)
+		{
+			case 0:
+				node[pressed][func]('voice', val);
+				break;
+			case 1:
+				node[pressed][func]('note', val-1);
+				break;
+			case 2:
+				node[pressed].change_plane(val-1);
+				break;
+		}
+		display_node(pressed);
+	}
+}
+
 function setup_translations()
 {
 	/*Here we set up some translation assignments and send them to the Python ModClient.
@@ -1003,6 +1089,7 @@ function setup_translations()
 		mod.Send( 'add_translation', 'extras_'+i, 'push_grid', 'push_extras', i, 7);
 	}
 }
+
 
 forceload(this);
 
