@@ -91,7 +91,7 @@ var POBJ = ['bufferloop', 'bufferundo', 'pokeloop', 'looper',
 			'overdub', 'reverse', 'undo', 'clear', 'speed', 'inertia', 'mute',
 			'quantizerecord', 'loop', 'quantizemenu', 'fadein', 'fadetime', 
 			'relativerecord', 'state', 'position', 'position_remote', 'state_remote',
-			'master', 'slave']; 
+			'master', 'slave', 'fl_delay']; 
 			// 'record', 'buffetin', 'bufferin', 'groovelength', 'latency', 'inloop', 'frommaster',
 			//'copybuffer', 'calc_record', 'drivesource', 'buffetloop', 'buffetundo', 
 var TOBJ = ['relativetimer',  'metro'];
@@ -446,6 +446,9 @@ function make_dummy_loop(len)
 	{
 		make_undo_step();
 		loop_end = LENGTHS[len]*quantize_record.samples;
+		//looper.fl_delaytime.message('int', loop_end);
+		looper.fl_delay.message('list', loop_end, 'samples');
+		looper.fl_delay.message('bang');
 		debug('make_dummy_loop', len, loop_end);
 		looper.speed.message('float', 1);
 		looper.feedback.message('float', 1);
@@ -457,9 +460,18 @@ function make_dummy_loop(len)
 		clear();
 		looper.looper.message('play', 1);
 		looper.looper.message('overdub', 1);
-		looper.overdub_status = 1;
+		overdub_status = 1;
 		wating_for_overdub = 0;
 		looper.trigger.state = 'odub';
+	}
+}
+
+function _end_dummy_loop()
+{
+	debug('_end_dummy_loop', in_loop, overdub_status);
+	if((!in_loop)&&(overdub_status))
+	{
+		_change_overdub(0);
 	}
 }
 
