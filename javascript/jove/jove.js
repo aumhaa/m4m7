@@ -7,7 +7,7 @@ var prefix = jsarguments[1];
 var max_time = jsarguments[2];
 var Alive = false;
 
-var DEBUG = true;
+var DEBUG = false;
 var debug = (DEBUG&&Debug) ? Debug : function(){};
 
 var FORCELOAD = false;
@@ -218,6 +218,7 @@ function initialize()
 			}
 		}
 		setup_translations();
+		//quantizemenu.message('bang');
 		display_position();
 		mod.Send('receive_translation', 'dummy_row_batch', 'batch_row', 4, 4, 4, 4, 4);
 		mod.Send('receive_translation', 'undo',  'value', (undo_data.can*7)+1);
@@ -496,7 +497,7 @@ function _change_inertia(new_inertia)
 }
 
 //change the record quantize amount
-function _set_quantize_amount(menu, ticks, ms, samples)
+function set_quantize_amount(menu, ticks, ms, samples)
 {
 	debug('quantize_amount', menu, ticks, ms, samples);
 	quantize_record.samples = samples;
@@ -504,7 +505,7 @@ function _set_quantize_amount(menu, ticks, ms, samples)
 	quantize_record.menu = menu;
 	quantize_record.ms = ms;
 	samps_per_ms = samples/ms;
-	looper.trigger.quantization.message('int', menu);
+	Alive&&looper.trigger.quantization.message('int', menu);
 }
 
 //turn on/off quantization
