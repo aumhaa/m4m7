@@ -502,52 +502,54 @@ function update(){
 		}else{ //pots, buttons, toggles, encoders, cycle
 		
 			key = ctlr.msgs[themess].control;
-			debug("CT-<<key",key,themess);
-			//store the value from the update:
-			ctlr.ctls[key].value = theval;
-			min = ctlr.ctls[key].rangelo;
-			max = ctlr.ctls[key].rangehi;
-			range = Math.abs(max-min);
-			//no need to update pots, so filter those out:
-			if(ctlr.ctls[key].type!='pot'){
-				switch(ctlr.ctls[key].type){
-				case 'encoder':
-				//encoder just gets sent the value for an update:
-				mval = Math.floor(127*(theval-min)/range);
-				debug("CT-mval",mval,theval,min,"....",theval-min,range);
-				break;
+			if(key&&ctlr.ctls[key]){
+				debug("CT-<<key",key,themess);
+				//store the value from the update:
+				ctlr.ctls[key].value = theval;
+				min = ctlr.ctls[key].rangelo;
+				max = ctlr.ctls[key].rangehi;
+				range = Math.abs(max-min);
+				//no need to update pots, so filter those out:
+				if(ctlr.ctls[key].type!='pot'){
+					switch(ctlr.ctls[key].type){
+					case 'encoder':
+					//encoder just gets sent the value for an update:
+					mval = Math.floor(127*(theval-min)/range);
+					debug("CT-mval",mval,theval,min,"....",theval-min,range);
+					break;
 				
-				case 'button':
-				//buttons get their value changed based on color:
-				if(theval>0){
-					mval = ctlr.ctls[key].vel_on;
-				}else{
-					mval = ctlr.ctls[key].vel_off;
+					case 'button':
+					//buttons get their value changed based on color:
+					if(theval>0){
+						mval = ctlr.ctls[key].vel_on;
+					}else{
+						mval = ctlr.ctls[key].vel_off;
+					}
+					debug("CT-btns",themess,theval,"--",mval);
+					break;
+				
+					case 'toggle':
+					//toggles get their value changed based on color:
+					if(theval>0){
+						mval = ctlr.ctls[key].vel_on;
+					}else{
+						mval = ctlr.ctls[key].vel_off;
+					}
+					debug("CT-togs",themess,theval,"--",mval);
+					break;
+				
+					//with cycle we make a concession that it could cycle a range of, say, 2-9, so we want to  
+					case 'cycle':
+					var colorsout = [0,1,3,4,5,127,2,6]; //turn values 0-7 into color values for modjs. off, white, cyan,magenta,red,blue,yellow,green
+					var min = ctlr.ctls[key].rangelo;
+					//for use with mods.js in Live, non-blinking colors
+					mval = colorsout[theval-min];
+					debug("CT-cycle",themess,theval,"--",mval);
+					break;
+				
+					}
+					ctlout(key, mval);
 				}
-				debug("CT-btns",themess,theval,"--",mval);
-				break;
-				
-				case 'toggle':
-				//toggles get their value changed based on color:
-				if(theval>0){
-					mval = ctlr.ctls[key].vel_on;
-				}else{
-					mval = ctlr.ctls[key].vel_off;
-				}
-				debug("CT-togs",themess,theval,"--",mval);
-				break;
-				
-				//with cycle we make a concession that it could cycle a range of, say, 2-9, so we want to  
-				case 'cycle':
-				var colorsout = [0,1,3,4,5,127,2,6]; //turn values 0-7 into color values for modjs. off, white, cyan,magenta,red,blue,yellow,green
-				var min = ctlr.ctls[key].rangelo;
-				//for use with mods.js in Live, non-blinking colors
-				mval = colorsout[theval-min];
-				debug("CT-cycle",themess,theval,"--",mval);
-				break;
-				
-				}
-				ctlout(key, mval);
 			}
 		}
 		//if(themess == 
