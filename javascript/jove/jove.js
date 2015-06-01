@@ -446,7 +446,6 @@ function make_dummy_loop(len)
 	{
 		make_undo_step();
 		loop_end = LENGTHS[len]*quantize_record.samples;
-		//looper.fl_delaytime.message('int', loop_end);
 		looper.fl_delay.message('list', loop_end, 'samples');
 		looper.fl_delay.message('bang');
 		debug('make_dummy_loop', len, loop_end);
