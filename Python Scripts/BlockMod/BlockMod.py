@@ -366,7 +366,7 @@ class BlockMod(MonOhm):
 				self._grid[column][row].set_enabled(True)
 				self._grid[column][row].set_on_off_values(127, 0)
 				self._grid[column][row].send_value(0, True)
-		self._send_reset.set_buttons(tuple(None for index in range(4)))
+		#self._send_reset.set_buttons(tuple(None for index in range(4)))
 	
 
 	def zoom_off(self):
@@ -396,7 +396,7 @@ class BlockMod(MonOhm):
 		if(self._r_function_mode._mode_index is 0):
 			for index in range(4):
 				self._grid[index + 4][7].send_value(SEND_RESET[self._rgb], True)
-			self._send_reset.set_buttons(tuple(self._grid[index + 4][7] for index in range(4)))
+			#self._send_reset.set_buttons(tuple(self._grid[index + 4][7] for index in range(4)))
 	
 
 	def zoom_off_m(self):
@@ -437,7 +437,7 @@ class BlockMod(MonOhm):
 		self._session.set_stop_all_clips_button(self._grid[3][5])
 		for index in range(4):
 			self._grid[index + 4][5].send_value(SEND_RESET[self._rgb], True)
-		self._send_reset.set_buttons(tuple(self._grid[index + 4][5] for index in range(4)))
+		#self._send_reset.set_buttons(tuple(self._grid[index + 4][5] for index in range(4)))
 		for index in range(4):
 			self._grid[index + 4][7].set_off_value(DEVICE_SELECT[self._rgb])
 		self._device_selector.set_matrix(self._monomod.submatrix[4:8][7:])
@@ -472,7 +472,7 @@ class BlockMod(MonOhm):
 		self._session.set_stop_all_clips_button(self._grid[3][5])
 		for index in range(4):
 			self._grid[index + 4][5].send_value(SEND_RESET[self._rgb], True)
-		self._send_reset.set_buttons(tuple(self._grid[index + 4][5] for index in range(4)))
+		#self._send_reset.set_buttons(tuple(self._grid[index + 4][5] for index in range(4)))
 		for index in range(4):
 			self._grid[index][7].set_off_value(DEVICE_SELECT[self._rgb])
 		self._device_selector.set_matrix(self._monomod.submatrix[:4][7:])
@@ -500,7 +500,7 @@ class BlockMod(MonOhm):
 		self._session.set_stop_all_clips_button(self._grid[3][5])
 		for index in range(4):
 			self._grid[index + 4][5].send_value(SEND_RESET[self._rgb], True)
-		self._send_reset.set_buttons(tuple(self._grid[index + 4][5] for index in range(4)))
+		#self._send_reset.set_buttons(tuple(self._grid[index + 4][5] for index in range(4)))
 		for index in range(4):
 			self._grid[index + 4][7].set_off_value(DEVICE_SELECT[self._rgb])
 		self._device_selector.set_matrix(self._monomod.submatrix[4:8][7:])
