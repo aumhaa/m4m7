@@ -22,7 +22,6 @@ from _Framework.SessionComponent import SessionComponent
 from _Framework.ClipCreator import ClipCreator
 from _Framework.ModesComponent import AddLayerMode, LayerMode, MultiEntryMode, ModesComponent, SetAttributeMode, ModeButtonBehaviour, CancellableBehaviour, AlternativeBehaviour, ReenterBehaviour, DynamicBehaviourMixin, ExcludingBehaviourMixin, ImmediateBehaviour, LatchingBehaviour, ModeButtonBehaviour
 from _Framework.Layer import Layer
-from _Framework.Task import *
 
 from Push.SessionRecordingComponent import *
 from Push.ViewControlComponent import ViewControlComponent
@@ -179,6 +178,18 @@ def reset_matrix(matrix):
 				button.use_default_message()
 				button.set_enabled(True)
 
+
+def new_reset_matrix(matrix):
+	if matrix:
+		for element in matrix:
+			button = element._control_element
+			if button:
+				button.descriptor = None
+				button.display_press = False
+				button._force_forwarding = False
+				button.set_force_next_value()
+				button.use_default_message()
+				button.set_enabled(True)
 
 def _add_to_mode(mode, add):
 	return mode + add
@@ -1002,16 +1013,6 @@ class MonoInstrumentComponent(CompoundComponent):
 	
 
 	def _set_device_attribute(self, device, attribute, value, force = False):
-		atts = {'device':device, 'attribute':attribute, 'value':value, 'force':force}
-		self._script.schedule_message(1, self._deferred_set_device_attribute, atts) 
-	
-
-	def _deferred_set_device_attribute(self, atts):
-		debug('_deferred_set_device_attribute', atts)
-		device = atts['device']
-		attribute = atts['attribute']
-		value = atts['value']
-		force = atts['force']
 		if not device is None and hasattr(device, 'name'):
 			name = device.name.split(' ')
 			for index in range(len(name)):
@@ -1024,11 +1025,6 @@ class MonoInstrumentComponent(CompoundComponent):
 	
 
 	def _remove_device_attribute(self, device, attribute, force = False):
-		atts = {'device':device, 'attribute':attribute, 'force':force}
-		self._script.schedule_message(1, self._deferred_remove_device_attribute, atts) 
-	
-
-	def _deferred_remove_device_attribute(self, device, attribute, force = False):
 		if not device is None and hasattr(device, 'name'):
 			name = device.name.split(' ')
 			for index in range(len(name)):
@@ -1056,21 +1052,12 @@ class MonoInstrumentComponent(CompoundComponent):
 							vals.append([vals[0]])
 					if vals[0] in dict_entry.keys():
 						if vals[0] == 'scale' and vals[1] in SCALES.keys():
-							try:
-								dict_entry[vals[0]] = str(vals[1])
-							except:
-								dict_entry[vals[0]] = 'Auto'
+							dict_entry[vals[0]] = str(vals[1])
 						elif vals[0] in ['sequencer', 'split']:
 							if vals[1] in ['False', 'True']:
-								try:
-									dict_entry[vals[0]] = bool(['False', 'True'].index(vals[1]))
-								except:
-									dict_entry[vals[0]] = False
+								dict_entry[vals[0]] = bool(['False', 'True'].index(vals[1]))
 						elif vals[0] in ['offset', 'vertoffset', 'drumoffset']:
-							try:
-								dict_entry[vals[0]] = int(vals[1])
-							except:
-								dict_entry[vals[0]] = 0
+							dict_entry[vals[0]] = int(vals[1])
 			#for key in dict_entry.keys():
 			#	debug('key: ' + str(key) + ' entry:' + str(dict_entry[key]))
 		return dict_entry
@@ -1289,10 +1276,9 @@ class MonoDrumpadComponent(CompoundComponent):
 		self.sequencer_layer = LayerMode(self, Layer(priority = 0))
 		self.sequencer_shift_layer = LayerMode(self, Layer(priority = 0))
 		self._step_sequencer = StepSeqComponent(ClipCreator(), skin, grid_resolution, name='Drum_Sequencer')
-		self._step_sequencer._drum_group = DrumGroupComponent()
 		self._step_sequencer._note_editor._visible_steps = self._visible_steps
-		self._step_sequencer._drum_group._update_pad_led = self._drum_group_update_pad_led
-		self._step_sequencer._drum_group._update_control_from_script = self._update_control_from_script
+		#self._step_sequencer._drum_group._update_pad_led = self._drum_group_update_pad_led
+		#self._step_sequencer._drum_group._update_control_from_script = self._update_control_from_script
 		self._step_sequencer._playhead_component._notes=tuple(range(16))
 		self._step_sequencer._playhead_component._triplet_notes=tuple(chain(*starmap(range, ((0, 3), (4, 7), (8, 11), (12, 15)))))
 		self.set_playhead = self._step_sequencer.set_playhead
@@ -1325,27 +1311,27 @@ class MonoDrumpadComponent(CompoundComponent):
 		if self._on_drumpad_matrix_value.subject:
 			DrumGroupComponent._update_pad_led(self._step_sequencer._drum_group, pad, button, soloed_pads)
 			#debug('updating leds:' + str(button.name))
-			button.turn_off()
+			#button.turn_off()
+			button.color = 'DefaultButton.Off'
 	
 
-	def _update_control_from_script(self):
+	"""def _update_control_from_script(self):
 		takeover_drums = self._step_sequencer._drum_group._takeover_drums or self._step_sequencer._drum_group._selected_pads
 		profile = 'default' if takeover_drums else 'drums'
-		if self._step_sequencer._drum_group._drum_matrix:
-			#for button, _ in self._step_sequencer._drum_group._drum_matrix.iterbuttons():
-			for button, _ in ifilter(first, self._step_sequencer._drum_group._drum_matrix.iterbuttons()):
+		if self._step_sequencer._drum_group.drum_matrix:
+			#for button, _ in self._step_sequencer._drum_group.drum_matrix.iterbuttons():
+			for button, _ in ifilter(first, self._step_sequencer._drum_group.drum_matrix.iterbuttons()):
 				if button:
 					translation_channel = self._parent._get_current_channel()
 					button.set_channel(translation_channel)
 					button.set_enabled(takeover_drums)
 					#debug('button name: ' + str(button.name) + ' ch: ' + str(translation_channel) + ' takeover drums is' + str(takeover_drums))
-					button.sensitivity_profile = profile
+					button.sensitivity_profile = profile"""
 	
 
 	def set_offset(self, offset):
 		self._offset = offset
-		if hasattr(self._step_sequencer, '_drum_group'):
-			self._step_sequencer._drum_group.position = offset
+		self._step_sequencer._drum_group and self._step_sequencer._drum_group._set_position(offset)
 	
 
 	def set_note_matrix(self, matrix):
@@ -1384,7 +1370,7 @@ class MonoDrumpadComponent(CompoundComponent):
 
 	def set_drumpad_matrix(self, matrix):
 		#debug('set drumpad matrix: ' + str(matrix))
-		reset_matrix(self._step_sequencer._drum_group._drum_matrix)
+		new_reset_matrix(self._step_sequencer._drum_group.drum_matrix)
 		reset_matrix(self._on_drumpad_matrix_value.subject)
 		self._on_drumpad_matrix_value.subject = matrix
 		if matrix:
@@ -1409,8 +1395,8 @@ class MonoDrumpadComponent(CompoundComponent):
 				self._control_surface.reset_controlled_track()
 				self._step_sequencer.set_drum_matrix(matrix.submatrix[:4, :4])
 			else:
-				self._step_sequencer._drum_group._mute_button and self._step_sequencer._drum_group._mute_button.send_value(0, True)
-				self._step_sequencer._drum_group._solo_button and self._step_sequencer._drum_group._solo_button.send_value(0, True)
+				#self._step_sequencer._drum_group.mute_button and self._step_sequencer._drum_group.mute_button.send_value(0, True)
+				#self._step_sequencer._drum_group.solo_button and self._step_sequencer._drum_group.solo_button.send_value(0, True)
 				offset = self._offset
 				current_note = self._step_sequencer._note_editor.editing_note
 				shifted = self._parent.is_shifted()
