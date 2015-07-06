@@ -328,6 +328,7 @@ function initialize(val)
 				script[i.replace('_', "")] = script[i];
 			}
 		}
+		
 		Alive = 1;
 		clear_surface();
 		
@@ -335,7 +336,6 @@ function initialize(val)
 
 		refresh_extras();
 		select_pattern(0);
-		
 
 		mod.Send('receive_device', 'set_mod_device_type', 'Hex');
 		mod.Send( 'receive_device', 'set_number_params', 16);
@@ -587,7 +587,7 @@ function setup_translations()
 
 function setup_colors()
 {
-	mod.Send( 'fill_color_map', 'Monochrome', 0, 1, 1, 1, 8, 1);
+	mod.Send( 'fill_color_map', 'Monochrome', 1, 1, 1, 1, 8, 1);
 }
 
 function refresh_pads()
