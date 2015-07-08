@@ -20,7 +20,7 @@ outlets = 4;
 inlets = 5;
 
 var FORCELOAD = false;
-var NEW_DEBUG = true;
+var NEW_DEBUG = false;
 var DEBUG = false;
 var DEBUG_LCD = false;
 var DEBUG_PTR = false;
@@ -362,6 +362,7 @@ function initialize(val)
 		var i=3;do{
 			mod.Send( 'cntrlr_encoder_grid', 'mode', i, 2, 0);
 		}while(i--);
+		keymodegui.message('int', 8);
 	}
 	else
 	{
@@ -761,6 +762,25 @@ function refresh_c_keys()
 			}while(i--);
 			if(grid_mode == 0){ mod.Send( 'receive_translation', 'keys_batch_fold', 'batch_row_fold', batch);}
 			break;
+		case 8:
+			var p = presets[selected.num]-1;
+			var i=7;do{
+				var v = (i==p)+6;
+				batch.unshift(Math.floor(i==p));
+				keygui.message(i+8, 0, v);
+			}while(i--);
+			var i=7;do{
+				var v = (i==Math.floor((global_offset)/16));
+				//debug('new offset:', global_offset, v, i, Math.floor((global_offset)/16));
+				batch.unshift(Math.floor(v));
+				keygui.message(i, 0, v);
+			}while(i--);
+			if(grid_mode == 0){ 
+				mod.Send( 'receive_translation', 'keys_batch', 'batch_mask_row', -1);
+				debug('batch is:', batch);
+				mod.Send( 'receive_translation', 'keys_batch_fold', 'batch_row_fold', batch); 
+			}
+			break;
 		default:
 			var i=15;do{
 				var v = part[i].active*2;
@@ -1097,6 +1117,7 @@ function _c_button(x, y, val)
 }
 
 var _po10_key = _c_key;
+
 function _c_key(x, y, val)
 {
 	debug('c key in', x, y, val, '\n');
@@ -1235,11 +1256,47 @@ function _c_key(x, y, val)
 					refresh_c_keys();
 				}
 				break;
+			case 8:
+				if(num<8)
+				{
+					if(val>0)
+					{
+						change_transpose(16*num);
+						refresh_c_keys();
+					}
+				}
+				else
+				{
+					if((val>0)&&(pad_pressed<0))
+					{
+						key_pressed = num-8;
+						if(val>0)
+						{
+							for(var i=0;i<16;i++)
+							{
+								presets[i] = num-7;
+							}
+							preset = num-7;
+							storage.message(presets[selected.num]);
+						}
+					}
+					else if(val>0)
+					{
+						key_pressed = -1;
+						copy_global_preset(preset, num-7);
+					}
+					else
+					{
+						key_pressed = -1;
+					} 
+					break;
+				}
 		}
 	}
 }
 
 var _po10_grid = _c_grid;
+
 function _c_grid(x, y, val)
 {
 	debug('_c_grid', x, y, val);
