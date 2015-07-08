@@ -87,7 +87,7 @@ function _L4(val)
 	finder.call('forward_midi', 144, 99, (val>0)*127);
 }
 
-function _L4(val)
+function _L5(val)
 {
 	finder.call('forward_midi', 144, 100, (val>0)*127);
 }
