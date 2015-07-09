@@ -764,7 +764,9 @@ function refresh_c_keys()
 			break;
 		case 8:
 			var p = presets[selected.num]-1;
-			var i=7;do{
+			batch.unshift(8);
+			keygui.message(15, 0, 5);
+			var i=6;do{
 				var v = (i==p)+6;
 				batch.unshift(Math.floor(i==p));
 				keygui.message(i+8, 0, v);
@@ -1265,7 +1267,7 @@ function _c_key(x, y, val)
 						refresh_c_keys();
 					}
 				}
-				else
+				else if(num<15)
 				{
 					if((val>0)&&(pad_pressed<0))
 					{
@@ -1290,6 +1292,12 @@ function _c_key(x, y, val)
 						key_pressed = -1;
 					} 
 					break;
+				}
+				else if(val>0)
+				{
+					clear_pattern(selected);
+					reset_params_to_default();
+					select_pattern(selected.num);
 				}
 		}
 	}
@@ -1962,14 +1970,15 @@ function _guibuttons(num, val)
 	{
 		case 0:
 			//padmodegui.message('int', RemotePModes[Math.max((RemotePModes.indexOf(pad_mode)+1)%3, 0)]);
-			if(padmodeenables.length)
+			/*if(padmodeenables.length)
 			{
 				while(padmodeenables.indexOf(pad_mode)==-1)
 				{
 					pad_mode = (pad_mode+1)%7;
 				}
 				padmodegui.message('int', padmodeenables[(padmodeenables.indexOf(pad_mode)+1)%padmodeenables.length]);
-			}
+			}*/
+			resync();
 			break;
 		case 1:
 			//keymodegui.message('int', (key_mode+1)%8);
@@ -2565,6 +2574,12 @@ function select_pattern(num)
 	}
 }	 
 
+function clear_pattern(dest)
+{
+	debug('clear_pattern', dest.num);
+	dest.obj.set.pattern([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+}
+
 function copy_pattern(src, dest)
 {
 	debug('copy pattern', src.num, dest.num, '\n');
@@ -2596,9 +2611,10 @@ function copy_global_preset(src, dest)
 //reset all parts to play from top...not quantized.
 function resync()
 {
-	var i=15;do{
-		part[i].obj.offset.message('int', 0);
-	}while(i--);
+	//var i=15;do{
+	//	part[i].obj.offset.message('int', 0);
+	//}while(i--);
+	messnamed(unique+('restart'), 0);
 }
 
 //begin or end sequence play from poly_play poly~
@@ -2658,7 +2674,7 @@ function change_transpose(val)
 	if(selected.channel==0)
 	{
 		debug('global_offset', val, '\n');
-		global_offset = (Math.max(Math.min(val, 96), 0));
+		global_offset = (Math.max(Math.min(val, 112), 0));
 		transposegui.message('set', global_offset);
 		for(var i = 0;i< 16;i++)
 		{
@@ -3689,6 +3705,16 @@ function hideerror()
 	{
 		pns[Encoders[i]].message('text', ' ');
 	}
+}
+
+
+
+///po10 specific
+
+function _reset_params_to_default()
+{
+	debug('_reset_params_to_default');
+	mod.Send( 'send_explicit', 'receive_device', 'set_all_params_to_defaults' );
 }
 
 forceload(this);
