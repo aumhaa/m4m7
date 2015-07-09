@@ -1041,6 +1041,7 @@ class PO10(OptimizedControlSurface):
 		self._skin = Skin(PO10Colors)
 		self._device_selection_follows_track_selection = FOLLOW
 		self.modhandler = None
+		self._main_modes = None
 		with self.component_guard():
 			self._setup_mod()
 		#self._on_device_changed.subject = self.song()
