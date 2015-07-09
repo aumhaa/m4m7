@@ -652,13 +652,13 @@ class PO10DeviceComponent(DeviceComponent):
 				debug('send_tracks_to_use:', send_tracks_to_use)
 				for track, send_control in zip(send_tracks_to_use, self._send_controls):
 					if track:
-						debug('send assign:', track, send_number, send_control)
+						#debug('send assign:', track, send_number, send_control)
 						send_control != None and send_control.connect_to(track.mixer_device.sends[send_number])
 					else:
 						send_control != None and send_control.release_parameter()
 				for track, feedback_control in zip(send_tracks_to_use, self._send_feedback):
 					if track:
-						debug('feedback assign:', track, send_number, feedback_control)
+						#debug('feedback assign:', track, send_number, feedback_control)
 						feedback_control != None and feedback_control.connect_to(track.mixer_device.sends[send_number])
 					else:
 						feedback_control != None and feedback_control.release_parameter()
@@ -1042,8 +1042,8 @@ class PO10(OptimizedControlSurface):
 		self._device_selection_follows_track_selection = FOLLOW
 		self.modhandler = None
 		self._main_modes = None
-		with self.component_guard():
-			self._setup_mod()
+		#with self.component_guard():
+		#	self._setup_mod()
 		#self._on_device_changed.subject = self.song()
 		#self.set_feedback_channels(range(14, 15))
 		#self._main_modes.selected_mode = 'MixMode'
@@ -1095,7 +1095,7 @@ class PO10(OptimizedControlSurface):
 					self._setup_device_selector()
 					self._setup_kills()
 					#self._setup_translations()
-					self._setup_modhandler()
+					self._setup_mod()
 					self._setup_modes() 
 					self._setup_m4l_interface()
 				self._initialized = True
@@ -1229,21 +1229,22 @@ class PO10(OptimizedControlSurface):
 		self.monomodular = get_monomodular(self)
 		self.monomodular.name = 'monomodular_switcher'
 		self.modhandler = PO10ModHandler(self) # is_enabled = False)
-	
-
-	def _setup_modhandler(self):
 		self.modhandler.name = 'ModHandler' 
 		self.modhandler.layer = Layer(priority = 8, po10_grid = self._matrix, po10_keys = self._key_matrix)
 		self.modhandler.partial_layer = AddLayerMode(self.modhandler, Layer(priority = 7, po10_encoder_grid = self._encoder_matrix, po10_encoder_button_grid = self._encoder_button_matrix))
 		self.modhandler.set_enabled(True)
+		self._select_hex_mod()
 	
 
 	def _select_hex_mod(self):
+		debug('select hex mod....')
 		for mod in self.monomodular._mods:
-			if mod._param_component._type is 'hex':
+			debug('a mod:', mod, mod._param_component._type if mod else None)
+			if mod._param_component._type in ['hex', 'Hex']:
 				if self.modhandler.active_mod() != mod:
 					self.modhandler.select_mod(mod)
 					debug('hex mod found!')
+					self._update_modswitcher()
 					break
 	
 
@@ -1650,7 +1651,7 @@ class PO10ModHandler(ModHandler):
 	def _on_device_changed(self):
 		#super(PO10ModHandler, self)._on_device_changed()
 		#self._script._on_device_changed()
-		#self._script._select_hex_mod()
+		self._script._select_hex_mod()
 		pass
 	
 
