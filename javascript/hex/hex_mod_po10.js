@@ -19,7 +19,7 @@ autowatch = 1;
 outlets = 4;
 inlets = 5;
 
-var FORCELOAD = false;
+var FORCELOAD = true;
 var NEW_DEBUG = false;
 var DEBUG = false;
 var DEBUG_LCD = false;
@@ -1297,7 +1297,7 @@ function _c_key(x, y, val)
 				{
 					clear_pattern(selected);
 					reset_params_to_default();
-					select_pattern(selected.num);
+					//select_pattern(selected.num);
 				}
 		}
 	}
@@ -2577,7 +2577,10 @@ function select_pattern(num)
 function clear_pattern(dest)
 {
 	debug('clear_pattern', dest.num);
-	dest.obj.set.pattern([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+	//dest.obj.set.pattern([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+	storage.copy(16, dest.num+1);
+	storage.recall(dest.num+1);
+	//storage.message('store', dest.num+1);
 }
 
 function copy_pattern(src, dest)

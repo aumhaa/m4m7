@@ -6,6 +6,7 @@ outlets = 1;
 
 var script = this;
 var finder;
+var scene_fire;
 var m4lcomp = 0;
 var PO10=new RegExp(/(PO10)/);
 var control_names = [];
@@ -34,6 +35,23 @@ function init()
 		if(finder.type == control_surface_type)
 		{
 			debug('found PO10.');
+			scene_fire = new LiveAPI(scene_fire_callback, 'control_surfaces', i);
+			num_controls = parseInt(finder.getcount('controls'));
+			for(var j=0;j<num_controls;j++)
+			{
+				scene_fire.goto('controls', j);
+				debug('control name:', scene_fire.get('name'));
+				var name = scene_fire.get('name');
+				if(name == 'Button_28')
+				{
+					scene_fire.property = 'value';
+					break;
+				}
+				else
+				{
+					scene_fire.path = 'control_surfaces '+i;
+				}
+			}
 			for(var i in script)
 			{
 				if((/^_/).test(i))
@@ -44,6 +62,16 @@ function init()
 			}
 			break;
 		}
+	}
+}
+
+function scene_fire_callback(args)
+{
+	debug('scene_fire_callback', args);
+	if((args[0]=='value')&&(args[1]>0))
+	{
+		debug('banging out to HK...');
+		outlet(0, 'bang');
 	}
 }
 
