@@ -51,22 +51,6 @@ debug = initialize_debug()
 from _Generic.Devices import *
 
 
-
-DEVICE_COLORS = {'midi_effect':2,
-				'audio_effect':5,
-				'instrument':3,
-				'Operator':4,
-				'DrumGroupDevice':6,
-				'MxDeviceMidiEffect':2,
-				'MxDeviceInstrument':3,
-				'MxDeviceAudioEffect':5,
-				'InstrumentGroupDevice':3,
-				'MidiEffectGroupDevice':2,
-				'AudioEffectGroupDevice':5}
-
-SELECTED_COLORSHIFT = 7
-
-
 def release_control(control):
 	if control != None:
 		control.release_parameter()
@@ -196,6 +180,42 @@ class CrateSceneComponent(SceneComponent):
 
 	def _create_clip_slot(self):
 		return self.clip_slot_component_type(self._script)
+	
+
+	def update(self):
+		super(SceneComponent, self).update()
+		if self._allow_updates:
+			if self._scene != None and self.is_enabled():
+				clip_index = self._track_offset
+				tracks = self.song().tracks
+				clip_slots = self._scene.clip_slots
+				#if self._track_offset > 0:
+				#	real_offset = 0
+				#	visible_tracks = 0
+				#	while visible_tracks < self._track_offset and len(tracks) > real_offset:
+				#		if tracks[real_offset].is_visible:
+				#			visible_tracks += 1
+				#		real_offset += 1
+
+				#	clip_index = real_offset
+				for slot in self._clip_slots:
+					#while len(tracks) > clip_index and not tracks[clip_index].is_visible:
+					#	clip_index += 1
+
+					if len(clip_slots) > clip_index:
+						slot.set_clip_slot(clip_slots[clip_index])
+					else:
+						slot.set_clip_slot(None)
+					clip_index += 1
+
+			else:
+				for slot in self._clip_slots:
+					slot.set_clip_slot(None)
+
+			self._update_launch_button()
+		else:
+			self._update_requests += 1
+	
 
 
 class CrateSessionComponent(SessionComponent):
@@ -205,6 +225,9 @@ class CrateSessionComponent(SessionComponent):
 
 	def __init__(self, script = None, *a, **k):
 		self._script = script
+		self._group_track = None
+		self._group_track_offset = 0
+		self._track_offset = 0
 		super(CrateSessionComponent, self).__init__(*a, **k)
 	
 
@@ -212,9 +235,100 @@ class CrateSessionComponent(SessionComponent):
 		return self.scene_component_type(script = self._script, num_slots=self._num_tracks, tracks_to_use_callback=self.tracks_to_use)
 	
 
+	def _end_initialisation(self):
+		self.on_selected_scene_changed()
+		self.set_offsets(0, 0)
+	
+
+	def tracks_to_use(self):
+		list_of_tracks = None
+		if self._mixer != None:
+			list_of_tracks = self._mixer.tracks_to_use()
+		else:
+			list_of_tracks = self.song().tracks
+		return list_of_tracks
+	
+
+	def _change_offsets(self, *a, **k):
+		super(CrateSessionComponent, self)._change_offsets(*a, **k)
+		self._update_track_nav_buttons()
+	
+
 	def on_enabled_changed(self):	
 		super(CrateSessionComponent, self).on_enabled_changed()
-		debug('session enabled:', self.is_enabled())
+		debug('session enabled:', self.name, self.is_enabled())
+		self.is_enabled() and self._update_track_select_names() and self._update_track_nav_buttons()
+	
+
+	def set_group_track(self, track_name):
+		tracks = [track for track in self.song().tracks]
+		for index, track in enumerate(tracks):
+			if track and track.name and track.name == track_name:
+				self._group_track = track
+				self._group_track_offset = index
+				self._update_track_select_names()
+				self.set_offsets(self._group_track_offset + 1, self.scene_offset())
+				break
+	
+
+	def _update_track_select_names(self):
+		nav_buttons = self._on_track_nav_button_value.subject
+		tracks = [track for track in self.song().tracks]
+		num_tracks = len(tracks)
+		if nav_buttons:
+			for _,  index in nav_buttons.iterbuttons():
+				if (index[0]+self._group_track_offset+1)<num_tracks:
+					name = tracks[index[0]+self._group_track_offset+1].name
+					self._script.track_name(index[0], name)
+				else:
+					self._script.track_name(index[0], ' ')
+	
+			
+	def set_track_nav_buttons(self, buttons):
+		self._clear_track_select_names()
+		self._on_track_nav_button_value.subject = buttons
+	
+
+	@subject_slot('value')
+	def _on_track_nav_button_value(self, value, num, *a, **k):
+		debug('_on_track_nav_button_value', value, num)
+		if value:
+			self.set_offsets(self._group_track_offset + num + 1, self.scene_offset())
+		else:
+			self._update_track_nav_buttons()
+	
+
+	def _update_track_nav_buttons(self):
+		buttons = self._on_track_nav_button_value.subject
+		track_num = self.track_offset()
+		if buttons:
+			for button, address in buttons.iterbuttons():
+				if (address[0] + self._group_track_offset + 1) == track_num:
+					button.turn_on()
+				else:
+					button.turn_off()
+	
+
+	def _clear_track_select_names(self):
+		nav_buttons = self._on_track_nav_button_value.subject
+		if nav_buttons:
+			for _,  index in nav_buttons.iterbuttons():
+				self._script.track_name(index[0], ' ')
+	
+
+
+class CrateSetSessionComponent(CrateSessionComponent):
+
+
+	def set_group_track(self, track_name):
+		tracks = [track for track in self.song().tracks]
+		for index, track in enumerate(tracks):
+			if track and track.name and track.name == track_name:
+				self._group_track = track
+				self._group_track_offset = index
+				self._update_track_select_names()
+				self.set_offsets(self._group_track_offset, self.scene_offset())
+				break
 	
 
 
@@ -223,6 +337,59 @@ class CrateButtonElement(MonoButtonElement):
 
 	def __init__(self, *a, **k):
 		super(CrateButtonElement, self).__init__(*a, **k)
+	
+
+
+class FireNextClipComponent(ControlSurfaceComponent):
+
+
+	def __init__(self, *a, **k):
+		super(FireNextClipComponent, self).__init__(*a, **k)
+		self._track = None
+		self._last_clip_played_index = -1
+		
+	
+
+	def set_track(self, name):
+		for track in self.song().tracks:
+			if track and hasattr(track, 'name') and track.name == name:
+				self._track = track
+				self._on_clip_played_listener.subject = self._track
+				break
+	
+
+	def set_button(self, button):
+		debug(self.name, 'set_button:', button)
+		self._on_button_value.subject = button
+	
+
+	@subject_slot('value')
+	def _on_button_value(self, value):
+		debug('_on_button_value:', value)
+		if value:
+			self._fire_next_clip()
+	
+
+	def _fire_next_clip(self):
+		debug('fire next clip')
+		if self._track:
+			debug('track is:', self._track)
+			next_clip_slot = 0
+			slot_index = self._track.playing_slot_index
+			if slot_index > -1:
+				next_clip_slot = slot_index + 1
+			elif self._last_clip_played_index:
+				next_clip_slot = self._last_clip_played_index + 1
+			debug('slot index is:', next_clip_slot)
+			if len(self._track.clip_slots) > next_clip_slot:
+				self._track.clip_slots[next_clip_slot].fire()
+	
+
+	@subject_slot('playing_slot_index')
+	def _on_clip_played_listener(self, *a, **k):
+		if self._track.playing_slot_index > -1:
+			self._last_clip_played_index = max(self._track.playing_slot_index, -1)
+		debug('_on_clip_played_listener', self._last_clip_played_index)
 	
 
 
@@ -243,6 +410,7 @@ class Crate(ControlSurface):
 			self._setup_monobridge()
 			self._setup_controls()
 			self._setup_session()
+			self._setup_next_buttons()
 			self._setup_modes()
 			self._create_fallback_control_owner()
 		self.schedule_message(1, self._open_log)
@@ -282,29 +450,56 @@ class Crate(ControlSurface):
 		self._crate_button = [CrateButtonElement(True, MIDI_NOTE_TYPE, 0, index+70, name = 'Button_' + str(index+70), script = self) for index in range(3)]
 
 		self._matrix = ButtonMatrixElement(name = 'Matrix', rows = [[self._button[index]] for index in range(20)])
-		self._split_matrix = ButtonMatrixElement(name = 'Matrix', rows = [[self._button[index], self._button[index+10]] for index in range(10)])
-		#self._main_matrix = ButtonMatrixElement(name = 'MainMatrix', rows = [self._button])
+
+		self._left_matrix = ButtonMatrixElement(name = 'Left_Matrix', rows = [[self._button[index]] for index in range(10)])
+		self._right_matrix = ButtonMatrixElement(name = 'Right_Matrix', rows = [[self._button[index]] for index in range(10,20)])
+
+		self._track_select_matrix = ButtonMatrixElement(name = 'Track_Matrix', rows = [self._track_button])
+
 	
 
 	def _setup_session(self):
-		self._left_session = CrateSessionComponent(script = self, name = 'Session_Component', num_tracks = 1, num_scenes = 20, autonaming = True, is_enabled = False, layer = Layer(priority = 1, clip_launch_buttons = self._matrix))
-		self._right_session = CrateSessionComponent(script = self, name = 'Session_Component', num_tracks = 1, num_scenes = 20, autonaming = True, is_enabled = False, layer = Layer(priority = 1, clip_launch_buttons = self._matrix))
-		self._set_session = CrateSessionComponent(script = self, name = 'Session_Component', num_tracks = 2, num_scenes = 10, autonaming = True, is_enabled = False, layer = Layer(priority = 1, clip_launch_buttons = self._split_matrix))
+		self._left_session = CrateSessionComponent(script = self, name = 'Session_Component_A', num_tracks = 1, num_scenes = 20, autonaming = True, is_enabled = False, layer = Layer(priority = 1, clip_launch_buttons = self._matrix, track_nav_buttons = self._track_select_matrix))
+		self._left_session.set_group_track('DECK A')
 		self._left_session_zooming = SessionZoomingComponent(session = self._left_session)
+
+		self._right_session = CrateSessionComponent(script = self, name = 'Session_Component_B', num_tracks = 1, num_scenes = 20, autonaming = True, is_enabled = False, layer = Layer(priority = 1, clip_launch_buttons = self._matrix, track_nav_buttons = self._track_select_matrix))
+		self._right_session.set_group_track('DECK B')
 		self._right_session_zooming = SessionZoomingComponent(session = self._right_session)
-		self._set_session_zooming = SessionZoomingComponent(session = self._set_session)
+
+		self._left_set_session = CrateSetSessionComponent(script = self, name = 'Session_Component_SETA', num_tracks = 1, num_scenes = 10, autonaming = True, is_enabled = False, layer = Layer(priority = 1, clip_launch_buttons = self._left_matrix))
+		self._left_set_session.set_group_track('SET A')
+		self._left_set_session_zooming = SessionZoomingComponent(session = self._left_set_session)
+
+		self._right_set_session = CrateSetSessionComponent(script = self, name = 'Session_Component_SETB', num_tracks = 1, num_scenes = 10, autonaming = True, is_enabled = False, layer = Layer(priority = 1, clip_launch_buttons = self._right_matrix))
+		self._right_set_session.set_group_track('SET B')
+		self._right_set_session_zooming = SessionZoomingComponent(session = self._right_set_session)
+	
+
+	def _setup_next_buttons(self):
+		self._next_a_button = FireNextClipComponent()
+		self._next_a_button.set_track('SET A')
+		self._next_a_button.layer = Layer(button = self._next_button[0])
+
+		self._next_b_button = FireNextClipComponent()
+		self._next_b_button.set_track('SET B')
+		self._next_b_button.layer = Layer(button = self._next_button[1])
 	
 
 	def _setup_modes(self):
 
+		next_buttons = CompoundMode(self._next_a_button, self._next_a_button)
 		self._main_modes = ModesComponent(name = 'MainModes')
 		self._main_modes.add_mode('disabled', None)
-		self._main_modes.add_mode('left_session', [self._left_session])
-		self._main_modes.add_mode('right_session', [self._right_session])
-		self._main_modes.add_mode('set_session', [self._set_session])
+		self._main_modes.add_mode('left_session', [self._left_session, next_buttons])
+		self._main_modes.add_mode('right_session', [self._right_session, next_buttons])
+		self._main_modes.add_mode('set_session', [self._left_set_session, self._right_set_session, next_buttons])
 		self._main_modes.layer = Layer(priority = 6, left_session_button = self._crate_button[0], right_session_button = self._crate_button[1], set_session_button = self._crate_button[2])
-		self._main_modes.selected_mode = 'left_session'
+		self._main_modes.selected_mode = 'set_session'
 		self._main_modes.set_enabled(True)
+
+		#self._next_a_button.set_enabled(True)
+		#self._next_b_button.set_enabled(True)
 	
 
 	def _create_fallback_control_owner(self):
@@ -409,6 +604,19 @@ class Crate(ControlSurface):
 			 0,
 			 102,
 			 1,
+			 offset) + tuple(shortname) + (247,)
+		#self.send_midi(display_sysex)
+		self._do_send_midi(display_sysex)
+	
+
+	def track_name(self, offset, name):
+		#message_bytes = [240, 112] + [self._button.index(sender)] + encode_name_to_sysex(name) + [247]
+		shortname = encode_name_to_sysex(name)
+		display_sysex = (240,
+			 0,
+			 0,
+			 102,
+			 2,
 			 offset) + tuple(shortname) + (247,)
 		#self.send_midi(display_sysex)
 		self._do_send_midi(display_sysex)
