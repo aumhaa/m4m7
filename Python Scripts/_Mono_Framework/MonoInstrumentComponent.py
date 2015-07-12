@@ -180,6 +180,18 @@ def reset_matrix(matrix):
 				button.set_enabled(True)
 
 
+def new_reset_matrix(matrix):
+	if matrix:
+		for element in matrix:
+			button = element._control_element
+			if button:
+				button.descriptor = None
+				button.display_press = False
+				button._force_forwarding = False
+				button.set_force_next_value()
+				button.use_default_message()
+				button.set_enabled(True)
+
 def _add_to_mode(mode, add):
 	return mode + add
 
@@ -1289,7 +1301,7 @@ class MonoDrumpadComponent(CompoundComponent):
 		self.sequencer_layer = LayerMode(self, Layer(priority = 0))
 		self.sequencer_shift_layer = LayerMode(self, Layer(priority = 0))
 		self._step_sequencer = StepSeqComponent(ClipCreator(), skin, grid_resolution, name='Drum_Sequencer')
-		self._step_sequencer._drum_group = DrumGroupComponent()
+		self._step_sequencer._drum_group = self.register_component(DrumGroupComponent())
 		self._step_sequencer._note_editor._visible_steps = self._visible_steps
 		self._step_sequencer._drum_group._update_pad_led = self._drum_group_update_pad_led
 		self._step_sequencer._drum_group._update_control_from_script = self._update_control_from_script
@@ -1325,7 +1337,8 @@ class MonoDrumpadComponent(CompoundComponent):
 		if self._on_drumpad_matrix_value.subject:
 			DrumGroupComponent._update_pad_led(self._step_sequencer._drum_group, pad, button, soloed_pads)
 			#debug('updating leds:' + str(button.name))
-			button.turn_off()
+			#button.turn_off()
+			button.color = 'DefaultButton.Off'
 	
 
 	def _update_control_from_script(self):
@@ -1344,8 +1357,6 @@ class MonoDrumpadComponent(CompoundComponent):
 
 	def set_offset(self, offset):
 		self._offset = offset
-		if hasattr(self._step_sequencer, '_drum_group'):
-			self._step_sequencer._drum_group.position = offset
 	
 
 	def set_note_matrix(self, matrix):
