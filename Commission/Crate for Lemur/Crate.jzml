@@ -1,6 +1,6 @@
 <JZML>
 <PROJECT version="5220" width="1024" height="724" osc_target="-1" midi_target="-1" kbmouse_target="-1" skin="Pixel"/>
-<WINDOW class="JAZZINTERFACE" text="Default" x="0" y="0" width="1024" height="724" state="1" group="0" font="tahoma,11,0" >
+<WINDOW class="JAZZINTERFACE" text="Crate" x="0" y="0" width="1024" height="724" state="1" group="0" font="tahoma,11,0" >
 <WINDOW class="Pads" text="Pads1" x="35" y="56" width="359" height="40" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads1/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,1,1" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="attack=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads1/attack" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
@@ -83,7 +83,7 @@
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads9/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
 <WINDOW class="Pads" text="Pads0" x="35" y="16" width="359" height="40" id="9" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
-<PARAM name="x=" value="0.251969" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads0/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
+<PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads0/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="attack=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads0/attack" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="decay=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads0/decay" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="sustain=1" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads0/sustain" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
@@ -91,13 +91,13 @@
 <VARIABLE name="hold=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads0/hold" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads0/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text1" x="35" y="16" width="359" height="40" id="10" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-1" kbmouse_target="-2" color="1596013" content="            ">
+<WINDOW class="Text" text="Text1" x="35" y="16" width="359" height="40" id="10" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-1" kbmouse_target="-2" color="1596013" content="120UltrFnkl ">
 <VARIABLE name="light=0" send="0" osc_target="-1" osc_trigger="1" osc_message="/Text1/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text2" x="35" y="56" width="359" height="40" id="11" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-1" midi_target="-1" kbmouse_target="-2" color="1596013" content="            ">
+<WINDOW class="Text" text="Text2" x="35" y="56" width="359" height="40" id="11" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-1" midi_target="-1" kbmouse_target="-2" color="1596013" content="110cstldr-S ">
 <VARIABLE name="light=0" send="0" osc_target="-1" osc_trigger="1" osc_message="/Text2/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text3" x="35" y="96" width="359" height="40" id="12" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-1" midi_target="-1" kbmouse_target="-2" color="1596013" content="            ">
+<WINDOW class="Text" text="Text3" x="35" y="96" width="359" height="40" id="12" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-1" midi_target="-1" kbmouse_target="-2" color="1596013" content="100Hrs(Orgn ">
 <VARIABLE name="light=0" send="0" osc_target="-1" osc_trigger="1" osc_message="/Text3/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
 <WINDOW class="Text" text="Text4" x="35" y="136" width="359" height="40" id="13" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-1" midi_target="-1" kbmouse_target="-2" color="1596013" content="            ">
@@ -121,8 +121,8 @@
 <WINDOW class="Text" text="Text10" x="35" y="376" width="359" height="40" id="19" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="            ">
 <VARIABLE name="light=0" send="0" osc_target="-1" osc_trigger="1" osc_message="/Text10/light" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,9,9" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Pads" text="Pads10" x="622" y="56" width="359" height="40" id="20" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
-<PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads10/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,10,10" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
+<WINDOW class="Pads" text="Pads10" x="620" y="16" width="359" height="40" id="20" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
+<PARAM name="x=" value="0.251969" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads10/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,10,10" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="attack=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads10/attack" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="decay=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads10/decay" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="sustain=1" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads10/sustain" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
@@ -130,7 +130,7 @@
 <VARIABLE name="hold=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads10/hold" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads10/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Pads" text="Pads11" x="622" y="96" width="359" height="40" id="21" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
+<WINDOW class="Pads" text="Pads11" x="620" y="56" width="359" height="40" id="21" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads11/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,11,11" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="attack=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads11/attack" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="decay=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads11/decay" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
@@ -139,7 +139,7 @@
 <VARIABLE name="hold=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads11/hold" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads11/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Pads" text="Pads12" x="622" y="136" width="359" height="40" id="22" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
+<WINDOW class="Pads" text="Pads12" x="620" y="96" width="359" height="40" id="22" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads12/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,12,12" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="attack=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads12/attack" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="decay=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads12/decay" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
@@ -148,7 +148,7 @@
 <VARIABLE name="hold=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads12/hold" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads12/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Pads" text="Pads13" x="622" y="176" width="359" height="40" id="23" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
+<WINDOW class="Pads" text="Pads13" x="620" y="136" width="359" height="40" id="23" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads13/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,13,13" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="attack=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads13/attack" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="decay=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads13/decay" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
@@ -157,7 +157,7 @@
 <VARIABLE name="hold=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads13/hold" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads13/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Pads" text="Pads14" x="622" y="216" width="359" height="40" id="24" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
+<WINDOW class="Pads" text="Pads14" x="620" y="176" width="359" height="40" id="24" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads14/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,14,14" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="attack=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads14/attack" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="decay=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads14/decay" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
@@ -166,7 +166,7 @@
 <VARIABLE name="hold=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads14/hold" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads14/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Pads" text="Pads15" x="622" y="256" width="359" height="40" id="25" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
+<WINDOW class="Pads" text="Pads15" x="620" y="216" width="359" height="40" id="25" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads15/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,15,15" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="attack=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads15/attack" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="decay=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads15/decay" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
@@ -175,7 +175,7 @@
 <VARIABLE name="hold=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads15/hold" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads15/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Pads" text="Pads16" x="622" y="296" width="359" height="40" id="26" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
+<WINDOW class="Pads" text="Pads16" x="620" y="256" width="359" height="40" id="26" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads16/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,16,16" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="attack=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads16/attack" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="decay=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads16/decay" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
@@ -184,7 +184,7 @@
 <VARIABLE name="hold=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads16/hold" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads16/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Pads" text="Pads17" x="622" y="336" width="359" height="40" id="27" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
+<WINDOW class="Pads" text="Pads17" x="620" y="296" width="359" height="40" id="27" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads17/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,17,17" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="attack=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads17/attack" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="decay=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads17/decay" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
@@ -193,7 +193,7 @@
 <VARIABLE name="hold=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads17/hold" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads17/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Pads" text="Pads18" x="622" y="376" width="359" height="40" id="28" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
+<WINDOW class="Pads" text="Pads18" x="620" y="336" width="359" height="40" id="28" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads18/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,18,18" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="attack=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads18/attack" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="decay=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads18/decay" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
@@ -202,7 +202,7 @@
 <VARIABLE name="hold=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads18/hold" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads18/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Pads" text="Pads19" x="622" y="16" width="359" height="40" id="29" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
+<WINDOW class="Pads" text="Pads19" x="620" y="376" width="359" height="40" id="29" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="865343,1596013" column="1" label="0" multicolor="0" multilabel="1" row="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Pads19/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,19,19" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="attack=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads19/attack" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="decay=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads19/decay" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
@@ -211,34 +211,34 @@
 <VARIABLE name="hold=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads19/hold" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Pads19/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text11" x="622" y="16" width="359" height="40" id="30" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-1" kbmouse_target="-2" color="1596013" content="            ">
+<WINDOW class="Text" text="Text11" x="620" y="16" width="359" height="40" id="30" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-1" kbmouse_target="-2" color="1596013" content="120st_-Mrbl ">
 <VARIABLE name="light=0" send="0" osc_target="-1" osc_trigger="1" osc_message="/Text11/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text12" x="622" y="56" width="359" height="40" id="31" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-1" midi_target="-1" kbmouse_target="-2" color="1596013" content="            ">
+<WINDOW class="Text" text="Text12" x="620" y="56" width="359" height="40" id="31" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-1" midi_target="-1" kbmouse_target="-2" color="1596013" content="110DrmMchn- ">
 <VARIABLE name="light=0" send="0" osc_target="-1" osc_trigger="1" osc_message="/Text12/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text13" x="622" y="96" width="359" height="40" id="32" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-1" midi_target="-1" kbmouse_target="-2" color="1596013" content="            ">
+<WINDOW class="Text" text="Text13" x="620" y="96" width="359" height="40" id="32" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-1" midi_target="-1" kbmouse_target="-2" color="1596013" content="100DRAWZ2TH ">
 <VARIABLE name="light=0" send="0" osc_target="-1" osc_trigger="1" osc_message="/Text13/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text14" x="622" y="136" width="359" height="40" id="33" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-1" midi_target="-1" kbmouse_target="-2" color="1596013" content="            ">
+<WINDOW class="Text" text="Text14" x="620" y="136" width="359" height="40" id="33" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-1" midi_target="-1" kbmouse_target="-2" color="1596013" content="            ">
 <VARIABLE name="light=0" send="0" osc_target="-1" osc_trigger="1" osc_message="/Text14/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text15" x="622" y="176" width="359" height="40" id="34" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="            ">
+<WINDOW class="Text" text="Text15" x="620" y="176" width="359" height="40" id="34" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="            ">
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Text15/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text16" x="622" y="216" width="359" height="40" id="35" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="            ">
+<WINDOW class="Text" text="Text16" x="620" y="216" width="359" height="40" id="35" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="            ">
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Text16/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text17" x="622" y="256" width="359" height="40" id="36" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="            ">
+<WINDOW class="Text" text="Text17" x="620" y="256" width="359" height="40" id="36" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="            ">
 <VARIABLE name="light=0" send="0" osc_target="-1" osc_trigger="1" osc_message="/Text17/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text18" x="622" y="296" width="359" height="40" id="37" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="            ">
+<WINDOW class="Text" text="Text18" x="620" y="296" width="359" height="40" id="37" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="            ">
 <VARIABLE name="light=0" send="0" osc_target="-1" osc_trigger="1" osc_message="/Text18/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text19" x="622" y="336" width="359" height="40" id="38" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="            ">
+<WINDOW class="Text" text="Text19" x="620" y="336" width="359" height="40" id="38" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="            ">
 <VARIABLE name="light=0" send="0" osc_target="-1" osc_trigger="1" osc_message="/Text19/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="Text" text="Text20" x="622" y="376" width="359" height="40" id="39" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="">
+<WINDOW class="Text" text="Text20" x="620" y="376" width="359" height="40" id="39" state="245" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="">
 <VARIABLE name="light=0" send="0" osc_target="-1" osc_trigger="1" osc_message="/Text20/light" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,9,9" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
 <WINDOW class="CustomButton" text="NEXTA" x="42" y="542" width="118" height="68" id="40" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="A NEXT" label_on="A NEXT" outline="1">
@@ -258,36 +258,47 @@
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/BBBB/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
 <WINDOW class="CustomButton" text="SET" x="603" y="543" width="118" height="68" id="44" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="SET" label_on="SET" outline="1">
-<PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/SET/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,72,72" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
+<PARAM name="x=" value="0.251969" send="17" osc_target="0" osc_trigger="1" osc_message="/SET/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,72,72" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/SET/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="CustomButton" text="Track1" x="42" y="449" width="90" height="68" id="45" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="" label_on="" outline="1">
+<WINDOW class="CustomButton" text="Track1" x="42" y="449" width="90" height="68" id="45" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="            " label_on="            " outline="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Track1/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,50,50" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Track1/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="CustomButton" text="Track2" x="143" y="449" width="90" height="68" id="46" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="" label_on="" outline="1">
+<WINDOW class="CustomButton" text="Track2" x="143" y="449" width="90" height="68" id="46" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="            " label_on="            " outline="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Track2/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,51,51" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Track2/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="CustomButton" text="Track4" x="351" y="449" width="90" height="68" id="48" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="" label_on="" outline="1">
+<WINDOW class="CustomButton" text="Track4" x="351" y="449" width="90" height="68" id="48" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="            " label_on="            " outline="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Track4/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,53,53" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Track4/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="CustomButton" text="Track5" x="451" y="449" width="90" height="68" id="49" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="" label_on="" outline="1">
+<WINDOW class="CustomButton" text="Track5" x="451" y="449" width="90" height="68" id="49" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="            " label_on="            " outline="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Track5/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,54,54" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Track5/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="CustomButton" text="Track6" x="556" y="449" width="90" height="68" id="50" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="" label_on="" outline="1">
+<WINDOW class="CustomButton" text="Track6" x="556" y="449" width="90" height="68" id="50" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="            " label_on="            " outline="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Track6/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,55,55" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Track6/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
-<WINDOW class="CustomButton" text="Track3" x="249" y="449" width="90" height="68" id="47" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="" label_on="" outline="1">
+<WINDOW class="CustomButton" text="Track3" x="249" y="449" width="90" height="68" id="47" state="241" group="0" font="tahoma,18,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" behavior="1" bitmap="0,0" capture="1" color="865343,1596013" label_off="            " label_on="            " outline="1">
 <PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Track3/x" midi_target="0" midi_trigger="1" midi_message="0x90,0x90,52,52" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/Track3/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 </WINDOW>
+<WINDOW class="Fader" text="Tempo" x="909" y="433" width="60" height="200" id="51" state="1" group="0" font="tahoma,10,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" capture="1" color="1596013" cursor="0" grid="0" grid_steps="1" label="0" physic="1" precision="3" unit="" value="0" zoom="0.000000">
+<PARAM name="x=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Tempo/x" midi_target="0" midi_trigger="1" midi_message="0xB0,0xB0,0,0" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
+<PARAM name="z=" value="0.000000" send="17" osc_target="0" osc_trigger="1" osc_message="/Tempo/z" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" osc_scale="0.000000,1.000000" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
+<VARIABLE name="value=x" send="0" osc_target="0" osc_trigger="1" osc_message="/Tempo/value" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
+<VARIABLE name="attraction=1" send="0" osc_target="0" osc_trigger="1" osc_message="/Tempo/attraction" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
+<VARIABLE name="friction=0.9" send="0" osc_target="0" osc_trigger="1" osc_message="/Tempo/friction" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
+<VARIABLE name="speed=1" send="0" osc_target="0" osc_trigger="1" osc_message="/Tempo/speed" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
+</WINDOW>
+<WINDOW class="Text" text="TempoValue" x="749" y="433" width="160" height="48" id="52" state="241" group="0" font="tahoma,14,0" send="1" osc_target="-2" midi_target="-2" kbmouse_target="-2" color="1596013" content="">
+<VARIABLE name="light=0" send="0" osc_target="0" osc_trigger="1" osc_message="/TempoValue/light" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
+</WINDOW>
 </WINDOW>
 <VARIABLE name="labels={Text1, Text2, Text3, Text4, Text5, Text6, Text7, Text8, Text9, Text10, Text11, Text12, Text13, Text14, Text15, Text16, Text17, Text18, Text19}" send="1" osc_target="0" osc_trigger="1" osc_message="/labels" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
-<VARIABLE name="track_buttons={Track1, Track2, Track3, Track4, Track5, Track6}" send="1" osc_target="0" osc_trigger="1" osc_message="/track_buttons" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="-8168,0,0" kbmouse_scale="0,1,0,1"/>
+<VARIABLE name="track_buttons={Track1, Track2, Track3, Track4, Track5, Track6}" send="1" osc_target="0" osc_trigger="1" osc_message="/track_buttons" midi_target="-1" midi_trigger="1" midi_message="0x90,0x90,0,0" midi_scale="0,16383" kbmouse_target="-1" kbmouse_trigger="1" kbmouse_message="0,0,0" kbmouse_scale="0,1,0,1"/>
 <SCRIPT name="receive_sysex(MIDI_ARGS)" script="log(MIDI_ARGS[0], MIDI_ARGS[1], MIDI_ARGS[2], MIDI_ARGS[3]);
 if((MIDI_ARGS[0]==0)&&(MIDI_ARGS[1]==0)&&(MIDI_ARGS[2]==102)&&(MIDI_ARGS[3]==1))
 {
@@ -306,10 +317,17 @@ else if((MIDI_ARGS[0]==0)&&(MIDI_ARGS[1]==0)&&(MIDI_ARGS[2]==102)&&(MIDI_ARGS[3]
 	setattribute(track_buttons[obj_num], 'label_off', name);
 	setattribute(track_buttons[obj_num], 'label_on', name);
 }
+else if((MIDI_ARGS[0]==0)&&(MIDI_ARGS[1]==0)&&(MIDI_ARGS[2]==102)&&(MIDI_ARGS[3]==3))
+{
+	decl data = subarray(MIDI_ARGS, 4, sizeof(MIDI_ARGS)-5);
+	decl name = arraytostring(data);
+	log('tempovalue', data, name, '');
+	setattribute(TempoValue, 'content', name);
 
-		" trigger_script="" trigger_type="3" trigger="1" clock="0" clock_div="4" osc_message="/receive_sysex" midi_message="0xF0,0xF0,0,0" midi_target="0" flag="1"/>
+}
+		" trigger_script="" trigger_type="3" trigger="1" osc_message="/receive_sysex" midi_message="0xF0,0xF0,0,0" midi_target="0" flag="1"/>
 <SCRIPT name="init()" script="//labels = {Text1,Text2, Text3, Text4, Text5, Text6, Text7, Text8, Text9, Text10};
 
-log('opening', 'the', 'lemur', 'template');" trigger_script="" trigger_type="5" trigger="1" clock="0" clock_div="4" osc_message="/init" midi_message="0x90,0x90,0,0" midi_target="-1" flag="1"/>
-<SCRIPT name="log(a, b, c, d)" script="oscout(0, 'log', {a, b, c, d});" trigger_script="" trigger_type="4" trigger="1" clock="0" clock_div="4" osc_message="/log" midi_message="0x90,0x90,0,0" midi_target="-1" flag="1"/>
+log('opening', 'the', 'lemur', 'template');" trigger_script="" trigger_type="5" trigger="1" osc_message="/init" midi_message="0x90,0x90,0,0" midi_target="-1" flag="1"/>
+<SCRIPT name="log(a, b, c, d)" script="oscout(0, 'log', {a, b, c, d});" trigger_script="" trigger_type="4" trigger="1" osc_message="/log" midi_message="0x90,0x90,0,0" midi_target="-1" flag="1"/>
 </JZML>

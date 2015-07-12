@@ -168,6 +168,26 @@ class CrateClipSlotComponent(ClipSlotComponent):
 				self._script.clip_name(self._launch_button_value.subject, new_name)
 	
 
+	def _do_launch_clip(self, value):
+		#debug('launch clip....', value)
+		button = self._launch_button_value.subject
+		object_to_launch = self._clip_slot
+		if not value:
+			launch_pressed = not button.is_momentary()
+			if self.has_clip():
+				object_to_launch = self._clip_slot.clip
+			else:
+				self._has_fired_slot = True
+			#debug('object_to_launch:', object_to_launch)
+			#if button.is_momentary():
+				#object_to_launch.set_fire_button_state(value != 0)
+			#elif launch_pressed:
+			#debug('should be firing....')
+			object_to_launch.fire()
+			#self.song().view.highlighted_clip_slot = launch_pressed and self.has_clip() and self.song().select_on_launch and self._clip_slot
+	
+
+
 class CrateSceneComponent(SceneComponent):
 
 
@@ -411,6 +431,7 @@ class Crate(ControlSurface):
 			self._setup_controls()
 			self._setup_session()
 			self._setup_next_buttons()
+			self._setup_tempo()
 			self._setup_modes()
 			self._create_fallback_control_owner()
 		self.schedule_message(1, self._open_log)
@@ -448,11 +469,12 @@ class Crate(ControlSurface):
 		self._track_button = [CrateButtonElement(True, MIDI_NOTE_TYPE, 0, index+50, name = 'Button_' + str(index+50), script = self) for index in range(6)]
 		self._next_button = [CrateButtonElement(True, MIDI_NOTE_TYPE, 0, index+60, name = 'Button_' + str(index+60), script = self) for index in range(2)]
 		self._crate_button = [CrateButtonElement(True, MIDI_NOTE_TYPE, 0, index+70, name = 'Button_' + str(index+70), script = self) for index in range(3)]
+		#self._tempo_slider = EncoderElement(MIDI_CC_TYPE, 0, 0, Live.MidiMap.MapMode.absolute, name = 'Slider')
 
 		self._matrix = ButtonMatrixElement(name = 'Matrix', rows = [[self._button[index]] for index in range(20)])
 
 		self._left_matrix = ButtonMatrixElement(name = 'Left_Matrix', rows = [[self._button[index]] for index in range(10)])
-		self._right_matrix = ButtonMatrixElement(name = 'Right_Matrix', rows = [[self._button[index]] for index in range(10,20)])
+		self._right_matrix = ButtonMatrixElement(name = 'Right_Matrix', rows = [[self._button[index+10]] for index in range(10)])
 
 		self._track_select_matrix = ButtonMatrixElement(name = 'Track_Matrix', rows = [self._track_button])
 
@@ -484,6 +506,24 @@ class Crate(ControlSurface):
 		self._next_b_button = FireNextClipComponent()
 		self._next_b_button.set_track('SET B')
 		self._next_b_button.layer = Layer(button = self._next_button[1])
+	
+
+	def _setup_tempo(self):
+		self._on_tempo_changed.subject = self.song()
+		self._on_tempo_changed()
+	
+
+	@subject_slot('value')
+	def _on_tempo_slider_value(self, value):
+		self.song().tempo = ((value/127.)*979.)+20.
+	
+
+	@subject_slot('tempo')
+	def _on_tempo_changed(self, *a, **k):
+		debug('on tempo changed:', self.song().tempo)
+		new_tempo = self.song().tempo
+		#self._on_tempo_slider_value.subject and self._on_tempo_slider_value.subject.send_value(((new_tempo-20)/979)*127)
+		self.send_tempo('Tempo '+str(new_tempo))
 	
 
 	def _setup_modes(self):
@@ -596,7 +636,6 @@ class Crate(ControlSurface):
 	
 
 	def clip_name(self, sender, name):
-		#message_bytes = [240, 112] + [self._button.index(sender)] + encode_name_to_sysex(name) + [247]
 		offset = self._button.index(sender)
 		shortname = encode_name_to_sysex(name)
 		display_sysex = (240,
@@ -605,12 +644,10 @@ class Crate(ControlSurface):
 			 102,
 			 1,
 			 offset) + tuple(shortname) + (247,)
-		#self.send_midi(display_sysex)
 		self._do_send_midi(display_sysex)
 	
 
 	def track_name(self, offset, name):
-		#message_bytes = [240, 112] + [self._button.index(sender)] + encode_name_to_sysex(name) + [247]
 		shortname = encode_name_to_sysex(name)
 		display_sysex = (240,
 			 0,
@@ -618,10 +655,18 @@ class Crate(ControlSurface):
 			 102,
 			 2,
 			 offset) + tuple(shortname) + (247,)
-		#self.send_midi(display_sysex)
 		self._do_send_midi(display_sysex)
 	
 
+	def send_tempo(self, tempo):
+		shortname = encode_name_to_sysex(tempo)
+		display_sysex = (240,
+			 0,
+			 0,
+			 102,
+			 3,) + tuple(shortname) + (247,)
+		self._do_send_midi(display_sysex)
+	
 
 
 
