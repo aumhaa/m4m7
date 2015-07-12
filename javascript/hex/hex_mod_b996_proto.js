@@ -20,7 +20,7 @@ outlets = 4;
 inlets = 5;
 
 var FORCELOAD = false;
-var NEW_DEBUG = false;
+var NEW_DEBUG = true;
 var DEBUG = false;
 var DEBUG_LCD = false;
 var DEBUG_PTR = false;
@@ -92,6 +92,7 @@ var Objs = {'pattern':{'Name':'pattern', 'Type':'list', 'pattr':'pattern'},
 			'timedivisor':{'Name':'timedivisor', 'Type':'int', 'pattr':'timedivisorpattr'},
 			'nexttime':{'Name':'nexttime', 'Type':'set', 'pattr':'object'},
 			'behavior_enable':{'Name':'behavior_enable', 'Type':'int', 'pattr':'hidden'},
+			'resync':{'Name':'resync', 'Type':'bang', 'pattr':'object'},
 			};
 
 /*			'phasor':{'Name':'phasor', 'Type':'float', 'pattr':'object'},
@@ -333,9 +334,8 @@ function initialize(val)
 		
 		storage.message('recall', 1);
 
-		refresh_extras();
 		select_pattern(0);
-		
+		refresh_extras();
 
 		mod.Send('receive_device', 'set_mod_device_type', 'Hex');
 		mod.Send( 'receive_device', 'set_number_params', 16);
@@ -362,6 +362,11 @@ function initialize(val)
 		var i=3;do{
 			mod.Send( 'cntrlr_encoder_grid', 'mode', i, 2, 0);
 		}while(i--);
+		var i=7;do{
+			mod.Send( 'receive_translation', 'buttons_'+i, 'value', ENC_COLORS[i]);
+		}while(i--);
+
+
 	}
 	else
 	{
@@ -1016,14 +1021,16 @@ function anything()
 }
 
 var _cntrlr_encoder_button_grid = _c_button;
-function _c_button(x, y, val)
+function _c_button(x, y, val) 
 {
 	debug('button_in', x, y, val, '\n');
 	switch(y)
 	{
+		//top row
 		case 0:
 			switch(x)
 			{
+				//time slower, change note type
 				case 0:
 					if(pad_pressed<0){
 						if(selected.lock==0){
@@ -1037,6 +1044,7 @@ function _c_button(x, y, val)
 						notetypegui.message('int', Math.max(0, Math.min(selected.notetype+1, 3)));
 					}
 					break;
+				//time faster, change note type
 				case 1:
 					if(pad_pressed<0){
 						if(selected.lock==0){
@@ -1050,27 +1058,33 @@ function _c_button(x, y, val)
 						notetypegui.message('int', Math.max(0, Math.min(selected.notetype-1, 3)));
 					}
 					break;
+				//pitch down, resync_single
 				case 2:
 					if(pad_pressed<0){
 						pitchdngui.message('int', val);
 					}
 					else if(val>0){
-						recgui.message('bang');
+						//recgui.message('bang');
+						resync_single(selected);
 					}
 					break;
+				//pitch up, resync
 				case 3:
 					if(pad_pressed<0){
 					pitchupgui.message('int', val);
 					}
 					else if(val>0){
-						playgui.message('bang');	
+						//playgui.message('bang');	
+						resync();
 					}
 					break;
 			}
 			break;
+		//second row
 		case 1:
 			switch(x)
 			{
+				//pad cycle	
 				case 0:
 					/*if((pad_mode!=6)&&(key_mode!=6))
 					{
@@ -1113,6 +1127,7 @@ function _c_button(x, y, val)
 						repeatgui.message('int', val);
 					}
 					break;
+				//key cycle
 				case 1:
 					btn_press2 = val;
 					if(btn_press1+btn_press2==2)
@@ -1124,6 +1139,7 @@ function _c_button(x, y, val)
 						keymodeadv.message('int', val);
 					}
 					break;
+				//rotate, *change slider view
 				case 2:
 					if(pad_pressed<0){
 						rotleftgui.message('int', val);
@@ -1132,6 +1148,7 @@ function _c_button(x, y, val)
 						stepmodegui.message('int', Math.max(0, Math.min(3, step_mode-1)));
 					}
 					break;
+				//rotate, *change slider view
 				case 3:
 					if((pad_mode!=6)&&(key_mode!=6))
 					{
@@ -1191,6 +1208,7 @@ function _c_key(x, y, val)
 	{
 		switch(key_mode)
 		{
+			//mute mode
 			default:
 				if(val>0)
 				{
@@ -1203,6 +1221,7 @@ function _c_key(x, y, val)
 					add_automation(Part, 'mute', Part.active);
 				}
 				break;
+			//loop mode
 			case 1:
 				if((key_pressed == num)&&(val==0))
 				{
@@ -1222,6 +1241,7 @@ function _c_key(x, y, val)
 				update_step();
 				refresh_c_keys();
 				break;
+			//behavior mode
 			case 2:
 				if(val>0)
 				{
@@ -1231,6 +1251,7 @@ function _c_key(x, y, val)
 					refresh_c_keys();
 					break;
 				}
+			//preset mode
 			case 3:
 				if((val>0)&&(key_pressed<0))
 				{
@@ -1252,8 +1273,9 @@ function _c_key(x, y, val)
 					key_pressed = -1;
 				}
 				break;
+			//global mode
 			case 4:
-				if((val>0)&&(pad_pressed<0))
+				if((val>0)&&(key_pressed<0))
 				{
 					key_pressed = num;
 					if(val>0)
@@ -1276,6 +1298,7 @@ function _c_key(x, y, val)
 					key_pressed = -1;
 				} 
 				break;
+			//polyrec mode
 			case 5:
 				if(val>0)
 				{
@@ -1290,10 +1313,12 @@ function _c_key(x, y, val)
 					refresh_c_keys();
 				}
 				break;	
+			//polyplay mode
 			case 6:
 				play_sequence(selected, num, val);
 				refresh_c_keys();
 				break;
+			//accent mode
 			case 7:
 				if(val>0)
 				{
@@ -1313,6 +1338,7 @@ function _c_grid(x, y, val)
 	debug('_c_grid', x, y, val);
 	switch(pad_mode)
 	{
+		//select mode	
 		default:
 			if((val>0)&&(pad_pressed<0))
 			{
@@ -1331,6 +1357,7 @@ function _c_grid(x, y, val)
 				copy_pattern(selected, part[x + (y*4)]);
 			}
 			break;
+		//add mode
 		case 1:
 			if(val>0)
 			{
@@ -1347,6 +1374,7 @@ function _c_grid(x, y, val)
 				change_key_mode(last_key_mode);*/
 			}
 			break;
+		//mute mode
 		case 2:
 			if(val>0)
 			{
@@ -1357,6 +1385,7 @@ function _c_grid(x, y, val)
 				add_automation(Part, 'mute', Part.active);
 			}
 			break;
+		//preset mode
 		case 3:
 			debug('pad_pressed', pad_pressed, '\n');
 			if((val>0)&&(pad_pressed<0))
@@ -1380,6 +1409,7 @@ function _c_grid(x, y, val)
 				pad_pressed = -1;
 			}
 			break;
+		//global mode
 		case 4:
 			if((val>0)&&(pad_pressed<0))
 			{
@@ -1405,6 +1435,7 @@ function _c_grid(x, y, val)
 				pad_pressed = -1;
 			}	
 			break;
+		//freewheel mode
 		case 5:
 			if((val>0)&&(pad_pressed<0))
 			{
@@ -1423,6 +1454,7 @@ function _c_grid(x, y, val)
 				sync_wheels(selected, part[x + (y*4)]);
 			}
 			break;
+		//play mode
 		case 6:
 			if(val>0)
 			{
@@ -1431,7 +1463,7 @@ function _c_grid(x, y, val)
 				
 			}
 			break;
-
+		//polyplay mode
 		case 7:
 			//post('pad_play', x, y, val);
 			var num = x + (y*4);
@@ -1481,6 +1513,7 @@ function _grid(x, y, val)
 	debug('_grid', x, y, val, '\n');
 	switch(grid_mode)
 	{
+		//cntrlr mode
 		default:
 			if(y<2)
 			{
@@ -1503,6 +1536,7 @@ function _grid(x, y, val)
 				keymodegui.message('int', x);
 			}
 			break;
+		//tr256 mode
 		case 1:
 			if(val>0)
 			{
@@ -1608,6 +1642,7 @@ function _grid(x, y, val)
 				grid_pressed = -1;
 			}
 			break;
+		//gome mode
 		case 2:
 			if(altVal>0)
 			{
@@ -1677,6 +1712,7 @@ function _grid(x, y, val)
 				}
 			}
 			break;
+		//cafe mode	
 		case 3:
 			//Cafe_Play_mode
 			debug('cafe play', presets[x]);
@@ -1700,6 +1736,7 @@ function _grid(x, y, val)
 				Part.obj.set.clutch(1);
 			}
 			break;
+		//boinngg mode
 		case 4:
 			//Boiingg_Play_mode
 			if(val>0)
@@ -1750,12 +1787,15 @@ function _grid(x, y, val)
 				}
 			}
 			break;
+		//slider mode	
 		case 5:
 			//Slider Mode
 			break;
+		//preset mode
 		case 6:
 			//Preset_Mode
 			break;
+		//behavior mode
 		case 7:
 			//Behavior_Grid_mode
 			if((val>0)&&(x<7))
@@ -1775,7 +1815,6 @@ function _grid(x, y, val)
 				refresh_grid();
 			}
 			break;
-
 	}
 }
 
@@ -1971,6 +2010,7 @@ function _guibuttons(num, val)
 	debug('gui_buttons', num, val, '\n');
 	switch(num)
 	{
+		//pad cycle
 		case 0:
 			//padmodegui.message('int', RemotePModes[Math.max((RemotePModes.indexOf(pad_mode)+1)%3, 0)]);
 			if(padmodeenables.length)
@@ -1982,6 +2022,7 @@ function _guibuttons(num, val)
 				padmodegui.message('int', padmodeenables[(padmodeenables.indexOf(pad_mode)+1)%padmodeenables.length]);
 			}
 			break;
+		//key cycle
 		case 1:
 			//keymodegui.message('int', (key_mode+1)%8);
 			if(keymodeenables.length)
@@ -1993,12 +2034,15 @@ function _guibuttons(num, val)
 				keymodegui.message('int', keymodeenables[(keymodeenables.indexOf(key_mode)+1)%keymodeenables.length]);
 			}
 			break;
+		//rotate
 		case 2:
 			rotate_pattern(selected, rot_length, -1);
 			break;
+		//rotate
 		case 3:
 			rotate_pattern(selected, rot_length, 1);
 			break;
+		//time value
 		case 4:
 			selected.obj.set.notevalues(val);
 			{
@@ -2009,9 +2053,10 @@ function _guibuttons(num, val)
 					selected.obj.nexttime.message('bang');
 				}
 				BaseTime.message('set', TRANS[selected.notetype][val][0]);	
-				script['Speed'+(selected.num+1)].message('set', TRANS[selected.notetype][val][1]);							
+				script['Speed'+(selected.num+1)].message('set', TRANS[selected.notetype][val][1]);
 			}
 			break;
+		//note type
 		case 5:
 			selected.obj.set.notetype(val);
 			var notevalues = selected.notevalues;
@@ -2026,6 +2071,7 @@ function _guibuttons(num, val)
 				BaseTime.message('set', TRANS[val][notevalues][0]); 
 			}
 			break;
+		//time up
 		case 6:
 			if(selected.notevalues<8)
 			{
@@ -2037,6 +2083,7 @@ function _guibuttons(num, val)
 				notetypegui.message('set', 0);
 			}
 			break;
+		//time down
 		case 7:
 			if(selected.notevalues<8)
 			{
@@ -2048,36 +2095,46 @@ function _guibuttons(num, val)
 				notetypegui.message('set', 0);
 			}
 			break;
+		//transpose up
 		case 8:
 			change_transpose(Math.max(Math.min(global_offset - transpose_steps, 96), 0));
 			break;
+		//transpose down
 		case 9:
 			change_transpose(Math.max(Math.min(global_offset + transpose_steps, 96), 0));
 			break;
+		//pad mode menu
 		case 10:
 			change_pad_mode(val);
 			break;
+		//key mode menu
 		case 11:
 			change_key_mode(val);
 			break;
+		//transpose menu
 		case 12:
 			change_transpose(val);
 			break;
+		//direction menu
 		case 13:
 			//selected.direction = val;
 			//selected.obj.direction.message('int', val);
 			selected.obj.set.direction(val);
 			break;
+		//lock
 		case 14:
 			debug('lock', val, '\n');
 			locked = val;
 			break;
+		//detect device
 		case 15:
 			detect_devices();
 			break;
+		//record
 		case 16:
 			record(val);
 			break;
+		//play
 		case 17:
 			play_enabled = val;
 			locked = 1;
@@ -2140,42 +2197,55 @@ function _settingsgui(num, val)
 	val = args[1];
 	switch(num)
 	{
+		//select+hold option
 		case 0:
 			pad_invoked_key_mode = val;
 			break;
+		//immediate timing option
 		case 1:
 			timing_immediate = val;
 			break;
+		//global offset
 		case 2:
 			global_chain_offset = val;
 			_select_chain(selected.num);
 			break;
+		//empty
 		case 3:
 			break;
+		//transpose steps
 		case 4:
 			transpose_steps = val;
 			break;
+		//randomize pattern
 		case 5:
 			randomize_pattern(randomize_global);
 			break;
+		//randomize velocity
 		case 6:
 			randomize_velocity(randomize_global);
 			break;
+		//randomize duration
 		case 7:
 			randomize_duration(randomize_global);
 			break;
+		//randomize behavior
 		case 8:
 			randomize_behavior(randomize_global);
 			break;
+		//randomize rulebends
 		case 9:
 			randomize_rulebends(randomize_global);
 			break;
+		//full reset
 		case 10:
 			reset_data(randomize_global);
 			break;
+		//randomize global
 		case 12:
 			randomize_global = val;
 			break;
+		//randomize all
 		case 11:
 			randomize_pattern(randomize_global);
 			randomize_velocity(randomize_global);
@@ -2183,9 +2253,11 @@ function _settingsgui(num, val)
 			randomize_behavior(randomize_global);
 			randomize_rulebends(randomize_global);
 			break;
+		//randomize rules
 		case 13:
 			randomize_rules();
 			break;
+		//keymode enables
 		case 14:
 			vals = args.slice(1, 9);
 			keymodeenables = [];
@@ -2198,6 +2270,7 @@ function _settingsgui(num, val)
 			}
 			debug('keymodeenables', keymodeenables, '\n');
 			break;
+		//padmode enables
 		case 15:
 			vals = args.slice(1, 8);
 			padmodeenables = args.slice(1, 8);
@@ -2211,6 +2284,7 @@ function _settingsgui(num, val)
 			}
 			debug('padmodeenables', padmodeenables, '\n');
 			break;
+		//behavior enables
 		case 16:
 			vals = args.slice(1, 17);
 			debug('behavior enables:', vals, '\n');
@@ -2584,7 +2658,7 @@ function copy_pattern(src, dest)
 
 function copy_preset(part, dest)
 {
-	debug('preset: copy', 'poly.'+(part.num+1), presets[part.num], dest, '\n');
+	//debug('preset: copy', 'poly.'+(part.num+1), presets[part.num], dest, '\n');
 	for(var index in Objs)
 	{
 		debug('copy', 'poly.'+(part.num+1)+'::'+Objs[index].pattr, presets[part.num], dest, '\n');
@@ -2596,20 +2670,66 @@ function copy_preset(part, dest)
 		}
 	}
 	//storage.copy('poly.'+(part.num+1), presets[part.num], dest);
+	//storage.recall('poly.'+(part.num+1), dest);
 }
 
 function copy_global_preset(src, dest)
 {
 	debug('copy global preset', 'copy', src, dest, '\n');
 	storage.copy(src, dest);
+	storage.recall(dest);
 }
 
-//reset all parts to play from top...not quantized.
+function clear_pattern(dest)
+{
+	/*for(var index in Objs)
+	{
+		//debug('clear', 'poly.'+(part.num+1)+'::'+Objs[index].pattr, dest, '\n');
+		var type = Objs[index].pattr;
+		var types = {'object':0, 'hidden':0};
+		if(!(type in types))
+		{
+			part.obj.set[index](part[index], dest);
+		}
+	}*/
+	var Part = dest;
+	var pset = presets[Part.num];
+	Part.obj.set.rulebends(default_pattern.slice());
+	Part.obj.set.pattern(default_pattern.slice());
+	Part.obj.set.behavior(default_pattern.slice());
+	Part.obj.set.velocity(default_velocity.slice());
+	Part.obj.set.duration(default_duration.slice());
+	Part.obj.set.note(default_pattern.slice());
+	Part.obj.set.basetime(1);
+	Part.obj.set.timedivisor(4);
+	Part.obj.set.notetype(0);
+	Part.obj.set.notevalues(2);
+	Part.obj.set.active(1);
+	debug('clear_pattern', dest.num);
+	//storage.copy('poly.'+(part.num+1), 16, dest.num+1);
+	//storage.recall('poly.'+(part.num+1), dest.num+1);
+}
+
+function clear_global(dest)
+{
+	debug('clear_global', dest.num);
+	storage.copy(16, dest.num+1);
+	storage.recall(dest.num+1);
+}
+
+//reset all parts to play from top...quantized
 function resync()
 {
-	var i=15;do{
+	/*var i=15;do{
 		part[i].obj.offset.message('int', 0);
-	}while(i--);
+	}while(i--);*/
+	messnamed(unique+'resync', 'bang');
+}
+
+//reset all parts to play from top...quantized
+function resync_single(selected)
+{
+	selected.obj.resync.message('bang');
 }
 
 //begin or end sequence play from poly_play poly~
