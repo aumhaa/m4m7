@@ -20,7 +20,7 @@ outlets = 4;
 inlets = 5;
 
 var FORCELOAD = false;
-var NEW_DEBUG = true;
+var NEW_DEBUG = false;
 var DEBUG = false;
 var DEBUG_LCD = false;
 var DEBUG_PTR = false;
@@ -362,6 +362,7 @@ function initialize(val)
 		var i=3;do{
 			mod.Send( 'cntrlr_encoder_grid', 'mode', i, 2, 0);
 		}while(i--);
+		//this is here because it wasn't getting called at init() with refresh_grid()
 		var i=7;do{
 			mod.Send( 'receive_translation', 'buttons_'+i, 'value', ENC_COLORS[i]);
 		}while(i--);
