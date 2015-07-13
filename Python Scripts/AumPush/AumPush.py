@@ -14,7 +14,7 @@ from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 from _Framework.InputControlElement import MIDI_CC_TYPE, MIDI_NOTE_TYPE, MIDI_CC_STATUS, MIDI_NOTE_ON_STATUS
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
 from _Framework.DisplayDataSource import DisplayDataSource
-from _Framework.ModesComponent import AddLayerMode, MultiEntryMode, ModesComponent, SetAttributeMode, ModeButtonBehaviour, CancellableBehaviour, AlternativeBehaviour, ReenterBehaviour, DynamicBehaviourMixin, ExcludingBehaviourMixin, ImmediateBehaviour, LatchingBehaviour, ModeButtonBehaviour
+from _Framework.ModesComponent import CompoundMode, AddLayerMode, MultiEntryMode, ModesComponent, SetAttributeMode, ModeButtonBehaviour, CancellableBehaviour, AlternativeBehaviour, ReenterBehaviour, DynamicBehaviourMixin, ExcludingBehaviourMixin, ImmediateBehaviour, LatchingBehaviour, ModeButtonBehaviour
 from _Framework.ModeSelectorComponent import ModeSelectorComponent
 from _Framework.SysexValueControl import SysexValueControl
 from _Framework.Layer import Layer
@@ -26,6 +26,8 @@ from _Framework import Defaults
 from _Framework import Task
 from _Framework.MixerComponent import MixerComponent
 from _Framework.ButtonElement import ButtonElement
+from _Framework.MixerComponent import MixerComponent
+
 
 
 from _Framework.M4LInterfaceComponent import M4LInterfaceComponent
@@ -81,6 +83,9 @@ from Push.NavigationNode import make_navigation_node
 from Push.SpecialMixerComponent import SpecialMixerComponent
 from Push.SpecialChanStripComponent import SpecialChanStripComponent
 from Push.consts import *
+from Push.DeviceParameterComponent import DeviceParameterComponent
+from Push.ProviderDeviceComponent import ProviderDeviceComponent
+from Push import Sysex
 
 from _Mono_Framework.MonoDeviceComponent import NewMonoDeviceComponent as MonoDeviceComponent
 from _Mono_Framework.MonoEncoderElement import MonoEncoderElement
@@ -99,6 +104,7 @@ from ModDevices import *
 CHANNEL_TEXT = ['Ch. 1', 'Ch. 2', 'Ch. 3', 'Ch. 4', 'Ch. 5', 'Ch. 6', 'Ch. 7', 'Ch. 8']
 
 AUMPUSH_SCALENAMES = ['Keys', 'Major', 'Minor', 'Auto', 'Chromatic']
+
 
 class AumPushValueComponent(ValueComponent):
 
@@ -127,6 +133,59 @@ class AumPushResetSendsComponent(ResetSendsComponent):
 		self._buttons = []
 	
 
+	def set_buttons(self, buttons):
+		self._buttons = buttons
+		self._on_button_value.replace_subjects(buttons)
+		#debug('send reset, set buttons:', buttons)
+		if buttons:
+			for button in buttons:
+				button and button.set_light('ResetSendsColor')
+	
+
+	def set_send_a_button(self, button):
+		self._on_send_a_button_value.subject = button
+		button and button.send_value(1)
+	
+
+	def set_send_b_button(self, button):
+		self._on_send_b_button_value.subject = button
+		button and button.send_value(1)
+	
+
+	def set_send_c_button(self, button):
+		self._on_send_c_button_value.subject = button
+		button and button.send_value(1)
+	
+
+	def set_send_d_button(self, button):
+		self._on_send_d_button_value.subject = button
+		button and button.send_value(1)
+	
+
+	#@subject_slot('touch_value')
+	@subject_slot('value')
+	def _on_send_a_button_value(self, value):
+		value and self.reset_send(0)
+	
+
+	#@subject_slot('touch_value')
+	@subject_slot('value')
+	def _on_send_b_button_value(self, value):
+		value and self.reset_send(1)
+	
+
+	#@subject_slot('touch_value')
+	@subject_slot('value')
+	def _on_send_c_button_value(self, value):
+		value and self.reset_send(2)
+	
+
+	#@subject_slot('touch_value')
+	@subject_slot('value')
+	def _on_send_d_button_value(self, value):
+		value and self.reset_send(3)
+	
+
 
 class AumPushTrollComponent(CompoundComponent):
 
@@ -134,213 +193,29 @@ class AumPushTrollComponent(CompoundComponent):
 	def __init__(self, script, *a, **k):
 		super(AumPushTrollComponent, self).__init__(*a, **k)
 		self._script = script
+
 		self._mixer = TrollMixerComponent(16, 4)
+		self._mixer._sends_layer = LayerMode(self._mixer, Layer())
+		self._mixer._left_layer = LayerMode(self._mixer, Layer())
+		self._mixer._right_layer = LayerMode(self._mixer, Layer())
+		self._mixer._master_layer = LayerMode(self._mixer, Layer())
+
 		self._device_selector = AumPushDeviceSelectorComponent(self._script)
+		self._device_selector.layer = Layer()
+
 		self._send_reset = AumPushResetSendsComponent(self._script)
-		self._encoder_mode = TrollModeSelectorComponent()
-		self._top_button_matrix = None
-		self._top_buttons = [None for index in range(8)]
-		self._bottom_buttons = [None for index in range(8)]
-		self._display_line1 = None
-		self._display_line2 = None
-		self._display_line3 = None
-		self._display_line4 = None
-		self._matrix = None
-		self._encoders = [None for index in range(8)]
-		self._encoder_buttons = [None for index in range(8)]
-		self._shift_button = None
-		self._encoder_mode.update = self.update_encoders
-		self._encoder_mode._set_protected_mode_index(0)
-		self.register_component(self._encoder_mode)
-		self.register_component(self._send_reset)
-		self.register_component(self._device_selector)
-		self._encoder_mode.set_enabled(True)
-	
+		self._send_reset.layer = Layer()
 
-	def set_top_buttons(self, buttons):
-		self._top_button_matrix = buttons
-		new_buttons = [None for index in range(8)]
-		if not buttons is None:
-			new_buttons = [button for button in buttons]
-		self._top_buttons = new_buttons
+		self._device1 = DeviceParameterComponent(ProviderDeviceComponent())
+		self._device2 = DeviceParameterComponent(ProviderDeviceComponent())
+		self.register_component(self._device1)
+		self.register_component(self._device2)
 
-		#self._send_reset.set_buttons(tuple(self._top_buttons[4:]))
-	
+		self._trollmodes = ModesComponent(name = 'TrollMode')  # is_enabled = False)
+		self.register_component(self._trollmodes)
 
-	def set_bottom_buttons(self, buttons):
-		new_buttons = [None for index in range(8)]
-		if not buttons is None:
-			new_buttons = [button for button in buttons]
-		self._bottom_buttons = new_buttons
+		#self._trollmodes.set_enabled(False)
 		
-		for button in self._bottom_buttons[4:]:
-			if not button == None:
-				button.set_on_off_values('DefaultButton.On', 'DefaultButton.Off')
-		self._encoder_mode.set_mode_buttons(tuple(self._bottom_buttons[4:]))
-		self.update_mode_buttons()
-	
-
-	def set_matrix(self, matrix):
-		BUTTON_COLORS = ['Scales.Selected', 'Scales.Chromatic', 'DrumGroup.PadMutedSelected', 'Scales.Unselected']
-		self._matrix = matrix
-		if not self._matrix is None:
-			buttons = []
-			for button, _ in matrix.iterbuttons():
-				button.use_default_message()
-				button.set_enabled(True)
-				buttons.append(button)
-		else:
-			buttons = [None for index in range(64)]
-		
-		for index in range(16):
-			if not buttons[index] is None:
-				buttons[index].set_on_off_values('Scales.Diatonic', BUTTON_COLORS[int(index/4)])
-			self._mixer.channel_strip(index).set_select_button(buttons[index])
-		self._device_selector.set_buttons(buttons[16:64])
-	
-
-	def set_display_line1(self, display):
-		#self._mixer.set_selected_names_display(display)
-		self._display_line1 = display
-	
-
-	def set_display_line2(self, display):
-		#self._mixer.set_encoder_names_display(display)
-		self._display_line2 = display
-	
-
-	def set_display_line3(self, display):
-		#self._mixer.set_encoder_values_display(display)
-		self._display_line3 = display
-	
-
-	def set_display_line4(self, display):
-		#self._mixer.set_selected_names_display(display)
-		self._display_line4 = display
-	
-
-	def set_encoders(self, encoders):
-		if encoders is None:
-			encoders = [None for index in range(8)]
-		self._encoders = encoders
-		self.update_encoders()
-	
-
-	def set_encoder_buttons(self, buttons):
-		if buttons is None:
-			buttons = [None for index in range(8)]
-		self._encoder_buttons = buttons
-	
-
-	def set_shift_button(self, button):
-		self._shift_button = button
-	
-
-	def update_encoders(self):
-		
-		for strip in self._mixer._channel_strips:
-			strip.set_send_controls(tuple([None, None, None, None]))
-			strip.set_volume_control(None)
-		for strip in self._mixer._return_strips:
-			strip.set_send_controls(tuple([None, None, None, None]))
-			strip.set_volume_control(None)
-
-		mode = self._encoder_mode._mode_index
-		line1 = []
-		line2 = []
-		line3 = []
-		if mode == 0:
-			self._mixer.selected_strip().set_send_controls(tuple(self._encoders[:4]))
-			line1 = [ self._mixer.selected_strip().track_parameter_name_sources(index) for index in range(2, 6) ]
-			line2 = [ self._mixer.selected_strip().track_parameter_graphic_sources(index) for index in range(2, 6) ]
-			line3 = [ self._mixer.selected_strip().track_parameter_data_sources(index) for index in range(2, 6) ]
-			for index in range(4):
-				self._mixer.return_strip(index).set_volume_control(self._encoders[index+4])
-				line1.append(self._mixer.return_strip(index).track_name_data_source())
-				line2.append(self._mixer.return_strip(index).track_parameter_graphic_sources(0))
-				line3.append(self._mixer.return_strip(index).track_parameter_data_sources(0))
-
-			self._top_button_matrix and self._send_reset.set_buttons(self._top_button_matrix.submatrix[:4, :])
-			
-			#if not self._shift_button is None and not self._encoder_buttons[0] is None:
-			#	self._script.log_message('making zeros!')
-			#	self._send_reset.set_buttons(tuple( [ComboElement(self._encoder_buttons[0], [self._shift_button]), ComboElement(self._encoder_buttons[1], [self._shift_button]), ComboElement(self._encoder_buttons[2], [self._shift_button]), ComboElement(self._encoder_buttons[3], [self._shift_button]) ]) )
-
-		elif mode == 1:
-			for index in range(4):
-				self._mixer.channel_strip(index).set_volume_control(self._encoders[index])
-				line1.append(self._mixer.channel_strip(index).track_name_data_source())
-				line2.append(self._mixer.channel_strip(index).track_parameter_graphic_sources(0))
-				line3.append(self._mixer.channel_strip(index).track_parameter_data_sources(0))
-			for index in range(4):
-				self._mixer.channel_strip(index+12).set_volume_control(self._encoders[index+4])
-				line1.append(self._mixer.channel_strip(index+12).track_name_data_source())
-				line2.append(self._mixer.channel_strip(index+12).track_parameter_graphic_sources(0))
-				line3.append(self._mixer.channel_strip(index+12).track_parameter_data_sources(0))
-			self._send_reset.set_buttons(None)
-
-		elif mode == 2:
-			for index in range(4):
-				self._mixer.channel_strip(index+4).set_volume_control(self._encoders[index])
-				line1.append(self._mixer.channel_strip(index+4).track_name_data_source())
-				line2.append(self._mixer.channel_strip(index+4).track_parameter_graphic_sources(0))
-				line3.append(self._mixer.channel_strip(index+4).track_parameter_data_sources(0))
-			for index in range(4):
-				self._mixer.channel_strip(index+8).set_volume_control(self._encoders[index+4])
-				line1.append(self._mixer.channel_strip(index+8).track_name_data_source())
-				line2.append(self._mixer.channel_strip(index+8).track_parameter_graphic_sources(0))
-				line3.append(self._mixer.channel_strip(index+8).track_parameter_data_sources(0))
-			self._send_reset.set_buttons(None)
-
-		elif mode == 3:
-			for index in range(4):
-				self._mixer.selected_strip().set_send_controls(tuple(self._encoders[:4]))
-				line1 = [ self._mixer.selected_strip().track_parameter_name_sources(index) for index in range(2, 6) ]
-				line2 = [ self._mixer.selected_strip().track_parameter_graphic_sources(index) for index in range(2, 6) ]
-				line3 = [ self._mixer.selected_strip().track_parameter_data_sources(index) for index in range(2, 6) ]
-			self._mixer.return_strip(0).set_send_controls(tuple([None, self._encoders[4], None, None]))
-			self._mixer.return_strip(1).set_send_controls(tuple([self._encoders[5], None, None, None]))
-			self._mixer.return_strip(2).set_send_controls(tuple([self._encoders[6], self._encoders[7], None, None]))
-			line1.append(self._mixer.return_strip(0).track_name_data_source())
-			line1.append(self._mixer.return_strip(1).track_name_data_source())
-			line1.append(self._mixer.return_strip(2).track_name_data_source())
-			line1.append(self._mixer.return_strip(2).track_name_data_source())
-			line2.append(self._mixer.return_strip(0).track_parameter_graphic_sources(3))
-			line2.append(self._mixer.return_strip(1).track_parameter_graphic_sources(2))
-			line2.append(self._mixer.return_strip(2).track_parameter_graphic_sources(2))
-			line2.append(self._mixer.return_strip(2).track_parameter_graphic_sources(3))
-			line3.append(self._mixer.return_strip(0).track_parameter_data_sources(3))
-			line3.append(self._mixer.return_strip(1).track_parameter_data_sources(2))
-			line3.append(self._mixer.return_strip(2).track_parameter_data_sources(2))
-			line3.append(self._mixer.return_strip(2).track_parameter_data_sources(3))
-			
-			self._top_button_matrix and self._send_reset.set_buttons(self._top_button_matrix.submatrix[4:, :])
-
-		if self._display_line1:
-			self._display_line1.set_data_sources(line1)
-		if self._display_line2:
-			self._display_line2.set_data_sources(line2)
-		if self._display_line3:
-			self._display_line3.set_data_sources(line3)
-		if self._display_line4:
-			self._script._device_navigation.set_display_line(self._display_line4)
-
-		
-		self.update_mode_buttons()
-	
-
-	def update_mode_buttons(self):
-		for button in self._encoder_mode._modes_buttons:
-			if self._encoder_mode._modes_buttons.index(button) == self._encoder_mode._mode_index:
-				button.turn_on()
-			else:
-				button.turn_off()
-	
-
-	def update(self):
-		#if self.is_enabled():
-		#	self._script.log_message('Troll update')
-		pass
 	
 
 	def set_enabled(self, enabled = True):
@@ -349,58 +224,22 @@ class AumPushTrollComponent(CompoundComponent):
 			self._script.schedule_message(1, self._script._select_note_mode)
 	
 
-	def set_mode_matrix(self, matrix):
-		if not matrix is None:
-			buttons = [button for button, _ in matrix.iterbuttons()]
-		else:
-			buttons = None
-		self.set_mode_buttons(buttons)
+	def _find_device1(self):
+		if self._device1:
+			if len(self.song().return_tracks) > 0:
+				if len(self.song().return_tracks[0].devices) > 0:
+					if self._device1.parameter_provider._locked_to_device:
+						self._device1.parameter_provider.set_lock_to_device(False, self._device1.parameter_provider._device)
+					self._device1.parameter_provider.set_lock_to_device(True, self.song().return_tracks[0].devices[0])
 	
 
-	def set_device_selector_matrix(self, matrix):
-		buttons = []
-		if not matrix is None:
-			for button, address in matrix.iterbuttons():
-				button.use_default_message()
-				button.set_enabled(True)
-				buttons.append(button)
-		
-		self._device_selector.set_buttons(buttons)
-	
-
-	def set_track_selector_matrix(self, matrix):
-		if not matrix == None:
-			buttons = []
-			self._script.log_message('matrix:  width: ' + str(matrix.width()) + ' height: ' + str(matrix.height()))
-			self._script.log_message('button from matrix: ' + str(matrix.get_button(0, 0)))
-			for button, _ in matrix.iterbuttons():
-				self._script.log_message('button: ' + str(button))
-				button.use_default_message()
-				button.set_enabled(True)
-				buttons.append(button)
-		else:
-			buttons = [None for index in range(16)]
-		for index in range(16):
-			self._mixer.channel_strip(index).set_select_button(buttons[index])
-	
-
-	def set_return_encoders(self, encoders):
-		if encoders is None:
-			encoders = [None for index in range(4)]
-		for index in range(4):
-			#self._script.log_message('encoder ' + str(encoders[index]) + ' return ' + str(index) + ' ' + str(self._mixer.return_strip(index)))
-			self._mixer.selected_strip().set_send_controls(encoders[:4])
-			self._mixer.return_strip(index).set_volume_control(encoders[index+4])
-	
-
-	#def set_send_reset_buttons(self, buttons):
-	#	self._send_reset.set_buttons(tuple(buttons[0:4]))
-	
-
-	def on_selected_track_changed(self):
-		pass
-		#if self.is_enabled():
-			#self._script.
+	def _find_device2(self):
+		if self._device2:
+			if len(self.song().return_tracks) > 1:
+				if len(self.song().return_tracks[1].devices) > 0:
+					if self._device2.parameter_provider._locked_to_device:
+						self._device2.parameter_provider.set_lock_to_device(False, self._device2.parameter_provider._device)
+					self._device2.parameter_provider.set_lock_to_device(True, self.song().return_tracks[1].devices[0])
 	
 
 
@@ -430,17 +269,99 @@ class AumPushSpecialMixerComponent(SpecialMixerComponent):
 class TrollMixerComponent(AumPushSpecialMixerComponent):
 
 
+	def __init__(self, *a, **k):
+		super(TrollMixerComponent, self).__init__(*a, **k)
+		self._input_name_sources = [ DisplayDataSource('In1'),  DisplayDataSource('In2'), DisplayDataSource('In3'), DisplayDataSource('In4')]
+		self._parameter_provider = ProviderDeviceComponent()
+		self._input_device = DeviceParameterComponent(self._parameter_provider)
+		self.register_component(self._input_device)
+	
+
 	def tracks_to_use(self):
 		return tuple(self.song().visible_tracks)
 	
 
+	def set_track_grid(self, buttons):
+		
+		BUTTON_COLORS = ['Scales.Selected', 'Scales.Chromatic', 'DrumGroup.PadMutedSelected', 'Scales.Unselected']
+		if buttons:
+			for button, _ in buttons.iterbuttons():
+				button.use_default_message()
+				button.set_enabled(True)
+				button.set_on_off_values('Scales.Diatonic', BUTTON_COLORS[int(index/4)])
+				self.channel_strip(index).set_select_button(button)
+		#super(TrollMixerComponent, self).set_track_select_buttons(buttons)
+	
+
+	def set_right_select_buttons(self, buttons):
+		for strip, button in map(None, self._channel_strips[8:12], buttons or []):
+			strip.set_select_button(button)
+	
+
+	def set_return_select_buttons(self, buttons):
+		for strip, button in map(None, self._return_strips, buttons or []):
+			strip.set_select_button(button)
+	
+
+	def _set_parameter_names_display(self, display, parameter):
+		if display:
+			sources = [ strip.track_parameter_name_sources(parameter) for strip in self._channel_strips ][:8]
+			display.set_data_sources(sources)
+	
+
+	def _set_parameter_values_display(self, display, parameter):
+		if display:
+			sources = [ strip.track_parameter_data_sources(parameter) for strip in self._channel_strips ][:8]
+			display.set_data_sources(sources)
+	
+
+	def _set_parameter_graphics_display(self, display, parameter):
+		if display:
+			sources = [ strip.track_parameter_graphic_sources(parameter) for strip in self._channel_strips ][:8]
+			display.set_data_sources(sources)
+	
+
+	def set_right_volume_controls(self, controls):
+		for strip, control in map(None, self._channel_strips[8:12], controls or []):
+			strip and strip.set_volume_control(control)
+	
+
+	def set_input_volume_controls(self, controls):
+		if controls:
+			self._input_device.set_parameter_controls( [control for control, _ in controls.iterbuttons()] )
+		else:
+			self._input_device.set_parameter_controls(None)
+	
+
+	def set_right_track_names_display(self, display):
+		if display:
+			sources = [ strip.track_name_data_source() for strip in self._channel_strips[8:12] ] + self._input_device._parameter_name_data_sources[:4]
+			display.set_data_sources(sources)
+	
+
+	def set_right_volume_values_display(self, display):
+		self.set_right_parameter_values_display(display, 0)
+	
+
+	def set_right_volume_graphics_display(self, display):
+		self.set_right_parameter_graphics_display(display, 0)
+	
+
+	def set_right_parameter_values_display(self, display, parameter):
+		if display:
+			sources = [ strip.track_parameter_data_sources(parameter) for strip in self._channel_strips ][8:12] + self._input_device._parameter_value_data_sources[:4]
+			display.set_data_sources(sources)
+	
+
+	def set_right_parameter_graphics_display(self, display, parameter):
+		if display:
+			sources = [ strip.track_parameter_graphic_sources(parameter) for strip in self._channel_strips ][8:12] + self._input_device._parameter_graphic_data_sources[:4]
+			display.set_data_sources(sources)
+	
+
 	def set_track_names_display(self, display):
 		if display:
-			sources = []
-			for index in range(4):
-				sources.append(self.channel_strip(index).track_name_data_source())
-			for index in range(4):
-				sources.append(self.channel_strip(index+12).track_name_data_source())
+			sources = [ self.channel_strip(index).track_name_data_source() for index in range(8) ]
 			display.set_data_sources(sources)
 	
 
@@ -468,28 +389,107 @@ class TrollMixerComponent(AumPushSpecialMixerComponent):
 		pass
 	
 
-	def _reassign_tracks(self):
-		tracks = self.tracks_to_use()
-		returns = self.song().return_tracks
-		num_empty_tracks = max(0, len(self._channel_strips) + self._track_offset - len(tracks))
-		num_visible_tracks = max(0, len(tracks) - len(returns) - self._track_offset)
-		num_visible_returns = len(self._channel_strips) - num_empty_tracks - num_visible_tracks
-		for index in range(len(self._channel_strips)):
-			track_index = self._track_offset + index
-			if len(tracks) > track_index:
-				track = tracks[track_index]
-				if tracks[track_index] not in returns:
-					self._channel_strips[index].set_track(track)
-				else:
-					self._channel_strips[index + num_empty_tracks].set_track(track)
-			else:
-				self._channel_strips[index - num_visible_returns].set_track(None)
+	def set_selected_controls(self, controls):
+		strip = self.selected_strip()
+		if controls:
+			strip.set_send_controls(controls)
+		else:
+			strip.set_send_controls(tuple())
+	
 
-		for index in range(len(self._return_strips)):
-			if len(returns) > index:
-				self._return_strips[index].set_track(returns[index])
-			else:
-				self._return_strips[index].set_track(None)
+	def set_return_controls(self, controls):
+		for strip, control in map(None, self._return_strips, controls or []):
+			#debug('strip and control:', strip, control)
+			strip.set_volume_control(control)
+	
+
+	def set_send_return_names_display(self, display):
+		if display:
+			sources = [ self.selected_strip().track_parameter_name_sources(index) for index in xrange(2,6) ]
+			for index in range(4):
+				sources.append(self.return_strip(index).track_name_data_source())
+			display.set_data_sources(sources)
+	
+
+	def set_send_return_values_display(self, display):
+		if display:
+			sources = [ self.selected_strip().track_parameter_data_sources(index) for index in xrange(2,6) ]
+			for index in range(4):
+				sources.append(self.return_strip(index).track_parameter_graphic_sources(0))
+			display.set_data_sources(sources)
+	
+
+	def set_send_return_graphics_display(self, display):
+		if display:
+			sources = [ self.selected_strip().track_parameter_graphic_sources(index) for index in xrange(2,6) ]
+			for index in range(4):
+				sources.append(self.return_strip(index).track_parameter_data_sources(0))
+			display.set_data_sources(sources)
+	
+
+	def _reassign_tracks(self):
+		#tracks = self.tracks_to_use()
+		#returns = self.song().return_tracks
+		#num_empty_tracks = max(0, len(self._channel_strips) + self._track_offset - len(tracks))
+		#num_visible_tracks = max(0, len(tracks) - len(returns) - self._track_offset)
+		#num_visible_returns = len(self._channel_strips) - num_empty_tracks - num_visible_tracks
+		#for index in range(len(self._channel_strips)):
+		#	track_index = self._track_offset + index
+		#	if len(tracks) > track_index:
+		#		track = tracks[track_index]
+		#		if tracks[track_index] not in returns:
+		#			self._channel_strips[index].set_track(track)
+		#		else:
+		#			self._channel_strips[index + num_empty_tracks].set_track(track)
+		#	else:
+		#		self._channel_strips[index - num_visible_returns].set_track(None)
+
+		#for index in range(len(self._return_strips)):
+		#	if len(returns) > index:
+		#		self._return_strips[index].set_track(returns[index])
+		#	else:
+		#		self._return_strips[index].set_track(None)
+		MixerComponent._reassign_tracks(self)
+	
+
+	def find_inputs(self):
+		found_device = None
+		tracks = self.song().tracks
+		for track in tracks:
+			if track.name == 'Inputs':
+				for device in track.devices:
+					if bool(device.can_have_chains) and device.name.endswith('Inputs'):
+						found_device = device
+		self._parameter_provider.set_device(found_device)
+	
+
+	def find_perc_crossfader(self):
+		found_parameter = None
+		tracks = self.song().tracks
+		for track in tracks:
+			if track.name == 'Perc':
+				for device in track.devices:
+					if bool(device.can_have_chains) and device.name == 'Perc':
+						for parameter in device.parameters:
+							if parameter.name == 'XFade':
+								found_parameter = parameter
+		return found_parameter
+	
+
+	"""this method is used to find the devices the alt controls will latch to"""
+	def _find_devices(self):
+		if self._device1:
+			if len(self.song().return_tracks) > 0:
+				if len(self.song().return_tracks[0].devices) > 0:
+					if self._device1._locked_to_device:
+						self._device1.set_lock_to_device(False, self._device1._device)
+					self._device1.set_lock_to_device(True, self.song().return_tracks[0].devices[0])
+		if self._device2:
+			if len(self.song().return_tracks) > 1:
+				if len(self.song().return_tracks[1].devices) > 0:
+					if self._device2._locked_to_device:
+						self._device2.set_lock_to_device(False, self._device2._device)
+					self._device2.set_lock_to_device(True, self.song().return_tracks[1].devices[0])
 	
 
 
@@ -514,6 +514,10 @@ class TrollModeSelectorComponent(ModeSelectorComponent):
 
 class AumPushSpecialChanStripComponent(SpecialChanStripComponent):
 
+
+	def __init__(self, *a, **k):
+		super(AumPushSpecialChanStripComponent, self).__init__(*a, **k)
+		#self._on_color = 
 
 	def _arm_value(self, value):
 		assert(not self._arm_button != None)
@@ -577,6 +581,30 @@ class AumPushSpecialChanStripComponent(SpecialChanStripComponent):
 		self._on_volume_value_changed.subject = mixer and mixer.volume
 		self._on_panning_value_changed.subject = mixer and mixer.panning
 		self._on_sends_value_changed.replace_subjects(sends)
+	
+
+	#def _update_parameter_name_sources(self):
+	#	num_params = self._track and len(self._track.mixer_device.sends) + 2
+	#	for index, source in enumerate(self._track_parameter_name_sources):
+	#		if index < num_params:
+	#			source.set_display_string(TRACK_PARAMETER_NAMES[index])
+	#		else:
+	#			source.set_display_string(' ')
+	
+
+	def _update_track_button(self):
+		if self.is_enabled() and self._select_button != None:
+			if self._track == None:
+				self._select_button.set_light(self.empty_color)
+			#elif self._track.can_be_armed and (self._track.arm or self._track.implicit_arm):
+			#	if self._track == self.song().view.selected_track:
+			#		self._select_button.set_light('Mixer.ArmSelected')
+			#	else:
+			#		self._select_button.set_light('Mixer.ArmUnselected')
+			elif self._track == self.song().view.selected_track:
+				self._select_button.turn_on()
+			else:
+				self._select_button.turn_off()
 	
 
 
@@ -675,13 +703,12 @@ class AumPushMonoInstrumentComponent(MonoInstrumentComponent):
 		super(AumPushMonoInstrumentComponent, self)._split_mode_value(mode)
 		self._keypad._on_keypad_matrix_value.subject and self._keypad.set_keypad_matrix(self._keypad._on_keypad_matrix_value.subject)
 	
-	
+
 	def _sequencer_mode_value(self, mode):
 		super(AumPushMonoInstrumentComponent, self)._sequencer_mode_value(mode)
 		self._keypad._on_keypad_matrix_value.subject and self._keypad.set_keypad_matrix(self._keypad._on_keypad_matrix_value.subject)
 	
 
-	
 
 class AumPush(Push):
 
@@ -801,8 +828,8 @@ class AumPush(Push):
 		self.monomodular.name = 'monomodular_switcher'
 		self.modhandler = PushModHandler(self)
 		self.modhandler.name = 'ModHandler'
-		self.modhandler.layer = Layer( lock_button = self._note_mode_button, grid = self._matrix, shift_button = self._shift_button, alt_button = self._select_button, key_buttons = self._track_state_buttons)
-		self.modhandler.layer.priority = 4
+		self.modhandler.layer = Layer( priority = 6, lock_button = self._note_mode_button, grid = self._matrix, shift_button = self._shift_button, alt_button = self._select_button, key_buttons = self._track_state_buttons)
+		#self.modhandler.layer.priority = 0
 		self.modhandler.legacy_shift_layer = AddLayerMode( self.modhandler, Layer(priority = 6, 
 																			nav_up_button = self._nav_up_button, 
 																			nav_down_button = self._nav_down_button, 
@@ -868,15 +895,96 @@ class AumPush(Push):
 		self._mixer.set_enabled(True)"""
 	
 
+	def _with_select(self, button):
+		return ComboElement(button, modifiers=[self._select_button])
+	
+
+
+	def _init_user(self):
+		sysex_control = SysexValueControl(Sysex.MODE_CHANGE)
+		self._user = UserComponent(value_control=sysex_control, is_root=True)
+		self._user.layer = Layer(priority = 10, action_button=self._user_button)
+		self._user.settings_layer = Layer(display_line1=self._display_line1, display_line2=self._display_line2, display_line3=self._display_line3, display_line4=self._display_line4, encoders=self._global_param_controls)
+		self._user.settings_layer.priority = 10
+		self._user.settings = self._settings
+		self._on_hardware_mode_changed.subject = self._user
+		self._on_before_hardware_mode_sent.subject = self._user
+		self._on_after_hardware_mode_sent.subject = self._user
+		self._update_pad_params()
+	
+
 	def _hack_stuff(self):
-		self._step_sequencer._drum_group._update_control_from_script = self._make_update_control_from_script(self._step_sequencer._drum_group)
+
+		self._crossfader_strip = TouchStripControllerComponent()
+		self._crossfader_strip.layer = Layer(touch_strip = self._touch_strip_control)
+		self._crossfader_strip.set_enabled(False)
+
+		self._stop_selected_strip.subject = self._with_select(self._global_track_stop_button)
+
+		#self._step_sequencer._drum_group._update_control_from_script = self._make_update_control_from_script(self._step_sequencer._drum_group)
+
 		self._troll = AumPushTrollComponent(self)
+
+		self._troll._mixer._master_strip.layer = Layer(priority = 6, select_button = self._with_select(self._master_select_button))
+
+		self._troll._mixer._sends_layer = LayerMode(self._troll._mixer, Layer(priority = 6, track_select_buttons = self._select_buttons, right_select_buttons = self._track_state_buttons.submatrix[:4, :], return_select_buttons = self._track_state_buttons.submatrix[4:, :], selected_controls = self._global_param_controls.submatrix[:4, :], send_return_names_display=self._display_line1, send_return_values_display=self._display_line2, send_return_graphics_display=self._display_line3, return_controls = self._global_param_controls.submatrix[4:, :])) #, 
+		self._troll._mixer._left_layer = LayerMode(self._troll._mixer, Layer(priority = 6, track_select_buttons = self._select_buttons, right_select_buttons = self._track_state_buttons.submatrix[:4, :], return_select_buttons = self._track_state_buttons.submatrix[4:, :], volume_controls = self._global_param_controls, track_names_display=self._display_line1, volume_values_display=self._display_line2, volume_graphics_display=self._display_line3))
+		self._troll._mixer._right_layer = LayerMode(self._troll._mixer, Layer(priority = 6, track_select_buttons = self._select_buttons, right_select_buttons = self._track_state_buttons.submatrix[:4, :], return_select_buttons = self._track_state_buttons.submatrix[4:, :], right_volume_controls = self._global_param_controls.submatrix[:4, :], input_volume_controls = self._global_param_controls.submatrix[4:, :], right_track_names_display=self._display_line1, right_volume_values_display=self._display_line2, right_volume_graphics_display=self._display_line3))
+		self._troll._mixer._device_layer = LayerMode(self._troll._mixer, Layer(priority = 6, track_select_buttons = self._select_buttons, right_select_buttons = self._track_state_buttons.submatrix[:4, :], return_select_buttons = self._track_state_buttons.submatrix[4:, :], )) 
+
+		#self._troll._send_reset._touch_layer = LayerMode(self._troll._send_reset, Layer(priority = 6, send_a_button = self._with_select(self._global_param_controls[4]), send_b_button = self._with_select(self._global_param_controls[5]), send_c_button = self._with_select(self._global_param_controls[6]), send_d_button = self._with_select(self._global_param_controls[7])))
+		self._troll._send_reset.layer = Layer(priority = 6, send_a_button = self._with_select(self._track_state_buttons_raw[4]), send_b_button = self._with_select(self._track_state_buttons_raw[5]), send_c_button = self._with_select(self._track_state_buttons_raw[6]), send_d_button = self._with_select(self._track_state_buttons_raw[7]))
+
+		self._troll._device_selector.layer = Layer(priority = 6, matrix = self._matrix.submatrix[:, :4])
+
+		self._troll._device1.layer = Layer(priority = 6, parameter_controls = self._global_param_controls, name_display_line=self._display_line1, value_display_line=self._display_line2, graphic_display_line=ComboElement(self._display_line3, [self._any_touch_button]))
+		self._troll._device2.layer = Layer(priority = 6, parameter_controls = self._global_param_controls, name_display_line=self._display_line1, value_display_line=self._display_line2, graphic_display_line=ComboElement(self._display_line3, [self._any_touch_button]))
+
+		static_modes = CompoundMode(self._troll._mixer, self._crossfader_strip, tuple([self._grab_crossfader, self._release_crossfader]), self._troll._device_selector, self._troll._send_reset)
+		self._troll._trollmodes.add_mode('sends', [static_modes, self._troll._mixer._sends_layer])
+		self._troll._trollmodes.add_mode('left', [static_modes, self._troll._mixer._left_layer])
+		self._troll._trollmodes.add_mode('right', [static_modes, self._troll._mixer._right_layer, self._troll._mixer.find_inputs])
+		self._troll._trollmodes.add_mode('device', [static_modes, self._troll._mixer._device_layer, self._device_parameter_component])
+		self._troll._trollmodes.add_mode('fx1', [static_modes, self._troll._mixer._device_layer, self._troll._device1, self._troll._find_device1])
+		self._troll._trollmodes.add_mode('fx2', [static_modes, self._troll._mixer._device_layer, self._troll._device2, self._troll._find_device2])
+		self._troll._trollmodes.selected_mode = 'sends'
+		self._troll._trollmodes.layer = Layer(priority = 6, sends_button = self._side_buttons.get_button(0, 0), left_button = self._side_buttons.get_button(1, 0), right_button = self._side_buttons.get_button(2, 0), device_button = self._side_buttons.get_button(3, 0), fx1_button = self._side_buttons.get_button(4, 0), fx2_button = self._side_buttons.get_button(5, 0))
+
 		self._troll.set_enabled(False)
-		self._troll.layer = Layer(priority = 6, top_buttons = self._select_buttons, bottom_buttons = self._track_state_buttons, matrix = self._matrix.submatrix[:, :], display_line1=self._display_line1, display_line2=self._display_line2, display_line3=self._display_line3, display_line4=self._display_line4, encoder_buttons = self._global_param_touch_buttons, encoders = self._global_param_controls)  #shift_button = self._shift_button, 
-		self._main_modes.add_mode('troll', self._troll, behaviour=CancellableBehaviourWithRelease())
-		#self._main_modes.layer = Layer(volumes_button=self._vol_mix_mode_button, pan_sends_button=self._pan_send_mix_mode_button, track_button=self._single_track_mix_mode_button, clip_button=self._clip_mode_button, device_button=self._device_mode_button, browse_button=self._browse_mode_button, add_effect_right_button=self._create_device_button, add_effect_left_button=ComboElement(self._create_device_button, [self._shift_button]), add_instrument_track_button=self._create_track_button, troll_button=self._master_select_button)
-		self._main_modes.layer = Layer(volumes_button=self._vol_mix_mode_button, pan_sends_button=self._pan_send_mix_mode_button, track_button=self._single_track_mix_mode_button, clip_button=self._clip_mode_button, device_button=self._device_mode_button, browse_button=self._browse_mode_button, add_effect_right_button=self._create_device_button, add_effect_left_button=self._with_shift(self._create_device_button), add_instrument_track_button=self._create_track_button, troll_button=self._master_select_button)
+
+		self._main_modes.add_mode('troll', [self._troll], behaviour=CancellableBehaviourWithRelease())
+		self._main_modes.layer = Layer(priority = 6, volumes_button=self._vol_mix_mode_button, pan_sends_button=self._pan_send_mix_mode_button, track_button=self._single_track_mix_mode_button, clip_button=self._clip_mode_button, device_button=self._device_mode_button, browse_button=self._browse_mode_button, add_effect_right_button=self._create_device_button, add_effect_left_button=self._with_shift(self._create_device_button), add_instrument_track_button=self._create_track_button, troll_button=self._master_select_button)
+
 		self.schedule_message(5, self._remove_pedal)
+
+		#self._crossfader_mix = ParameterValueComponent(self.song().master_track.mixer_device.crossfader, display_label='Crossfade Mix:', display_seg_start=3, name='Crossfade_Mix_Display', is_root=True)
+		#self._crossfader_mix.layer = Layer(encoder=self._with_select(self._master_volume_control))
+		#self._crossfader_mix.layer = Layer(encoder=self._with_select(self._touch_strip_control))
+		#self._crossfader_mix.display_layer = Layer(label_display=self._display_line1, value_display=self._display_line3, graphic_display=self._display_line2, clear_display2=self._display_line4)
+		#self._crossfader_mix.display_layer.priority = 3
+	
+
+	@subject_slot('value')
+	def _stop_selected_strip(self, value):
+		debug('stop selected strip')
+		track = self._mixer.selected_strip._track
+		track and hasattr(track, 'stop_all_clips') and track.stop_all_clips()
+	
+
+	def _grab_crossfader(self):
+		self._crossfader_strip.set_parameter(self.song().master_track.mixer_device.crossfader)
+	
+
+	def _release_crossfader(self):
+		self._crossfader_strip.set_parameter(None)
+	
+
+	def _grab_encoder_touches(self):
+		pass
+	
+
+	def _release_encoder_touches(self):
+		pass
 	
 
 	def _remove_pedal(self):
@@ -890,7 +998,7 @@ class AumPush(Push):
 		self._foot_pedal_button = None
 		self.request_rebuild_midi_map()
 	
-	
+
 	def _make_update_control_from_script(self, drum_group):
 		def _update_control_from_script(): 
 			takeover_drums = drum_group._takeover_drums or drum_group._selected_pads
@@ -933,7 +1041,7 @@ class AumPush(Push):
 				elif channelized:
 					self._note_modes.selected_mode = 'monoinstrument'
 				elif drum_device:
-					self._note_modes.selected_mode = 'sequencer'
+					self._note_modes.selected_mode = 'drums'
 				else:
 					self._note_modes.selected_mode = 'instrument'
 				self.reset_controlled_track()
@@ -1188,6 +1296,7 @@ class PushModHandler(ModHandler):
 
 	@subject_slot('value')
 	def _shift_value(self, value, *a, **k):
+		debug('mod shift value:', value)
 		self._is_shifted = not value is 0
 		mod = self.active_mod()
 		if mod:
