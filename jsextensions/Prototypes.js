@@ -454,3 +454,22 @@ function Key(name, call, x, parent)
 	}	
 
 }
+
+
+function deprivatize_script_functions(script)
+{
+	for(var i in script)
+	{
+		if((/^_/).test(i))
+		{
+			//debug('replacing', i, '\n');
+			script[i.replace('_', "")] = script[i];
+		}
+	}
+}
+
+
+
+
+
+

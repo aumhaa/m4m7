@@ -9,6 +9,7 @@ for(var i=0;i<8;i++)
 	modes[i] = [0, 0, 0, 0];
 }
 
+var leader;
 var notes = [0, 5, 7, 10, 12, 17, 19, 24];
 var durations = [8000, 4000, 2000, 1000];
 var dist_array = [];
@@ -40,12 +41,13 @@ var mywind = 0.
 var DEBUG = true;
 var debug = (DEBUG&&Debug) ? Debug : function(){};
 
-var FORCELOAD = true;
+var FORCELOAD = false;
 var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
 
 
 function init()
 {
+	debug('aumboids init');
 	agentcount(8);
 }
 
