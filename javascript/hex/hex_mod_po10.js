@@ -19,7 +19,7 @@ autowatch = 1;
 outlets = 4;
 inlets = 5;
 
-var FORCELOAD = true;
+var FORCELOAD = false;
 var NEW_DEBUG = false;
 var DEBUG = false;
 var DEBUG_LCD = false;
@@ -2614,10 +2614,11 @@ function copy_global_preset(src, dest)
 //reset all parts to play from top...not quantized.
 function resync()
 {
-	//var i=15;do{
-	//	part[i].obj.offset.message('int', 0);
-	//}while(i--);
-	messnamed(unique+('restart'), 0);
+	var i=15;do{
+		//part[i].obj.offset.message('int', 0);
+		part[i].obj.resync.message('bang');
+	}while(i--);
+	//messnamed(unique+('restart'), 0);
 }
 
 //begin or end sequence play from poly_play poly~
