@@ -12,7 +12,7 @@ from _Framework.ModesComponent import ModesComponent
 from _Framework.Resource import PrioritizedResource
 from _Framework.SessionZoomingComponent import SessionZoomingComponent
 from _Framework.Skin import merge_skins
-from _Framework.Util import nop
+from _Framework.Util import nop, recursive_map
 from _Framework.ComboElement import ComboElement, DoublePressElement, MultiElement, DoublePressContext
 from _Framework.ModeSelectorComponent import ModeSelectorComponent
 
@@ -143,7 +143,7 @@ class AumPC40(APC40):
 
 	def disconnect(self):
 		super(AumPC40, self).disconnect()
-		rebuild_sys()
+		#rebuild_sys()
 	
 
 	def _create_controls(self):
@@ -155,7 +155,7 @@ class AumPC40(APC40):
 		self._up_button = make_button(0, 94, name='Bank_Select_Up_Button')
 		self._down_button = make_button(0, 95, name='Bank_Select_Down_Button')
 		self._session_matrix = ButtonMatrixElement(name='Button_Matrix')
-		self._scene_launch_buttons = [ make_color_button(0, index + 82, name='Scene_%d_Launch_Button' % index, cs = self) for index in xrange(SESSION_HEIGHT) ]
+		self._scene_launch_buttons_raw = [ make_color_button(0, index + 82, name='Scene_%d_Launch_Button' % index, cs = self) for index in xrange(SESSION_HEIGHT) ]
 		self._track_stop_buttons = [ make_color_button(index, 52, name='Track_%d_Stop_Button' % index, cs = self) for index in xrange(SESSION_WIDTH) ]
 		self._stop_all_button = make_color_button(0, 81, name='Stop_All_Clips_Button', cs = self)
 		self._matrix_rows_raw = [ [ make_color_button(track_index, scene_index + 53, name='%d_Clip_%d_Button' % (track_index, scene_index), cs = self) for track_index in xrange(SESSION_WIDTH) ] for scene_index in xrange(SESSION_HEIGHT) ]
@@ -223,23 +223,27 @@ class AumPC40(APC40):
 		def wrap_matrix(control_list, wrapper = nop):
 			return ButtonMatrixElement(rows=[map(wrapper, control_list)])
 
-		self._scene_launch_buttons = wrap_matrix(self._scene_launch_buttons)
+		self._scene_launch_buttons = wrap_matrix(self._scene_launch_buttons_raw)
 		self._track_stop_buttons = wrap_matrix(self._track_stop_buttons)
 		self._volume_controls = wrap_matrix(self._volume_controls)
 		self._arm_buttons = wrap_matrix(self._arm_buttons)
-		self._original_solo_buttons = wrap_matrix(self._original_solo_buttons)
-		self._original_mute_buttons = wrap_matrix(self._original_mute_buttons)
+		self._solo_buttons = wrap_matrix(self._original_solo_buttons)
+		self._mute_buttons = wrap_matrix(self._original_mute_buttons)
 		self._select_buttons = wrap_matrix(self._select_buttons)
 		self._device_param_controls = wrap_matrix(self._device_param_controls_raw)
 		self._device_bank_buttons = wrap_matrix(self._device_bank_buttons, partial(DeviceBankButtonElement, modifiers=[self._shift_button]))
+		self._shifted_matrix = ButtonMatrixElement(rows=recursive_map(self._with_shift, self._matrix_rows_raw))
+		self._shifted_scene_buttons = ButtonMatrixElement(rows=[[ self._with_shift(button) for button in self._scene_launch_buttons_raw ]])
 
-		self._solo_buttons = self._original_solo_buttons
-		self._mute_buttons = self._original_mute_buttons
+		#self._solo_buttons = self._original_solo_buttons
+		#self._mute_buttons = self._original_mute_buttons
+		#self._scene_launch_buttons = self._scene_launch_buttons_raw
 
 	
 
 	def _create_detail_view_control(self):
-		self._detail_view_toggler = DetailViewCntrlComponent(name='Detail_View_Control', is_enabled=False, layer=Layer(device_clip_toggle_button=self._device_clip_toggle_button, device_nav_left_button=self._detail_left_button, device_nav_right_button=self._detail_right_button))  #detail_toggle_button=self._detail_toggle_button
+		self._detail_view_toggler = DetailViewCntrlComponent(name='Detail_View_Control', is_enabled=False, layer=Layer(device_clip_toggle_button=self._device_clip_toggle_button, device_nav_left_button=self._detail_left_button, device_nav_right_button=self._detail_right_button))	#detail_toggle_button=self._detail_toggle_button
+	
 
 	def _setup_monobridge(self):
 		self._monobridge = MonoBridgeElement(self)
@@ -396,6 +400,7 @@ class APCModHandler(ModHandler):
 
 	def __init__(self, *a, **k):
 		super(APCModHandler, self).__init__(*a, **k)
+		self.nav_box = None
 		self._color_type = 'APC'
 		self.navbox_selected = 8
 		self.navbox_unselected = 127
