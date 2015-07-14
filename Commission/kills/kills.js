@@ -7,6 +7,8 @@ outlets = 1;
 var script = this;
 var finder;
 var scene_fire;
+var scenes;
+var scene_offset;
 var m4lcomp = 0;
 var PO10=new RegExp(/(PO10)/);
 var control_names = [];
@@ -20,6 +22,10 @@ var debug = (DEBUG&&Debug) ? Debug : function(){};
 var FORCELOAD = false;
 var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
 
+function endsWith(str, suffix) 
+{
+	return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
 
 function init()
 {
@@ -52,6 +58,8 @@ function init()
 					scene_fire.path = 'control_surfaces '+i;
 				}
 			}
+			scene_offset = new LiveAPI(null_callback, 'control_surfaces', i, 'components', 0);
+			scenes = new LiveAPI(null_callback, 'live_set');
 			for(var i in script)
 			{
 				if((/^_/).test(i))
@@ -65,14 +73,23 @@ function init()
 	}
 }
 
+function null_callback(){}
+
 function scene_fire_callback(args)
 {
 	debug('scene_fire_callback', args);
 	if((args[0]=='value')&&(args[1]>0))
 	{
-		debug('banging out to HK...');
-		outlet(0, 'bang');
+		var scene_index = scene_offset.call('scene_offset');
+		scenes.goto('scenes', scene_index);
+		var name = scenes.get('name')[0];
+		if(endsWith(name, '@HK'))
+		{
+			debug('banging out to HK...');
+			outlet(0, 'bang');
+		}
 	}
+	scenes.path = 'live_set';
 }
 
 function _Softkill()

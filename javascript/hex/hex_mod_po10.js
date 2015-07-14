@@ -766,7 +766,8 @@ function refresh_c_keys()
 			var p = presets[selected.num]-1;
 			batch.unshift(8);
 			keygui.message(15, 0, 5);
-			var i=6;do{
+			keygui.message(14, 0, 2);
+			var i=5;do{
 				var v = (i==p)+6;
 				batch.unshift(Math.floor(i==p));
 				keygui.message(i+8, 0, v);
@@ -1267,7 +1268,7 @@ function _c_key(x, y, val)
 						refresh_c_keys();
 					}
 				}
-				else if(num<15)
+				else if(num<14)
 				{
 					if((val>0)&&(pad_pressed<0))
 					{
@@ -1295,9 +1296,18 @@ function _c_key(x, y, val)
 				}
 				else if(val>0)
 				{
-					clear_pattern(selected);
-					reset_params_to_default();
-					//select_pattern(selected.num);
+					if(num==14)
+					{
+						_reset_params_to_default();
+					}
+					else if(num==15)
+					{
+						this.patcher.getnamed('moddial').message('int', 0);
+						clear_pattern(selected);
+						reset_params_to_default();
+						//select_pattern(selected.num);
+						this.patcher.getnamed('moddial').message('int', 127);
+					}
 				}
 		}
 	}
@@ -3266,6 +3276,7 @@ function reset_data(global)
 	}
 	update_step();
 	refresh_c_keys();
+	this.patcher.getnamed('moddial').message('int', 127);
 }
 
 function init_storage()
