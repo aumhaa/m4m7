@@ -41,6 +41,8 @@ function init()
 		if(finder.type == control_surface_type)
 		{
 			debug('found PO10.');
+			scene_offset = new LiveAPI(null_callback, 'control_surfaces', i, 'components', 0);
+			scenes = new LiveAPI(null_callback, 'live_set');
 			scene_fire = new LiveAPI(scene_fire_callback, 'control_surfaces', i);
 			num_controls = parseInt(finder.getcount('controls'));
 			for(var j=0;j<num_controls;j++)
@@ -58,8 +60,6 @@ function init()
 					scene_fire.path = 'control_surfaces '+i;
 				}
 			}
-			scene_offset = new LiveAPI(null_callback, 'control_surfaces', i, 'components', 0);
-			scenes = new LiveAPI(null_callback, 'live_set');
 			for(var i in script)
 			{
 				if((/^_/).test(i))
@@ -88,8 +88,9 @@ function scene_fire_callback(args)
 			debug('banging out to HK...');
 			outlet(0, 'bang');
 		}
+		scenes.path = 'live_set';
 	}
-	scenes.path = 'live_set';
+
 }
 
 function _Softkill()

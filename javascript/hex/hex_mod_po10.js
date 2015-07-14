@@ -20,7 +20,7 @@ outlets = 4;
 inlets = 5;
 
 var FORCELOAD = false;
-var NEW_DEBUG = false;
+var NEW_DEBUG = true;
 var DEBUG = false;
 var DEBUG_LCD = false;
 var DEBUG_PTR = false;
@@ -281,7 +281,7 @@ function initialize(val)
 			part[i] = {'n': 'part', 'num':i, 'nudge':0, 'offset':0, 'channel':0, 'len':16, 'start':0, 
 						'jitter':0, 'active':1, 'swing':.5, 'lock':1, 'ticks':480, 'notevalues':3, 'notetype':0, 
 						'pushed':0, 'direction':0, 'noteoffset':i, 'root':i, 'octave':0, 'add':0, 'quantize':1, 'repeat':6, 'clutch':1,
-						'random':0, 'note':i, 'steps':15, 'mode':0, 'polyenable':0, 'polyoffset':36, 'mode':0,
+						'random':0, 'note':i, 'steps':11, 'mode':0, 'polyenable':0, 'polyoffset':36, 'mode':0,
 						'hold':0, 'held':[], 'triggered':[], 'recdirty':0, 'timedivisor':16, 'basetime':1, 'behavior_enable':1};//'speed':480,'notevalue':'4n'
 			part[i].num = parseInt(i);
 			part[i].pattern = default_pattern.slice();

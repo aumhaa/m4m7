@@ -284,6 +284,8 @@ class HKDefaultsComponent(DefaultsComponent):
 	def set_defaults(self):
 		super(HKDefaultsComponent, self).set_defaults()
 		self._parent._sendreset_component.reset_send()
+		mod = self._parent.modhandler.active_mod()
+		mod and mod._param_component.set_all_params_to_defaults()
 	
 
 	def scan_device(self, device):
