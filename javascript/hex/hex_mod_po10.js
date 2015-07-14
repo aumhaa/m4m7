@@ -765,6 +765,7 @@ function refresh_c_keys()
 		case 8:
 			var p = presets[selected.num]-1;
 			batch.unshift(8);
+			batch.unshift(2);
 			keygui.message(15, 0, 5);
 			keygui.message(14, 0, 2);
 			var i=5;do{
