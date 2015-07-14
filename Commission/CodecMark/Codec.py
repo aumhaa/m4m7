@@ -39,7 +39,7 @@ from _Mono_Framework.DeviceSelectorComponent import NewDeviceSelectorComponent a
 from _Mono_Framework.MonoBridgeElement import MonoBridgeElement
 from _Mono_Framework.MonoButtonElement import MonoButtonElement
 from _Mono_Framework.MonoEncoderElement import MonoEncoderElement
-from _Mono_Framework.MonoMixerComponent import MixerComponent
+from _Mono_Framework.MonoMixerComponent import MixerComponent as MixerComponentBase
 from _Mono_Framework.Live8DeviceComponent import Live8DeviceComponent as DeviceComponent
 from _Mono_Framework.LiveUtils import *
 from _Mono_Framework.Mod import *
@@ -52,7 +52,7 @@ from Map import *
 def tracks_to_use(self):
 	return tuple(self.song().visible_tracks) + tuple(self.song().return_tracks)
 	
-MixerComponent.tracks_to_use = tracks_to_use
+MixerComponentBase.tracks_to_use = tracks_to_use
 
 
 """ Here we define some global variables """
@@ -65,6 +65,28 @@ NORMALENCODER = (240, 0, 1, 97, 4, 30, 02, 00, 247)
 FASTENCODER = (240, 0, 1, 97, 4, 30, 04, 00, 247)
 SHOW_PLAYING_CLIP_DELAY = 5
 ENCODER_SPEED = [NORMALENCODER, SLOWENCODER]
+
+
+class MixerComponent(MixerComponentBase):
+
+
+	def _bank_up_value(self, value):
+		debug('bank up value', value)
+		assert(isinstance(value, int))
+		assert(self._bank_up_button != None)
+		if self.is_enabled() and value:
+			new_offset = self._track_offset + 1
+			if len(self.tracks_to_use()) > new_offset:
+				self.set_track_offset(new_offset)
+
+
+	def _bank_down_value(self, value):
+		debug('bank down value', value)
+		assert(isinstance(value, int))
+		assert(self._bank_down_button != None)
+		if self.is_enabled() and value:
+			self.set_track_offset(max(0, (self._track_offset - 1)))
+	
 
 class CancellableBehaviourWithRelease(CancellableBehaviour):
 
@@ -1149,6 +1171,7 @@ class Codec(ControlSurface):
 			self._mixer.channel_strip(index).set_solo_button(None)
 			self._mixer.channel_strip(index).set_mute_button(None)
 		self._mixer.set_select_buttons(None, None)
+		self._mixer.set_bank_buttons(None, None)
 		self._send_reset.set_enabled(False)
 		for index in range(8):
 			self._mixer.channel_strip(index).set_select_button(None)
@@ -1162,7 +1185,7 @@ class Codec(ControlSurface):
 			#self._mixer.channel_strip(index).set_send_controls(tuple([self._dial[index][0], self._dial[index][1]]))
 			self._mixer.channel_strip(index).set_solo_button(self._button[index][2])
 			self._mixer.channel_strip(index).set_mute_button(self._button[index][3])
-		self._mixer.set_select_buttons(self._button[7][0], self._button[6][0])
+		self._mixer.set_bank_buttons(self._button[7][0], self._button[6][0])
 		for index in range(8):
 			self._mixer.channel_strip(index).set_select_button(self._column_button[index])
 			#self._mixer.channel_strip(index).select_layer.enter_mode()
