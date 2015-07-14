@@ -1151,7 +1151,7 @@ class PO10(OptimizedControlSurface):
 		self._device_encoder_button_matrix = ButtonMatrixElement(name = 'Device_Encoder_Button_Matrix', rows = [self._encoder_button[:6]])
 		self._send_encoder_button_matrix = ButtonMatrixElement(name = 'Send_Encoder_Button_Matrix', rows = [self._encoder_button[13:]])
 		self._main_button_matrix = ButtonMatrixElement(name = 'Main_Matrix', rows = [self._button[22:]])
-		self._device_button_matrix = ButtonMatrixElement(name = 'Device_Matrix', rows = [self._button[:7] + self._button[8:13] + self._button[16:17]])
+		self._device_button_matrix = ButtonMatrixElement(name = 'Device_Matrix', rows = [self._button[:7] + self._button[8:16]])
 	
 
 	def _define_sysex(self):

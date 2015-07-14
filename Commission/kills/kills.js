@@ -2,7 +2,7 @@ autowatch = 1;
 
 
 inlets = 1;
-outlets = 1;
+outlets = 2;
 
 var script = this;
 var finder;
@@ -87,6 +87,11 @@ function scene_fire_callback(args)
 		{
 			debug('banging out to HK...');
 			outlet(0, 'bang');
+		}
+		else if(endsWith(name, '@SK'))
+		{
+			debug('banging out to SK...');
+			outlet(1, 'bang');
 		}
 		scenes.path = 'live_set';
 	}
