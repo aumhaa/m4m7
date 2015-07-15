@@ -1,0 +1,77 @@
+MACRO NAMING CONVENTIONS:
+
+@rst:[0-100]
+
+A percentage between 0 and 100. 
+Parameter will be reset to value when:
+	encoder button is pressed
+	HK is pressed
+	HK is triggered via kills device.
+
+@hk:[0-100]
+
+A percentage between 0 and 100. 
+Parameter will be reset to value when:
+	HK is pressed
+	HK is triggered via kills device.
+
+@sk:[0-100]
+
+A percentage between 0 and 100. 
+Parameter will be reset to value when:
+	SK is pressed
+	SK is triggered via kills device.
+
+@tog
+
+Parameter will be toggled between on and off (minimum and maximum) when encoder button is pressed.
+
+@max
+
+Parameter will be set to maximum value when encoder button is pressed.
+
+@min
+
+Parameter will be set to minimum value when encoder button is pressed.
+
+@onoff
+
+Device rack will toggle on or off when encoder button is pressed.
+
+@shft:[parameter name]
+
+If parameter name matches another parameter in the same rack, when the encoder button is pressed it will be assigned to that parameter.
+
+@param:[parameter name]:
+
+If parameter name matches another parameter in the same rack, when the encoder button is pressed it will toggle that parameter between its minimum and maximum.
+
+@param:[parameter name]:rst:[0-100]
+
+A percentage between 0 and 100. 
+If parameter name matches another parameter in the same rack, when the encoder button is pressed it will reset the parameter to the percentage of maximum.
+
+@default
+
+All of the rack device's parameters will be set to @rst or @hk values when the encoder button is pressed.
+
+
+
+SCENE NAMING CONVENTIONS:
+
+Any scene ending with the @HK tag will cause all parameters in the entire Live set to be changed to @hk or @rst or @def values if they are tagged.
+
+Any scene ending with the @SK tag will cause all parameters in the entire Live set to be changed to @sk values if they are tagged.
+
+
+HEX MACRO NAMING CONVENTIONS:
+
+@def:[0-100]
+
+A percentage between 0 and 100. 
+Parameter will be reset to value when:
+	HK is pressed
+	HK is triggered via kills device.
+	def button is pressed on hex GUI.
+	Second from right (yellow) button is pressed in GUI or the corresponding button on the PO10.
+

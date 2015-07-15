@@ -20,7 +20,7 @@ outlets = 4;
 inlets = 5;
 
 var FORCELOAD = false;
-var NEW_DEBUG = true;
+var NEW_DEBUG = false;
 var DEBUG = false;
 var DEBUG_LCD = false;
 var DEBUG_PTR = false;
@@ -981,46 +981,12 @@ function _c_button(x, y, val)
 			switch(x)
 			{
 				case 0:
-					if(pad_pressed<0){
-						if(selected.lock==0){
-							change_lock_status(selected, 0);
-						}
-						else{
-							timedngui.message('int', val);
-						}
-					}
-					else if(val>0){
-						notetypegui.message('int', Math.max(0, Math.min(selected.notetype+1, 3)));
-					}
 					break;
 				case 1:
-					if(pad_pressed<0){
-						if(selected.lock==0){
-							change_lock_status(selected, 1);
-						}
-						else{
-							timeupgui.message('int', val);
-						}
-					}
-					else if(val>0){
-						notetypegui.message('int', Math.max(0, Math.min(selected.notetype-1, 3)));
-					}
 					break;
 				case 2:
-					if(pad_pressed<0){
-						pitchdngui.message('int', val);
-					}
-					else if(val>0){
-						recgui.message('bang');
-					}
 					break;
 				case 3:
-					if(pad_pressed<0){
-					pitchupgui.message('int', val);
-					}
-					else if(val>0){
-						playgui.message('bang');	
-					}
 					break;
 			}
 			break;
@@ -1028,91 +994,21 @@ function _c_button(x, y, val)
 			switch(x)
 			{
 				case 0:
-					/*if((pad_mode!=6)&&(key_mode!=6))
-					{
-						if(pad_pressed<0){
-							repeatgui.message('int', val);
-						}
-						else if(val>0){
-							directiongui.message('int', (selected.direction+1)%3);
-						}
-					}
-					else
-					{
-						//post('pad mode is 6\n');
-						if(val>0)
-						{
-							selected.hold = Math.abs(selected.hold-1);
-							//post('val is > 0, selected.hold ==', selected.hold, '\n');
-							mod.Send( 'button', 0, 2, selected.hold);
-							if(selected.hold<1)
-							{
-								release_held_sequences(selected);
-							}
-						}
-						if(pad_mode == 6)
-						{
-							refresh_pads();
-						}
-						if(key_mode == 6)
-						{
-							refresh_c_keys();
-						}
-					}*/
-					btn_press1 = val;
-					if(btn_press1+btn_press2==2)
-					{
-						padmodegui.message('int', (pad_mode!=5)*5);
-					}
-					else
-					{
-						repeatgui.message('int', val);
-					}
 					break;
 				case 1:
-					btn_press2 = val;
-					if(btn_press1+btn_press2==2)
-					{
-						padmodegui.message('int', (pad_mode!=5)*5);
-					}
-					else
-					{
-						keymodeadv.message('int', val);
-					}
 					break;
 				case 2:
-					if(pad_pressed<0){
-						rotleftgui.message('int', val);
-					}
-					else if(val>0){
-						stepmodegui.message('int', Math.max(0, Math.min(3, step_mode-1)));
+					if(val>0){
+						//selected.obj.set.random(0);
+						//Random.message('set', selected.obj.random.getvalueof());
+						Random.message('float', 0);
 					}
 					break;
 				case 3:
-					if((pad_mode!=6)&&(key_mode!=6))
-					{
-						if(pad_pressed<0){
-							rotrightgui.message('int', val);
-						}
-						else if(val>0){
-							stepmodegui.message('int', Math.max(0, Math.min(3, step_mode+1)));
-						}
-					}
-					else
-					{
-						//post('pad mode is 6\n');
-						if(val>0)
-						{
-							poly_hold_toggle();
-						}
-						if(pad_mode == 6)
-						{
-							refresh_pads();
-						}
-						if(key_mode == 6)
-						{
-							refresh_c_keys();
-						}
+					if(val>0){
+						//selected.obj.set.groove(.5);
+						//Groove.message('set', selected.obj.groove.getvalueof());
+						Groove.message('float', .5);
 					}
 					break;
 			}
