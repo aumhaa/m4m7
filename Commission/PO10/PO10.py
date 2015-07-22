@@ -228,6 +228,7 @@ class DefaultsComponent(ControlSurfaceComponent):
 		if self.is_enabled():
 			if value:
 				self.set_defaults()
+			self._on_button_value.subject and self._on_button_value.subject.set_light(bool(value))
 	
 
 	def set_defaults(self):
@@ -286,6 +287,7 @@ class HKDefaultsComponent(DefaultsComponent):
 		self._parent._sendreset_component.reset_send()
 		mod = self._parent.modhandler.active_mod()
 		mod and mod._param_component.set_all_params_to_defaults()
+		self._parent.modhandler.reset_sequence()
 	
 
 	def scan_device(self, device):
@@ -1151,7 +1153,7 @@ class PO10(OptimizedControlSurface):
 		self._device_encoder_button_matrix = ButtonMatrixElement(name = 'Device_Encoder_Button_Matrix', rows = [self._encoder_button[:8]])
 		self._send_encoder_button_matrix = ButtonMatrixElement(name = 'Send_Encoder_Button_Matrix', rows = [self._encoder_button[13:]])
 		self._main_button_matrix = ButtonMatrixElement(name = 'Main_Matrix', rows = [self._button[22:]])
-		self._device_button_matrix = ButtonMatrixElement(name = 'Device_Matrix', rows = [self._button[:7] + self._button[8:16]])
+		self._device_button_matrix = ButtonMatrixElement(name = 'Device_Matrix', rows = [self._button[:7] + self._button[8:13] + self._button[16:17]])
 	
 
 	def _define_sysex(self):
@@ -1709,6 +1711,10 @@ class PO10ModHandler(ModHandler):
 		self._last_sent_leds = 1
 	
 
+	def reset_sequence(self):
+		if self._active_mod:
+			self._active_mod.send('reset_sequence')
+	
 
 
 

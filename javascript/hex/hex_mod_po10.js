@@ -3619,7 +3619,11 @@ function hideerror()
 	}
 }
 
-
+function reset_sequence()
+{
+	debug('mod reset_sequence()');
+	clear_pattern(selected);
+}
 
 ///po10 specific
 
