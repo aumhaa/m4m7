@@ -11,7 +11,7 @@ import sys
 from _Framework.Dependency import inject
 from _Framework.ButtonElement import ButtonElement
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
-#from _Framework.ChannelStripComponent import ChannelStripComponent
+from _Framework.ChannelStripComponent import ChannelStripComponent
 from _Framework.ClipSlotComponent import ClipSlotComponent
 from _Framework.CompoundComponent import CompoundComponent
 from _Framework.ControlElement import ControlElement, ControlElementClient
@@ -228,7 +228,11 @@ class DefaultsComponent(ControlSurfaceComponent):
 		if self.is_enabled():
 			if value:
 				self.set_defaults()
-			self._on_button_value.subject and self._on_button_value.subject.set_light(bool(value))
+			if self._on_button_value.subject:
+				if value:
+					self._on_button_value.subject.turn_on()
+				else:
+					self._on_button_value.subject.turn_off()
 	
 
 	def set_defaults(self):
@@ -288,6 +292,7 @@ class HKDefaultsComponent(DefaultsComponent):
 		mod = self._parent.modhandler.active_mod()
 		mod and mod._param_component.set_all_params_to_defaults()
 		self._parent.modhandler.reset_sequence()
+		self._parent._open_track_mutes()
 	
 
 	def scan_device(self, device):
@@ -1098,6 +1103,7 @@ class PO10(OptimizedControlSurface):
 					self._setup_main_device_selector()
 					self._setup_device_selector()
 					self._setup_kills()
+					self._setup_track_mutes()
 					#self._setup_translations()
 					self._setup_mod()
 					self._setup_modes() 
@@ -1153,7 +1159,7 @@ class PO10(OptimizedControlSurface):
 		self._device_encoder_button_matrix = ButtonMatrixElement(name = 'Device_Encoder_Button_Matrix', rows = [self._encoder_button[:8]])
 		self._send_encoder_button_matrix = ButtonMatrixElement(name = 'Send_Encoder_Button_Matrix', rows = [self._encoder_button[13:]])
 		self._main_button_matrix = ButtonMatrixElement(name = 'Main_Matrix', rows = [self._button[22:]])
-		self._device_button_matrix = ButtonMatrixElement(name = 'Device_Matrix', rows = [self._button[:7] + self._button[8:13] + self._button[16:17]])
+		self._device_button_matrix = ButtonMatrixElement(name = 'Device_Matrix', rows = [self._button[:7] + self._button[8:18] + [self._button[20]]])
 	
 
 	def _define_sysex(self):
@@ -1215,7 +1221,35 @@ class PO10(OptimizedControlSurface):
 	
 
 	def _setup_track_mutes(self):
-		pass
+		self._AllBeats_channel_strip = ChannelStripComponent()
+		self._AllBeats_channel_strip._invert_mute_feedback = True
+		self._BD_channel_strip = ChannelStripComponent()
+		self._BD_channel_strip._invert_mute_feedback = True
+		self._scan_for_track_mutes()
+	
+
+	def _scan_for_track_mutes(self):
+		for track in self.song().tracks:
+			debug('looking for mute on track:', track.name)
+			if track and hasattr(track, 'name') and track.name.startswith('AllBeats'):
+				debug('found AllBeats mute!')
+				self._AllBeats_channel_strip.set_track(track)
+				self._AllBeats_channel_strip.set_mute_button(self._button[18])
+				self._AllBeats_channel_strip.set_enabled(True)
+			elif track and hasattr(track, 'name') and track.name.startswith('BD'):
+				debug('found BD mute!')
+				self._BD_channel_strip.set_track(track)
+				self._BD_channel_strip.set_mute_button(self._button[19])
+				self._BD_channel_strip.set_enabled(True)
+	
+
+	def _open_track_mutes(self):
+		track = self._AllBeats_channel_strip.track
+		if not track is None and isinstance(track, Live.Track.Track):
+			track.mixer_device.track_activator.value = 1
+		track = self._BD_channel_strip.track
+		if not track is None and isinstance(track, Live.Track.Track):
+			track.mixer_device.track_activator.value = 1
 	
 
 	def _setup_translations(self):
