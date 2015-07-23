@@ -1236,11 +1236,13 @@ class PO10(OptimizedControlSurface):
 				self._AllBeats_channel_strip.set_track(track)
 				self._AllBeats_channel_strip.set_mute_button(self._button[16])
 				self._AllBeats_channel_strip.set_enabled(True)
+				break
 			elif track and hasattr(track, 'name') and track.name.startswith('BD'):
 				debug('found BD mute!')
 				self._BD_channel_strip.set_track(track)
 				self._BD_channel_strip.set_mute_button(self._button[17])
 				self._BD_channel_strip.set_enabled(True)
+				break
 	
 
 	def _open_track_mutes(self):
