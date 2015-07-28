@@ -292,7 +292,7 @@ class HKDefaultsComponent(DefaultsComponent):
 		self._parent._sendreset_component.reset_send()
 		mod = self._parent.modhandler.active_mod()
 		mod and mod._param_component.set_all_params_to_defaults()
-		self._parent.modhandler.reset_sequence()
+		#self._parent.modhandler.reset_sequence()
 	
 
 	def scan_device(self, device):
@@ -483,7 +483,7 @@ class ParamButton(ControlSurfaceComponent):
 
 	def set_param_to_default(self):
 		debug('set_param_to_default', self._param, self._default)
-		if self._param and self._default:
+		if self._param and not self._default is None:
 			self._param.value = self._default
 	
 
@@ -1158,7 +1158,7 @@ class PO10(OptimizedControlSurface):
 		self._main_encoder_button_matrix = ButtonMatrixElement(name = 'Main_Encoder_Button_Matrix', rows = [self._encoder_button[8:13]])
 		self._device_encoder_button_matrix = ButtonMatrixElement(name = 'Device_Encoder_Button_Matrix', rows = [self._encoder_button[:8]])
 		self._send_encoder_button_matrix = ButtonMatrixElement(name = 'Send_Encoder_Button_Matrix', rows = [self._encoder_button[13:]])
-		self._main_button_matrix = ButtonMatrixElement(name = 'Main_Matrix', rows = [self._button[22:]])
+		self._main_button_matrix = ButtonMatrixElement(name = 'Main_Matrix', rows = [self._button[22:25]])
 		self._device_button_matrix = ButtonMatrixElement(name = 'Device_Matrix', rows = [self._button[:7] + self._button[8:16] + self._button[18:21]])
 	
 
@@ -1237,7 +1237,9 @@ class PO10(OptimizedControlSurface):
 				self._AllBeats_channel_strip.set_mute_button(self._button[16])
 				self._AllBeats_channel_strip.set_enabled(True)
 				break
-			elif track and hasattr(track, 'name') and track.name.startswith('BD'):
+		for track in self.song().tracks:
+			debug('looking for mute on track:', track.name)
+			if track and hasattr(track, 'name') and track.name.startswith('BD'):
 				debug('found BD mute!')
 				self._BD_channel_strip.set_track(track)
 				self._BD_channel_strip.set_mute_button(self._button[17])
