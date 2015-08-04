@@ -1175,6 +1175,7 @@ class PO10(OptimizedControlSurface):
 		self.set_highlighting_session_component(self._session)
 		self._session.set_show_highlight(True)
 		self._session.set_enabled(False)
+		self._session._link()
 	
 
 	def _setup_main_device_control(self):
@@ -1418,6 +1419,7 @@ class PO10(OptimizedControlSurface):
 	
 
 	def disconnect(self):
+		self._session._unlink()
 		self.log_message("<<<<<<<<<<<<<<<<<<<<<<<<< " + str(self._host_name) + " log closed >>>>>>>>>>>>>>>>>>>>>>>>>")
 		super(PO10, self).disconnect()
 		if not self._po10_linked_script is None:
