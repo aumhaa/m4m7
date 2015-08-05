@@ -29,7 +29,7 @@ DEFAULT_MASTER_DEVICE_INDEX = 0
 
 DEFAULT_DEVICE_INDEX = 0
 
-TRACK_NAMES_FOR_SENDS = ['CLP/SD_1', 'AllBeats', 'HEX', 'SUB37_input', 'RYTM']
+TRACK_NAMES_FOR_SENDS = ['CLP/SD_1', 'AllBeats', 'HEX', 'SUB37_AUDIO', 'AllTones']
 
 FOLLOW = True		#this sets whether or not the last selected device on a track is selected for editing when you select a new track
 
