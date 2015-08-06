@@ -204,8 +204,8 @@ class Faderfox(OptimizedControlSurface):
 
 	def _setup_session(self):
 		self._session = SessionComponent(name = 'Session_Component', num_tracks = 20, num_scenes = 1)
-		self._session._scenes[0].layer = Layer(priority = 6, launch_button = self._button[1])
-		self._session.layer = Layer(priority = 6, scene_bank_down_button = self._button[0])
+		self._session._scenes[0].layer = Layer(priority = 6, launch_button = self._button[0])
+		self._session.layer = Layer(priority = 6, scene_bank_down_button = self._button[1])
 		self.set_highlighting_session_component(self._session)
 		self._session.set_show_highlight(True)
 		self._session.set_enabled(False)
