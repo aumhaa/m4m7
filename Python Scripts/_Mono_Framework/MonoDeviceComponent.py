@@ -1188,7 +1188,7 @@ class NewMonoDeviceComponent(DeviceComponent):
 						for item in name.split(' '):
 							if len(str(item)) and str(item)[0]=='@':
 								vals = item[1:].split(':')
-								if vals[0] in ['def']:
+								if vals[0] in ['def', 'rst']:
 									#self.set_param_to_default(param, vals[1])
 									rst_val = float(vals[1])/100
 									newval = float(rst_val * (param.max - param.min)) + param.min
