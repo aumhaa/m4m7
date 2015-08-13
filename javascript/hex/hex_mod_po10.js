@@ -425,8 +425,11 @@ function make_obj_setter(part, obj)
 					part[obj.Name] = val;
 					part.obj[obj.Name].message(obj.Type, val);
 				}
-				debug('storing', obj.Name, 'in', obj.pattr, 'at', pset, 'with', val, '\n');
-				storage.setstoredvalue('poly.'+(num+1)+'::'+obj.pattr, pset, val);
+				if(!locked)
+				{
+					debug('storing', obj.Name, 'in', obj.pattr, 'at', pset, 'with', val, '\n');
+					storage.setstoredvalue('poly.'+(num+1)+'::'+obj.pattr, pset, val);
+				}
 			}
 		}
 	}
@@ -764,11 +767,15 @@ function refresh_c_keys()
 			break;
 		case 8:
 			var p = presets[selected.num]-1;
+			var muted = this.patcher.getnamed('moddial').getvalueof() == 0;
+			debug('muted:', muted);
 			batch.unshift(8);
 			batch.unshift(2);
+			batch.unshift(muted ? 5 : 1);
 			keygui.message(15, 0, 5);
 			keygui.message(14, 0, 2);
-			var i=5;do{
+			keygui.message(13, 0, muted ? 4 : 3);
+			var i=4;do{
 				var v = (i==p)+6;
 				batch.unshift(Math.floor(i==p));
 				keygui.message(i+8, 0, v);
@@ -781,7 +788,7 @@ function refresh_c_keys()
 			}while(i--);
 			if(grid_mode == 0){ 
 				mod.Send( 'receive_translation', 'keys_batch', 'batch_mask_row', -1);
-				debug('batch is:', batch);
+				//debug('batch is:', batch);
 				mod.Send( 'receive_translation', 'keys_batch_fold', 'batch_row_fold', batch); 
 			}
 			break;
@@ -1165,7 +1172,7 @@ function _c_key(x, y, val)
 						refresh_c_keys();
 					}
 				}
-				else if(num<14)
+				else if(num<13)
 				{
 					if((val>0)&&(pad_pressed<0))
 					{
@@ -1193,6 +1200,11 @@ function _c_key(x, y, val)
 				}
 				else if(val>0)
 				{
+					if(num==13)
+					{
+						this.patcher.getnamed('moddial').message('int', 127);
+						refresh_c_keys();
+					}
 					if(num==14)
 					{
 						_reset_params_to_default();
@@ -3619,12 +3631,6 @@ function hideerror()
 	}
 }
 
-function reset_sequence()
-{
-	debug('mod reset_sequence()');
-	clear_pattern(selected);
-}
-
 ///po10 specific
 
 function _reset_params_to_default()
@@ -3633,4 +3639,20 @@ function _reset_params_to_default()
 	mod.Send( 'send_explicit', 'receive_device', 'set_all_params_to_defaults' );
 }
 
+function reset_sequence()
+{
+	debug('mod reset_sequence()');
+	this.patcher.getnamed('moddial').message('int', 0);
+	refresh_c_keys();
+}
+
+function recall_base_pattern()
+{
+	storage.message(6);
+}
+
+function moddial_change(val)
+{
+	refresh_c_keys();
+}
 forceload(this);
