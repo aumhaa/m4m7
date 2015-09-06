@@ -6,7 +6,7 @@ inlets = 1;
 var script = this;
 
 
-var DEBUG = true;
+var DEBUG = false;
 var SHOW_STORAGE = false;
 var FORCELOAD = false ;
 
@@ -480,7 +480,7 @@ function anything()
 
 function init()
 {
-	mod = new Mod(script, 'hex', unique, false);
+	mod = new Mod(script, 'plinko', unique, false);
 	//mod.debug = debug;
 	mod_finder = new LiveAPI(mod_callback, 'this_device');
 	mod.assign_api(mod_finder);

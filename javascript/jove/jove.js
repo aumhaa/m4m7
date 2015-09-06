@@ -102,6 +102,7 @@ var stored_messages = [];
 //var del_chan = new Task(change_poke_channel, this);
 
 var Mod = ModComponent.bind(script);
+var mod, modfinder;
 
 var master = new Global('master');
 master.looper = [];
@@ -110,7 +111,7 @@ function mod_callback(args)
 {
 	if((args[0]=='value')&&(args[1]!='bang'))
 	{
-		//debug('mod callback:', args);
+		//debug('mod callback', prefix, ':', args);
 		if(args[1] in script)
 		{
 			//debug('in script:', args[1]);
@@ -146,6 +147,7 @@ function anything()
 function init()
 {
 	debug('init');
+	debug('prefix is:', prefix);
 	for(var obj in POBJ)
 	{
 		looper[POBJ[obj]] = this.patcher.getnamed(POBJ[obj]);
@@ -191,7 +193,8 @@ function init()
 	dev.id = 0;
 
 
-	mod = new Mod(script, 'jove', prefix, false);
+	//mod = new Mod(script, 'jove', prefix, false);
+	mod = new Mod(script, undefined, 'jove', prefix, false);
 	//mod.debug = debug;
 	//mod.wiki_addy = WIKI;
 	mod_finder = new LiveAPI(mod_callback, 'this_device');
@@ -680,8 +683,12 @@ function setup_translations()
 	}
 	for(var i = 0;i < 4;i++)
 	{
-		mod.Send('add_translation', 'instance_'+i, 'grid', 'instance', (i%2)+6, Math.floor(i/2)+6);
+		mod.Send('add_translation', 'instance_'+i+1, 'grid', 'instance', (i%2)+6, Math.floor(i/2)+6);
 	}
+	//mod.Send('add_translation', 'instance_0', 'grid', 'instance', 6, 6);
+	//mod.Send('add_translation', 'instance_1', 'grid', 'instance', 7, 6);
+	//mod.Send('add_translation', 'instance_2', 'grid', 'instance', 6, 7);
+	//mod.Send('add_translation', 'instance_3', 'grid', 'instance', 7, 7);
 	mod.Send('add_translation', 'undo', 'grid', 'all', 0, 6);
 	mod.Send('add_translation', 'overdub', 'grid', 'all', 1, 6);
 	mod.Send('add_translation', 'record', 'grid', 'all', 2, 6);
@@ -709,6 +716,7 @@ function setup_translations()
 
 function _push_grid(x, y, z)
 {
+	debug('push_grid:', x, y, z);
 	grid(x, y, z);
 }
 
@@ -756,6 +764,7 @@ function _base_grid(x, y, z)
 
 function _grid(x, y, z)
 {
+	debug('grid:', x, y, z);
 	if((x<8)&&(y<8))
 	{
 		var pos = parseInt(cell_fire[x][y][0]);
