@@ -68,18 +68,18 @@ from ModDevices import *
 from Map import *
 
 
-from Push.AutoArmComponent import AutoArmComponent
-from Push.SessionRecordingComponent import *
-from Push.ViewControlComponent import ViewControlComponent
-from Push.DrumGroupComponent import DrumGroupComponent
-from Push.StepSeqComponent import StepSeqComponent
-from Push.PlayheadElement import PlayheadElement
-from Push.PlayheadComponent import PlayheadComponent
-from Push.GridResolution import GridResolution
-from Push.ConfigurableButtonElement import ConfigurableButtonElement
-from Push.LoopSelectorComponent import LoopSelectorComponent
-from Push.Actions import CreateInstrumentTrackComponent, CreateDefaultTrackComponent, CaptureAndInsertSceneComponent, DuplicateDetailClipComponent, DuplicateLoopComponent, SelectComponent, DeleteComponent, DeleteSelectedClipComponent, DeleteSelectedSceneComponent, CreateDeviceComponent
-from Push.SelectPlayingClipComponent import SelectPlayingClipComponent
+#from Push.AutoArmComponent import AutoArmComponent
+#from Push.SessionRecordingComponent import *
+#from Push.ViewControlComponent import ViewControlComponent
+#from Push.DrumGroupComponent import DrumGroupComponent
+#from Push.StepSeqComponent import StepSeqComponent
+#from Push.PlayheadElement import PlayheadElement
+#from Push.PlayheadComponent import PlayheadComponent
+#from Push.GridResolution import GridResolution
+#from Push.ConfigurableButtonElement import ConfigurableButtonElement
+#from Push.LoopSelectorComponent import LoopSelectorComponent
+#from Push.Actions import CreateInstrumentTrackComponent, CreateDefaultTrackComponent, CaptureAndInsertSceneComponent, DuplicateDetailClipComponent, DuplicateLoopComponent, SelectComponent, DeleteComponent, DeleteSelectedClipComponent, DeleteSelectedSceneComponent, CreateDeviceComponent
+#from Push.SelectPlayingClipComponent import SelectPlayingClipComponent
 
 
 check_model = (240, 126, 127, 6, 1, 247)
