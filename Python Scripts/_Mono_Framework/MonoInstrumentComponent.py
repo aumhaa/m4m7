@@ -11,31 +11,29 @@ from itertools import imap, chain, starmap, ifilter
 from _Framework.ControlSurface import *
 from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 from _Framework.CompoundComponent import CompoundComponent
+from _Framework.ControlElement import ControlElement
 from _Framework.ModeSelectorComponent import ModeSelectorComponent
 from _Framework.SubjectSlot import subject_slot, subject_slot_group
 from _Framework.ButtonElement import ButtonElement
 from _Framework.ButtonMatrixElement import ButtonMatrixElement
 from _Framework.DisplayDataSource import DisplayDataSource
 from _Framework.ModesComponent import DisplayingModesComponent, ModesComponent
-from _Framework.Util import forward_property, find_if, first, in_range, product
+from _Framework.Util import forward_property, find_if, first, in_range, product, nop
 from _Framework.SessionComponent import SessionComponent
 from _Framework.ClipCreator import ClipCreator
 from _Framework.ModesComponent import AddLayerMode, LayerMode, MultiEntryMode, ModesComponent, SetAttributeMode, ModeButtonBehaviour, CancellableBehaviour, AlternativeBehaviour, ReenterBehaviour, DynamicBehaviourMixin, ExcludingBehaviourMixin, ImmediateBehaviour, LatchingBehaviour, ModeButtonBehaviour
 from _Framework.Layer import Layer
 from _Framework.Task import *
+from _Framework.SessionRecordingComponent import *
+from _Framework.ViewControlComponent import ViewControlComponent
+from _Framework.Proxy import Proxy
 
-from Push.SessionRecordingComponent import *
-from Push.ViewControlComponent import ViewControlComponent
-#from Push.DrumGroupComponent import DrumGroupComponent
-from Push.StepSeqComponent import StepSeqComponent, DrumGroupFinderComponent
-from Push.GridResolution import GridResolution
-from Push.ConfigurableButtonElement import ConfigurableButtonElement
-from Push.LoopSelectorComponent import LoopSelectorComponent
-from Push.Actions import CreateInstrumentTrackComponent, CreateDefaultTrackComponent, CaptureAndInsertSceneComponent, DuplicateDetailClipComponent, DuplicateLoopComponent, SelectComponent, DeleteComponent, DeleteSelectedClipComponent, DeleteSelectedSceneComponent, CreateDeviceComponent
-from Push.SkinDefault import make_default_skin
+from _deprecated.StepSeqComponent import StepSeqComponent, DrumGroupFinderComponent
+from _deprecated.LoopSelectorComponent import LoopSelectorComponent
+#from _deprecated.PlayheadComponent import PlayheadComponent
 
-from _Mono_Framework.OriginalDrumGroupComponent import DrumGroupComponent
-from _Mono_Framework.Debug import *
+from OriginalDrumGroupComponent import DrumGroupComponent
+from Debug import *
 
 debug = initialize_debug()
 
@@ -180,21 +178,128 @@ def reset_matrix(matrix):
 				button.set_enabled(True)
 
 
-def new_reset_matrix(matrix):
-	if matrix:
-		for element in matrix:
-			button = element._control_element
-			if button:
-				button.descriptor = None
-				button.display_press = False
-				button._force_forwarding = False
-				button.set_force_next_value()
-				button.use_default_message()
-				button.set_enabled(True)
-
 def _add_to_mode(mode, add):
 	return mode + add
 
+
+
+
+class NullPlayhead(object):
+	notes = []
+	start_time = 0.0
+	step_length = 1.0
+	velocity = 0.0
+	wrap_around = False
+	track = None
+	set_feedback_channels = nop
+
+
+
+class ProxyElement(Proxy, ControlElement):
+
+
+	def reset(self):
+		try:
+			super(ProxyElement, self).__getattr__('reset')()
+		except AttributeError:
+			pass
+	
+
+
+class PlayheadElement(ProxyElement):
+
+
+	def __init__(self, playhead = None, *a, **k):
+		super(PlayheadElement, self).__init__(proxied_object=playhead, proxied_interface=NullPlayhead())
+	
+
+	def reset(self):
+		self.track = None
+	
+
+
+class MonoPlayheadComponent(ControlSurfaceComponent):
+	"""
+	Updates the contents of the Live playhead object.
+	"""
+
+
+	def __init__(self, paginator = None, grid_resolution = None, follower = None, notes = range(8), triplet_notes = range(6), feedback_channels = [], *a, **k):
+		super(MonoPlayheadComponent, self).__init__(*a, **k)
+		self._playhead = None
+		self._clip = None
+		self._paginator = paginator
+		self._grid_resolution = grid_resolution
+		self._follower = follower
+		self._notes = tuple(notes)
+		self._triplet_notes = tuple(triplet_notes)
+		self._feedback_channels = feedback_channels
+		self._on_page_changed.subject = self._paginator
+		self._on_grid_resolution_changed.subject = self._grid_resolution
+		self._on_follower_is_following_changed.subject = self._follower
+	
+
+	def set_playhead(self, playhead):
+		self._playhead = playhead
+		self.update()
+	
+
+	def set_clip(self, clip):
+		self._clip = clip
+		self._on_playing_status_changed.subject = clip
+		self._on_song_is_playing_changed.subject = self.song() if clip else None
+		self.update()
+	
+
+	@subject_slot('is_playing')
+	def _on_song_is_playing_changed(self):
+		self.update()
+	
+
+	@subject_slot('page')
+	def _on_page_changed(self):
+		self.update()
+	
+
+	@subject_slot('playing_status')
+	def _on_playing_status_changed(self):
+		self.update()
+	
+
+	@subject_slot('is_playing')
+	def _on_song_is_playing_changed(self):
+		self.update()
+	
+
+	@subject_slot('index')
+	def _on_grid_resolution_changed(self):
+		self.update()
+	
+
+	@subject_slot('is_following')
+	def _on_follower_is_following_changed(self, value):
+		self.update()
+	
+
+	def update(self):
+		super(MonoPlayheadComponent, self).update()
+		if self._playhead:
+			if self.is_enabled() and self.song().is_playing and self._clip and self._clip.is_playing:
+				clip_slot = self._clip.canonical_parent
+				track = clip_slot.canonical_parent if clip_slot else None
+			else:
+				track = None
+			self._playhead.track = track
+			self._playhead.set_feedback_channels(self._feedback_channels)
+			if track:
+				is_triplet = self._grid_resolution.clip_grid[1]
+				notes = self._triplet_notes if is_triplet else self._notes
+				self._playhead.notes = list(notes)
+				self._playhead.wrap_around = self._follower.is_following and self._paginator.can_change_page
+				self._playhead.start_time = self._paginator.page_length * self._paginator.page_index
+				self._playhead.step_length = self._paginator.page_length / len(notes)
+			#debug('playhead update:', notes, wrap_around, start_time, step_length, self._feedback_channels, track)
+	
 
 
 class CancellableBehaviourWithRelease(CancellableBehaviour):
@@ -1121,9 +1226,16 @@ class MonoScaleComponent(CompoundComponent):
 		self.split_layer = LayerMode(self, Layer(priority = 0))
 		self.sequencer_layer = LayerMode(self, Layer(priority = 0))
 		self.sequencer_shift_layer = LayerMode(self, Layer(priority = 0))
-		self._note_sequencer = StepSeqComponent(ClipCreator(), skin, grid_resolution, name='Note_Sequencer')
-		self._note_sequencer._playhead_component._notes=tuple(range(16))
-		self._note_sequencer._playhead_component._triplet_notes=tuple(chain(*starmap(range, ((0, 6), (8, 14)))))
+		self._note_sequencer = StepSeqComponent(clip_creator = ClipCreator(), skin = skin, grid_resolution = grid_resolution, name='Note_Sequencer')
+		self._note_sequencer._playhead_component = self._note_sequencer.register_component(MonoPlayheadComponent(	grid_resolution=self._note_sequencer._grid_resolution,
+																												paginator=self._note_sequencer._paginator,
+																												follower=self._note_sequencer._loop_selector,
+																												notes=tuple(range(16)),
+																												triplet_notes=tuple(chain(*starmap(range, ((0, 6), (8, 14))))),
+																												feedback_channels = [14]))
+		#self._note_sequencer._playhead_component._notes=tuple(range(16))
+		#self._note_sequencer._playhead_component._triplet_notes=tuple(chain(*starmap(range, ((0, 6), (8, 14)))))
+		#self._note_sequencer._playhead_component._feedback_channels = [14]
 		#self.set_playhead = self._note_sequencer.set_playhead
 		self.set_loop_selector_matrix = self._note_sequencer.set_loop_selector_matrix 
 		self.set_quantization_buttons = self._note_sequencer.set_quantization_buttons
@@ -1214,10 +1326,11 @@ class MonoScaleComponent(CompoundComponent):
 			for button, (x, y) in matrix.iterbuttons():
 				if button:
 					button.display_press = False
-					#button.set_channel(0)
+					button.set_channel(1)
 					#button.set_on_off_values('Sequencer.On', 'Sequencer.Off')
 					button.set_identifier(x + (y*width))
-			#self._control_surface.set_feedback_channels(range(14, 15))
+			# self._control_surface.set_feedback_channels(range(14, 15)
+		self._control_surface.reset_controlled_track()
 		self._note_sequencer.set_button_matrix(matrix)
 		#debug('playhead color is:', self._note_sequencer.playhead_color, int(self._skin[self._note_sequencer.playhead_color]))
 	
@@ -1243,6 +1356,7 @@ class MonoScaleComponent(CompoundComponent):
 	@subject_slot('value')
 	def _on_sequencer_matrix_value(self, value, x, y, *a, **k):
 		debug('on_sequencer_matrix_value', x, y, value)
+		self._on_sequencer_matrix_value.subject.get_button(x, y) and debug('channel:', self._on_sequencer_matrix_value.subject.get_button(x, y).message_channel())
 
 		#if y>1 and value:
 		#	self._note_sequencer._note_editor.editing_note = self._base_grid.get_button(x, y)._stored_note
@@ -1300,13 +1414,20 @@ class MonoDrumpadComponent(CompoundComponent):
 		self.split_layer = LayerMode(self, Layer(priority = 0))
 		self.sequencer_layer = LayerMode(self, Layer(priority = 0))
 		self.sequencer_shift_layer = LayerMode(self, Layer(priority = 0))
-		self._step_sequencer = StepSeqComponent(ClipCreator(), skin, grid_resolution, name='Drum_Sequencer')
-		self._step_sequencer._drum_group = self.register_component(DrumGroupComponent())
+		self._step_sequencer = StepSeqComponent(clip_creator = ClipCreator(), skin = skin, grid_resolution = grid_resolution, name='Drum_Sequencer')
+		self._step_sequencer._drum_group = DrumGroupComponent()
 		self._step_sequencer._note_editor._visible_steps = self._visible_steps
 		self._step_sequencer._drum_group._update_pad_led = self._drum_group_update_pad_led
 		self._step_sequencer._drum_group._update_control_from_script = self._update_control_from_script
-		self._step_sequencer._playhead_component._notes=tuple(range(16))
-		self._step_sequencer._playhead_component._triplet_notes=tuple(chain(*starmap(range, ((0, 3), (4, 7), (8, 11), (12, 15)))))
+		self._step_sequencer._playhead_component = self._step_sequencer.register_component(MonoPlayheadComponent(	grid_resolution=self._step_sequencer._grid_resolution,
+																												paginator=self._step_sequencer._paginator,
+																												follower=self._step_sequencer._loop_selector,
+																												notes=tuple(range(16)),
+																												triplet_notes=tuple(chain(*starmap(range, ((0, 3), (4, 7), (8, 11), (12, 15))))),
+																												feedback_channels = [14]))
+		#self._step_sequencer._playhead_component._notes=tuple(range(16))
+		#self._step_sequencer._playhead_component._triplet_notes=tuple(chain(*starmap(range, ((0, 3), (4, 7), (8, 11), (12, 15)))))
+		#self._step_sequencer._playhead_component._feedback_channels = [14]
 		self.set_playhead = self._step_sequencer.set_playhead
 		self.set_loop_selector_matrix = self._step_sequencer.set_loop_selector_matrix 
 		self.set_quantization_buttons = self._step_sequencer.set_quantization_buttons
@@ -1337,8 +1458,7 @@ class MonoDrumpadComponent(CompoundComponent):
 		if self._on_drumpad_matrix_value.subject:
 			DrumGroupComponent._update_pad_led(self._step_sequencer._drum_group, pad, button, soloed_pads)
 			#debug('updating leds:' + str(button.name))
-			#button.turn_off()
-			button.color = 'DefaultButton.Off'
+			button.turn_off()
 	
 
 	def _update_control_from_script(self):
@@ -1357,6 +1477,8 @@ class MonoDrumpadComponent(CompoundComponent):
 
 	def set_offset(self, offset):
 		self._offset = offset
+		if hasattr(self._step_sequencer, '_drum_group'):
+			self._step_sequencer._drum_group.position = offset
 	
 
 	def set_note_matrix(self, matrix):
@@ -1384,6 +1506,7 @@ class MonoDrumpadComponent(CompoundComponent):
 					button.set_identifier(x+(y*width))
 					#button.set_channel(14)
 					#debug('button assignments: ' + str(button.message_identifier()) + ' ' + str(button.message_channel()))
+		self._control_surface.reset_controlled_track()
 		self._step_sequencer.set_button_matrix(matrix)
 	
 
