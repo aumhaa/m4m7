@@ -7,6 +7,10 @@ var ccmutes=[];
 var leader;
 var unique = jsarguments[1];
 
+
+var DEBUG = true;
+var debug = (DEBUG&&Debug) ? Debug : function(){};
+
 function anything(){}
 
 function init()

@@ -16,29 +16,30 @@ var dist_array = [];
 var boids = [];
 var weights = [1., 1., 1., 1., 1., 1., 1., 1.];
 var sixteenth = 1/16;
-var centroid_x = 0.
-var centroid_y = 0.
-var avgvelocity_x = 0.
-var avgvelocity_y = 0.
-var myprime = 0
+var centroid_x = 0.;
+var centroid_y = 0.;
+var avgvelocity_x = 0.;
+var avgvelocity_y = 0.;
+var myprime = 0;
 var primes = [];
-var mywind_x = 0.
-var mywind_y = 0.
-var myseparation = .1
-var myalignment = .07
-var mycoherence = .1
-var myobedience = .5
-var myinertia = .5
-var myfriction = .5
-var mysepthresh = .3
-var mymaxvel = .1
-var mygravity = .1
-var mygravpoint_x = .5
-var mygravpoint_y = 0.
-var myslip = 0.
-var mywind = 0.
+var mywind_x = 0.;
+var mywind_y = 0.;
+var myseparation = .1;
+var myalignment = .07;
+var mycoherence = .1;
+var myobedience = .5;
+var myinertia = .5;
+var myfriction = .5;
+var mysepthresh = .3;
+var mymaxvel = .1;
+var mygravity = .1;
+var mygravpoint_x = .5;
+var mygravpoint_y = 0.;
+var myslip = 0.;
+var mywind = 0.;
+var myagentcount = 0;
 
-var DEBUG = true;
+var DEBUG = false;
 var debug = (DEBUG&&Debug) ? Debug : function(){};
 
 var FORCELOAD = false;
@@ -199,6 +200,7 @@ function gravpoint(x, y)
 
 function bang()
 {
+	debug('bang');
 	//timer += 1
 	//mywind_x = ((Math.random()-.5)*.05)*mywind_x
 	//mywind_y = ((Math.random()-.5)*.05)*mywind_y
@@ -448,6 +450,9 @@ function assign_weight(num, val)
 	}
 }
 
-
+function anything()
+{
+	debug(arrayfromargs(messagename, arguments));
+}
 
 forceload(this);

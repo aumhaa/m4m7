@@ -745,6 +745,7 @@ function _channel(num)
 {
 	debug('channel', num);
 	mod.Send( 'channel', 'value', num);
+	messnamed(unique+'channel', num);
 }
 
 function display_node(num)

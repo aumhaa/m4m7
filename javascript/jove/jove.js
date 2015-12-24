@@ -229,6 +229,12 @@ function initialize()
 		mod.Send('receive_translation', 'record',  'value', (in_loop*7)+5);
 		mod.Send('receive_translation', 'mute', 'value', (mute_status*7)+7);
 		mod.Send('receive_translation', 'clear',  'value', 2);
+		for(var i=0;i<4;i++)
+		{
+			mod.Send('receive_translation', 'instance_'+i, 'value', this_instance_number==i?5:1);
+		}
+		_change_speed(speed);
+		_change_inertia(inertia);
 	}
 }
 
@@ -241,7 +247,7 @@ function detect_instance(this_device)
 		if(KEYS[i].test(name))
 		{
 			this_instance_number = i;
-			mod.Send('receive_translation', 'instance_'+i, 'value', 1);
+			//Alive&&mod.Send('receive_translation', 'instance_'+i, 'value', 1);
 			debug('found instance number:', i);
 			break;
 		}
@@ -683,12 +689,8 @@ function setup_translations()
 	}
 	for(var i = 0;i < 4;i++)
 	{
-		mod.Send('add_translation', 'instance_'+i+1, 'grid', 'instance', (i%2)+6, Math.floor(i/2)+6);
+		mod.Send('add_translation', 'instance_'+i, 'grid', 'instance', (i%2)+6, Math.floor(i/2)+6);
 	}
-	//mod.Send('add_translation', 'instance_0', 'grid', 'instance', 6, 6);
-	//mod.Send('add_translation', 'instance_1', 'grid', 'instance', 7, 6);
-	//mod.Send('add_translation', 'instance_2', 'grid', 'instance', 6, 7);
-	//mod.Send('add_translation', 'instance_3', 'grid', 'instance', 7, 7);
 	mod.Send('add_translation', 'undo', 'grid', 'all', 0, 6);
 	mod.Send('add_translation', 'overdub', 'grid', 'all', 1, 6);
 	mod.Send('add_translation', 'record', 'grid', 'all', 2, 6);

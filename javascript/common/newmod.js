@@ -19,7 +19,7 @@ var legacy = false;
 var control_surface_ids = {0:true};
 var restart = new Task(init, this);
 
-var DEBUG = false;
+var DEBUG = true;
 var debug = (DEBUG&&Debug) ? Debug : function(){};
 
 var FORCELOAD = false;
