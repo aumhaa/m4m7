@@ -81,6 +81,7 @@ function alive(val)
 
 function initialize()
 {
+	deprivatize_script_functions(script);
 	storage = this.patcher.getnamed('life');
 	for(var i=0;i<16;i++)
 	{
@@ -109,11 +110,14 @@ function anything()
 		case 1:
 			if(args[0]<5)
 			{
-				plane = args[0]-1;
-				var i=4;do{
-					mod.Send('key', 'value', i, i==plane ? i+1 : 0);
-				}while(i--);
-				display_gameboard();
+				if(Alive)
+				{
+					plane = args[0]-1;
+					var i=4;do{
+						mod.Send('key', 'value', i, i==plane ? i+1 : 0);
+					}while(i--);
+					display_gameboard();
+				}
 			}
 			break;
 		case 2:
@@ -270,7 +274,7 @@ function grid(x, y, val)
 	}
 }
 
-function grid_out(x, y, val)
+function _grid_out(x, y, val)
 {
 	mod.Send('grid', 'value', x, y, val);
 }

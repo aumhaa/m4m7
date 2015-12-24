@@ -20,8 +20,6 @@ var type = jsarguments[2];
 
 var initialize_instance = function(){}
 
-var type = 'aumboids';
-
 var Translations = require(type+"Translations");
 //include(type+'Translations');
 var Colors = require(type+"Colors");
@@ -95,6 +93,7 @@ function setup_translations()
 	debug('setup trasnlations');
 	for(var i in Translations)
 	{
+		debug('sending translation for:', i);
 		Translations[i](mod);
 	}
 }
@@ -104,26 +103,16 @@ function setup_colors()
 	debug('setup colors');
 	for(var i in Colors)
 	{
+		debug('sending colors for:', i);
 		Colors[i](mod);
 	}
 }
 
 function anything()
 {
-	var args = arrayfromarguments(arguments);
+	var args = arrayfromargs(arguments);
 	debug('anything', type+':', args);
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 forceload(this);
