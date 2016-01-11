@@ -172,7 +172,10 @@ function init()
 	looper.speed.message('float', looper.speed.getvalueof());
 	looper.inertia.message('int', looper.inertia.getvalueof());
 	looper.fadetime.message('int', looper.fadetime.getvalueof());
-	looper.relativerecord.message('int', looper.relativerecord.getvalueof());
+	//looper.relativerecord.message('int', looper.relativerecord.getvalueof());
+	//looper.quantizerecord.message('int', looper.quantizerecord.getvalueof());
+	//looper.relativerecord.message('bang');
+	//looper.quantizerecord.message('bang');
 	looper.overdub.message('set', 0);
 	looper.quantizemenu.message('bang');
 	looper.metro.message('bang');
@@ -192,13 +195,24 @@ function init()
 	looper.state_remote.message('id', dev.id);
 	dev.id = 0;
 
-
 	//mod = new Mod(script, 'jove', prefix, false);
 	mod = new Mod(script, undefined, 'jove', prefix, false);
 	//mod.debug = debug;
 	//mod.wiki_addy = WIKI;
-	mod_finder = new LiveAPI(mod_callback, 'this_device');
+	mod_finder = new LiveAPI(mod_callback, 'live_set', 'this_device');
 	mod.assign_api(mod_finder);
+
+	var val = looper.quantizerecord.getvalueof();
+	debug('quantize:', val);
+	_set_quantize_record(parseInt(val));
+
+	var val = looper.relativerecord.getvalueof();
+	debug('relative:', val);
+	_set_relative_record(parseInt(val));
+
+	looper.trigger.quantization.message('int', looper.trigger.quantization.getvalueof());
+
+
 }
 
 function alive(val)
@@ -531,7 +545,7 @@ function set_quantize_amount(menu, ticks, ms, samples)
 //turn on/off quantization
 function _set_quantize_record(val)
 {
-	debug('quantize_amount', val);
+	debug('set_quantize_record', val);
 	if((looper.trigger.state=='play')||(looper.trigger.state=='empty'))
 	{
 		quantize_record.enabled = val;
@@ -547,7 +561,7 @@ function _set_quantize_record(val)
 //turn on/off relative quantization	
 function _set_relative_record(val)
 {
-	debug('relative', val);
+	debug('set_relative_record', val);
 	if((looper.trigger.state=='play')||(looper.trigger.state=='empty'))
 	{
 		quantize_record.relative = val;
@@ -626,7 +640,7 @@ function _loop_phase(val)
 function change_state(val)
 {
 	state = val;
-	looper.state.message('int', ['recording', 'empty', 'playing', 'overdubbing', 'awaiting_record', 'muted'].indexOf(val));
+	looper.state1.message('int', ['recording', 'empty', 'playing', 'overdubbing', 'awaiting_record', 'muted'].indexOf(val));
 	debug('state', state);
 }
 
