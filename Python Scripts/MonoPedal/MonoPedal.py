@@ -284,7 +284,8 @@ class MonolooperComponent(CompoundComponent):
 	def _on_doublepress_select_value(self, value, x, y, is_momentary):
 		#self._script.log_message('doublepress_select: %(x)s %(y)s %(value)s %(is_momentary)s' % {'x':x, 'y':y, 'value':value, 'is_momentary':is_momentary})
 		#self._loopers[x].display_looper()
-		self._script.toggle_device_control(x)
+		#self._script.toggle_device_control(x)
+		pass
 	
 
 	@subject_slot('value')
