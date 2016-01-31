@@ -30,8 +30,9 @@ ModComponent.prototype.init = function()
 	if(DEBUG){post('this device id:', this.this_device_id);}
 	this.finder.goto('control_surfaces');
 	var number_children = parseInt(this.finder.children[0]);
+	if(DEBUG){post('children:', this.finder.children, this.finder.children[0]);}
 	if(DEBUG){post('control_surfaces length:', number_children , '\n');}
-	for(var i=0;i<number_children;i++)
+	for(var i=1;i<(number_children+1);i++)
 	{
 		if(DEBUG){post('Checking control surface #:', i, '\n');}
 	   	this.finder.goto('control_surfaces', i);

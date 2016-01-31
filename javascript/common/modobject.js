@@ -30,8 +30,9 @@ var Mod = ModComponent.bind(script);
 
 function init()
 {
+	debug('modobject init');
 	mod = new Mod(script, type, unique, false);
-	//mod.debug = debug;
+	mod.debug = debug;
 	mod_finder = new LiveAPI(mod_callback, 'this_device');
 	mod.assign_api(mod_finder);
 }
@@ -40,10 +41,10 @@ function mod_callback(args)
 {
 	if((args[0]=='value')&&(args[1]!='bang'))
 	{
-		//debug('mod callback:', args);
+		debug('mod callback:', args);
 		if(args[1] in script)
 		{
-			//debug('args[1] is in script', script[args[1]]);
+			debug('args[1] is in script', script[args[1]]);
 			script[args[1]].apply(script, args.slice(2));
 		}
 		if(args[1]=='disconnect')

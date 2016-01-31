@@ -200,7 +200,7 @@ ModComponent.prototype.init = function()
 					}
 					else
 					{
-						this.control_surface_ids[parseInt(this.finder.id)] = true;
+						//this.control_surface_ids[parseInt(this.finder.id)] = true;
 					}
 				}
 			}

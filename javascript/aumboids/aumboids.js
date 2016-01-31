@@ -48,6 +48,7 @@ var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
 
 function init()
 {
+	post('aumboids init post');
 	debug('aumboids init');
 	agentcount(8);
 }
