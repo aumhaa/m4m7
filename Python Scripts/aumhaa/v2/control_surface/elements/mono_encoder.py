@@ -78,9 +78,13 @@ class MonoEncoderElement(EncoderElement):
 			except:
 				assignment = parameter
 			if not self._parameter_to_map_to is assignment:
-				self.send_value(0, True)
+				#self.send_value(0, True)
+				#self.send_value(0)
+				pass
 			super(MonoEncoderElement, self).connect_to(assignment)
 			self.add_parameter_listener(self._parameter_to_map_to)
+			if self._parameter_to_map_to is None:
+				self.reset()
 	
 
 	def set_enabled(self, enabled):
@@ -279,8 +283,8 @@ class CodecEncoderElement(MonoEncoderElement):
 	def release_parameter(self):
 		if(self._parameter_to_map_to != None):
 			self.remove_parameter_listener(self._parameter_to_map_to)
+		super(CodecEncoderElement, self).release_parameter()
 		self.send_value(0, True)
-		super(CodecEncoderElement, self).release_paraemter()
 		self._parameter_last_num_value = 0
 	
 

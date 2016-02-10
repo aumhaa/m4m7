@@ -2,7 +2,7 @@
 
 
 import Live
-from _Tools.re import *
+from re import *
 #from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
 from ableton.v2.control_surface.component import Component as ControlSurfaceComponent
 #from Live8DeviceComponent import Live8DeviceComponent as DeviceComponent

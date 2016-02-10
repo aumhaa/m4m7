@@ -87,7 +87,7 @@ def turn_button_on_off(button, on = True):
 class MixerComponentBase(CompoundComponent):
 	""" Class encompassing several channel strips to form a mixer """
 
-	def __init__(self, num_tracks = 0, num_returns = 0, auto_name = False, invert_mute_feedback = False, *a, **k):
+	def __init__(self, num_tracks = 0, num_returns = 0, invert_mute_feedback = False, auto_name = False, *a, **k):
 		assert(num_tracks >= 0)
 		assert(num_returns >= 0)
 		super(MixerComponentBase, self).__init__(*a, **k)

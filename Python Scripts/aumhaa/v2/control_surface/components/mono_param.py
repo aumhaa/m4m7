@@ -1,7 +1,7 @@
 #by amounra 0915 : http://www.aumhaa.com
 
 import Live
-from _Tools.re import *
+from re import *
 from ableton.v2.control_surface.component import Component as ControlSurfaceComponent
 from aumhaa.v2.control_surface.components.live8_device import Live8DeviceComponent as DeviceComponent
 from _Generic.Devices import *

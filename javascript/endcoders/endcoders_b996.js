@@ -4,7 +4,7 @@ inlets = 2;
 outlets = 2;
 
 var FORCELOAD = false;
-var DEBUG = false;
+var DEBUG = true;
 var DEBUGLCD = 0;
 var SHOW_STORAGE = 0;
 
@@ -396,15 +396,17 @@ function _button(x, y, val)
 		{
 			if(rows[0].pressed>0)
 			{
-				clear_breakpoint(((y-1)*8)+x);
+				select_parameter(((y-1)*8)+x);
+				//clear_breakpoint(((y-1)*8)+x);
 			}
 			else if(is_shifted)
 			{
-				set_breakpoint(((y-1)*8)+x);
+				//set_breakpoint(((y-1)*8)+x);
+				select_parameter(((y-1)*8)+x);
 			}
 			else if(is_alted)
 			{
-				select_parameter(((y-1)*8)+x);
+				//select_parameter(((y-1)*8)+x);
 			}
 			else
 			{

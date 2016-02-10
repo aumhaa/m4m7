@@ -6,7 +6,7 @@ import os
 import copy
 import Live
 import contextlib
-from _Tools.re import *
+from re import *
 #from _Framework.ButtonMatrixElement import ButtonMatrixElement
 from ableton.v2.control_surface.elements import ButtonMatrixElement
 
@@ -43,7 +43,7 @@ from ableton.v2.base.disconnectable import Disconnectable
 from ableton.v2.control_surface.input_control_element import InputSignal
 
 #from _Mono_Framework.DeviceSelectorComponent import NewDeviceSelectorComponent as DeviceSelectorComponent
-from aumhaa.v2.control_surface.components.device_selector import NewDeviceSelectorComponent as DeviceSelectorComponent
+from aumhaa.v2.control_surface.components.device_selector import DeviceSelectorComponent
 
 #from _Mono_Framework.MonoParamComponent import MonoParamComponent
 from aumhaa.v2.control_surface.components.mono_param import MonoParamComponent
@@ -56,6 +56,8 @@ from aumhaa.v2.control_surface.mod_devices import *
 
 #from _Mono_Framework.Debug import *
 from aumhaa.v2.base.debug import *
+
+#from _Mono_Framework.Mod import ModRouter as OldModRouter
 
 #from ableton.v2.control_surface import ControlSurface as ControlSurface_v2
 

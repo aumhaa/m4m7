@@ -125,7 +125,7 @@ class ShiftedBehaviour(ModeButtonBehaviour):
 	
 
 	def press_immediate(self, component, mode):
-		#debug('selected_mode:', component.selected_mode, 'mode:', mode, 'chosen_mode:', self._chosen_mode,)
+		#debug('press_immediate selected_mode:', component.selected_mode, 'mode:', mode, 'chosen_mode:', self._chosen_mode,)
 		if mode is component.selected_mode and not component.get_mode(mode+'_shifted') is None:
 			self._chosen_mode = mode+'_shifted'
 		else:
@@ -134,7 +134,7 @@ class ShiftedBehaviour(ModeButtonBehaviour):
 	
 
 	def release_immediate(self, component, mode):
-		#debug('chosen mode is:', self._chosen_mode)
+		#debug('release_immediate chosen mode is:', self._chosen_mode)
 		if component.selected_mode.endswith('_shifted'):
 			component.pop_groups(['shifted'])
 		elif len(component.active_modes) > 1:
@@ -142,21 +142,31 @@ class ShiftedBehaviour(ModeButtonBehaviour):
 	
 
 	def release_delayed(self, component, mode):
-		#debug('chosen mode is:', self._chosen_mode)
+		#debug('release_delayed chosen mode is:', self._chosen_mode)
 		component.pop_mode(self._chosen_mode)
 	
 
 	def update_button(self, component, mode, selected_mode):
-		button = component.get_mode_button(mode)
-		groups = component.get_mode_groups(mode)
-		selected_groups = component.get_mode_groups(selected_mode)
-		#debug('--------mode:', mode, 'selected:', selected_mode, 'chosen:', self._chosen_mode)
-		if mode == selected_mode:
-			button.set_light(self._color)
-		elif mode+'_shifted' == selected_mode:
-			button.set_light(self._color+'_shifted')
-		else:
-			button.turn_off()
+		if not mode.endswith('_shifted'):
+			button = component.get_mode_button(mode)
+			groups = component.get_mode_groups(mode)
+			selected_groups = component.get_mode_groups(selected_mode)
+			#debug('--------mode:', mode, 'selected:', selected_mode, 'chosen:', self._chosen_mode)
+			if mode == selected_mode:
+				#button.set_light(self._color)
+				button.color = self._color
+				button.mode_unselected_color = 'DefaultButton.Disabled'
+			elif mode+'_shifted' == selected_mode:
+				#button.set_light(self._color+'_shifted')
+				button.color = self._color+'_shifted'
+				button.mode_unselected_color = self._color+'_shifted'
+			else:
+				#button.turn_off()
+				button.color = 'DefaultButton.Disabled'
+				button.mode_unselected_color = 'DefaultButton.Disabled'
+				
+			#debug('button color:', button.color)
+			button.update()
 	
 
 
@@ -173,20 +183,20 @@ class LatchingShiftedBehaviour(ShiftedBehaviour):
 		else:
 			self._chosen_mode = mode
 		component.push_mode(self._chosen_mode)
-		debug('new chosen_mode:', self._chosen_mode,)
+		#debug('press_immediate new chosen_mode:', self._chosen_mode,)
 	
 
 	def release_immediate(self, component, mode):
 		if len(component.active_modes) > 1:
 			component.pop_unselected_modes()
-		#debug('selected mode:', component.selected_mode)
+		#debug('release_immediate selected mode:', component.selected_mode)
 	
 
 	def release_delayed(self, component, mode):
 		if not mode is self._chosen_mode is mode + '_shifted':
 			if len(component.active_modes) > 1:
 				component.pop_mode(component.selected_mode)
-		#debug('selected mode:', component.selected_mode)
+		#debug('release_delayed selected mode:', component.selected_mode)
 	
 
 
@@ -221,7 +231,8 @@ class CancellableBehaviourWithRelease(CancellableBehaviour):
 		groups = component.get_mode_groups(mode)
 		selected_groups = component.get_mode_groups(selected_mode)
 		value = (mode == selected_mode or bool(groups & selected_groups))*32 or 1
-		button.send_value(value, True)
+		#button.send_value(value, True)
+		button.color = value
 	
 
 
@@ -239,9 +250,11 @@ class ColoredCancellableBehaviourWithRelease(CancellableBehaviourWithRelease):
 		groups = component.get_mode_groups(mode)
 		selected_groups = component.get_mode_groups(selected_mode)
 		if mode == selected_mode:
-			button.set_light(self._color)
+			#button.set_light(self._color)
+			button.color = self._color
 		else:
-			button.set_light(self._off_color)
+			#button.set_light(self._off_color)
+			button.color = self._off_color
 	
 
 
@@ -259,9 +272,11 @@ class BicoloredMomentaryBehaviour(MomentaryBehaviour):
 		groups = component.get_mode_groups(mode)
 		selected_groups = component.get_mode_groups(selected_mode)
 		if mode == selected_mode:
-			button.set_light(self._color)
+			#button.set_light(self._color)
+			button.color = self._color
 		else:
-			button.set_light(self._off_color)
+			#button.set_light(self._off_color)
+			button.color = self._off_color
 	
 
 

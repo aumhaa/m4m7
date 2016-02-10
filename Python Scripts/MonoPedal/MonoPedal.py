@@ -5,48 +5,46 @@ import Live
 import time
 import math
 import sys
+from re import *
+from ableton.v2.control_surface.mode import ModesComponent
+from ableton.v2.control_surface import ControlSurface, Layer
+from ableton.v2.base import listens, listens_group
+from ableton.v2.control_surface.elements import ButtonMatrixElement, EncoderElement, DoublePressElement, ButtonElement
+from ableton.v2.control_surface import CompoundComponent, Component
+from ableton.v2.control_surface.components import SceneComponent
 
-from _Tools.re import *
+from aumhaa.v2.control_surface.elements.mono_encoder import CodecEncoderElement
+from aumhaa.v2.control_surface.elements.mono_bridge import MonoBridgeElement
+from aumhaa.v2.control_surface.elements.mono_button import MonoButtonElement
+from aumhaa.v2.base.debug import *
+
+import logging
+logger = logging.getLogger(__name__)
 
 """ _Framework files """
-from _Framework.ButtonElement import ButtonElement
-from _Framework.ButtonMatrixElement import ButtonMatrixElement
-from _Framework.ChannelStripComponent import ChannelStripComponent
-from _Framework.ClipSlotComponent import ClipSlotComponent
-from _Framework.CompoundComponent import CompoundComponent
-from _Framework.ControlElement import ControlElement
-from _Framework.ControlSurface import ControlSurface
-from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
-from _Framework.DeviceComponent import DeviceComponent
-from _Framework.EncoderElement import EncoderElement
-from _Framework.InputControlElement import * 
-from VCM600.MixerComponent import MixerComponent
-from _Framework.ModeSelectorComponent import ModeSelectorComponent
-from _Framework.NotifyingControlElement import NotifyingControlElement
-from _Framework.SceneComponent import SceneComponent
-from _Framework.SessionComponent import SessionComponent
-from _Framework.SessionZoomingComponent import DeprecatedSessionZoomingComponent as SessionZoomingComponent
-from _Framework.SliderElement import SliderElement
-from _Framework.TransportComponent import TransportComponent
-from _Framework.SubjectSlot import subject_slot, subject_slot_group
-from _Framework.Layer import Layer
-from _Framework.ModesComponent import AddLayerMode, MultiEntryMode, ModesComponent, SetAttributeMode, CancellableBehaviour, AlternativeBehaviour, ReenterBehaviour, DynamicBehaviourMixin, ExcludingBehaviourMixin, EnablingModesComponent
-
-from _Framework.ComboElement import ComboElement, DoublePressElement, MultiElement, DoublePressContext
+#from _Framework.CompoundComponent import CompoundComponent
+#from _Framework.ControlSurface import ControlSurface
+#from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
+#from _Framework.InputControlElement import * 
+#from _Framework.SceneComponent import SceneComponent
+#from _Framework.SubjectSlot import subject_slot, subject_slot_group
+#from _Framework.Layer import Layer
+#from _Framework.ModesComponent import ModesComponent
+#from _Framework.ComboElement import ComboElement, DoublePressElement, MultiElement, DoublePressContext
 
 """Imports from the Monomodular Framework"""
-from _Mono_Framework.CodecEncoderElement import CodecEncoderElement
-from _Mono_Framework.EncoderMatrixElement import EncoderMatrixElement
-from _Mono_Framework.MonoChopperComponent import MonoChopperComponent
-from _Mono_Framework.MonoBridgeElement import MonoBridgeElement
-from _Mono_Framework.MonoButtonElement import MonoButtonElement
-from _Mono_Framework.MonoEncoderElement import MonoEncoderElement
-from _Mono_Framework.ResetSendsComponent import ResetSendsComponent
-from _Mono_Framework.DeviceSelectorComponent import DeviceSelectorComponent
-from _Mono_Framework.DetailViewControllerComponent import DetailViewControllerComponent
-from _Mono_Framework.MonoDeviceComponent import NewMonoDeviceComponent
-from _Mono_Framework.LiveUtils import *
-from _Mono_Framework.Debug import *
+#from _Mono_Framework.CodecEncoderElement import CodecEncoderElement
+#from _Mono_Framework.MonoEncoderElement import MonoEncoderElement
+#from _Mono_Framework.ResetSendsComponent import ResetSendsComponent
+#from _Mono_Framework.DeviceSelectorComponent import DeviceSelectorComponent
+#from _Mono_Framework.DetailViewControllerComponent import DetailViewControllerComponent
+#from _Mono_Framework.MonoDeviceComponent import NewMonoDeviceComponent
+#from _Mono_Framework.LiveUtils import *
+#from _Mono_Framework.Debug import *
+#from _Mono_Framework.EncoderMatrixElement import EncoderMatrixElement
+#from _Mono_Framework.MonoChopperComponent import MonoChopperComponent
+#from _Mono_Framework.MonoBridgeElement import MonoBridgeElement
+#from _Mono_Framework.MonoButtonElement import MonoButtonElement
 
 debug = initialize_debug()
 
@@ -89,7 +87,7 @@ class LoopPedalExpressionElement(EncoderElement):
 	
 
 	def receive_value(self, value):
-		self._script.log_message('exp val ' + str(value))
+		#debug('exp val ' + str(value))
 		#value = min(127, max(0, (value - 96)*4))
 		#self._script.log_message('exp new val ' + str(value))
 		self._verify_value(value)
@@ -183,14 +181,13 @@ class MonolooperComponent(CompoundComponent):
 		self._loopers = [Monoloop(self, index, self._leds[index]) for index in range(4)]
 		for looper in self._loopers:
 			self.register_components(looper)
-		self.song().add_appointed_device_listener(self.on_enabled_changed)
+		self.on_enabled_changed.subject = self._script._device_provider
 		self._select_looper(0)
 	
 
 	def disconnect(self, *a, **k):
+		self.on_enabled_changed.subject = None
 		super(MonolooperComponent, self).disconnect()
-		if self.song().appointed_device_has_listener(self.on_enabled_changed):
-			self.song().remove_appointed_device_listener(self.on_enabled_changed)
 	
 
 	def update(self):
@@ -198,23 +195,24 @@ class MonolooperComponent(CompoundComponent):
 			for index in range(len(self._loopers)):
 				key = str('@loop' + str(index + 1))
 				preset = None
-				for track in self.song().tracks:
+				for track in self.song.tracks:
 					for device in self.enumerate_track_device(track):
 						if(match(key, str(device.name)) != None):
 							preset = device
 							break
-				for return_track in self.song().return_tracks:
+				for return_track in self.song.return_tracks:
 					for device in self.enumerate_track_device(return_track):
 						if(match(key, str(device.name)) != None):
 							preset = device
 							break
-				for device in self.enumerate_track_device(self.song().master_track):
+				for device in self.enumerate_track_device(self.song.master_track):
 					if(match(key, str(device.name)) != None):
 						preset = device
 						break
 				self._loopers[index].set_device(preset)
 	
 
+	@listens('device')
 	def on_enabled_changed(self):
 		if self.is_enabled():
 			self.update()
@@ -256,7 +254,7 @@ class MonolooperComponent(CompoundComponent):
 			self._loopers[index]._set_led(leds[index])
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def _on_select_value(self, value, x, y, is_momentary):
 		#self._script.log_message('select: %(x)s %(y)s %(value)s %(is_momentary)s' % {'x':x, 'y':y, 'value':value, 'is_momentary':is_momentary})
 		buttons = self._on_select_value.subject
@@ -280,7 +278,7 @@ class MonolooperComponent(CompoundComponent):
 			self._select_looper(x)
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def _on_doublepress_select_value(self, value, x, y, is_momentary):
 		#self._script.log_message('doublepress_select: %(x)s %(y)s %(value)s %(is_momentary)s' % {'x':x, 'y':y, 'value':value, 'is_momentary':is_momentary})
 		#self._loopers[x].display_looper()
@@ -288,13 +286,13 @@ class MonolooperComponent(CompoundComponent):
 		pass
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def _on_record_value(self, value):
 		if not self._all_loops_selected:
 			self._selected_loop.hit_record(value)
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def _on_mute_value(self, value):
 		loops = self._loopers if self._all_loops_selected else [self._selected_loop]
 		if self._on_select_value.subject and self._on_select_value.subject.get_button(3, 0) in self._select_buttons_pressed:
@@ -311,7 +309,7 @@ class MonolooperComponent(CompoundComponent):
 					loop.hit_mute(value)
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def _on_overdub_value(self, value):
 		loops = self._loopers if self._all_loops_selected else [self._selected_loop]
 		if self._on_select_value.subject and self._on_select_value.subject.get_button(0, 0) in self._select_buttons_pressed:
@@ -324,7 +322,7 @@ class MonolooperComponent(CompoundComponent):
 				loop.hit_overdub(value)
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def _on_expression_value(self, value):
 		loops = self._loopers if self._all_loops_selected else [self._selected_loop]
 		for loop in loops:
@@ -442,7 +440,7 @@ class Monoloop(ControlSurfaceComponent):
 		self.update()
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def on_state_change(self):
 		if self.is_enabled():
 			if not self.on_state_change.subject == None:
@@ -452,30 +450,30 @@ class Monoloop(ControlSurfaceComponent):
 			#state = self._record.value or  self._mute.value * 2 or self._overdub.value * 3 or self._clear.value * 4 or self._speed * 5
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def on_livelooper_state_change(self):
 		if self.is_enabled():
 			if not self.on_livelooper_state_change.subject == None:
 				self._led.send_value(LIVE_STATE_COLORS[int(self.on_livelooper_state_change.subject.value)] + (self.is_selected()*7), True)
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def on_position_change(self):
 		#self._script.log_message('position change: ' + str(self.on_position_change.subject.value))
 		pass
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def on_mute_change(self):
 		self.on_state_change()
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def on_record_change(self):
 		self.on_state_change()
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def on_overdub_change(self):
 		self.on_state_change()
 	
@@ -563,7 +561,7 @@ class Monoloop(ControlSurfaceComponent):
 
 	def display_looper(self):
 		if not self._device is None:
-			self.song().view.select_device(self._device)
+			self.song.view.select_device(self._device)
 			#self._script.set_appointed_device(self._device)
 	
 
@@ -623,13 +621,13 @@ class LauncherComponent(CompoundComponent):
 		self._launchers = [LauncherSlot(self, index, self._leds[index]) for index in range(3)]
 		for launcher in self._launchers:
 			self.register_components(launcher)
-		#self.song().add_selected_scene_listener(self.on_enabled_changed)
+		#self.song.add_selected_scene_listener(self.on_enabled_changed)
 	
 
 	def disconnect(self, *a, **k):
 		super(LauncherComponent, self).disconnect()
-		#if self.song().selected_scene_has_listener(self.on_enabled_changed):
-		#	self.song().remove_selected_scene_listener(self.on_enabled_changed)
+		#if self.song.selected_scene_has_listener(self.on_enabled_changed):
+		#	self.song.remove_selected_scene_listener(self.on_enabled_changed)
 	
 
 	def update(self):
@@ -637,7 +635,7 @@ class LauncherComponent(CompoundComponent):
 			for launcher in self._launchers:
 				key = str('@launch ' + str(self._bank + 1) + ' ' + str(launcher._number + 1))
 				slot = None
-				for scene in self.song().scenes:
+				for scene in self.song.scenes:
 					#self._script.log_message('scene check: ' + str(scene.name) + ' vs. ' + str(key))
 					if(match(key, str(scene.name)) != None):
 						slot = scene
@@ -683,7 +681,7 @@ class LauncherComponent(CompoundComponent):
 		self._on_expression_value.subject = pedal
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def _on_select_value(self, value, x, y, is_momentary):
 		#self._script.log_message('launcher select: %(x)s %(y)s %(value)s %(is_momentary)s' % {'x':x, 'y':y, 'value':value, 'is_momentary':is_momentary})
 		buttons = self._on_select_value.subject
@@ -708,27 +706,27 @@ class LauncherComponent(CompoundComponent):
 			
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def _on_doublepress_select_value(self, value, x, y, is_momentary):
 		self._script.toggle_device_control(x)
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def on_fire1_value(self, value):
 		self._launchers[0].launch()
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def on_fire2_value(self, value):
 		self._launchers[1].launch()
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def on_fire3_value(self, value):
 		self._launchers[2].launch()
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def _on_expression_value(self, value):
 		pass
 	
@@ -800,13 +798,13 @@ class DeviceControlComponent(CompoundComponent):
 		self._bank = 0
 		self._parameters = [ParameterSlot(self, index, self._leds[index]) for index in range(3)]
 		self._exp_parameter = ParameterSlot(self, 3, None)
-		#self.song().add_selected_scene_listener(self.on_enabled_changed)
+		#self.song.add_selected_scene_listener(self.on_enabled_changed)
 	
 
 	def disconnect(self, *a, **k):
 		super(DeviceControlComponent, self).disconnect()
-		#if self.song().selected_scene_has_listener(self.on_enabled_changed):
-		#	self.song().remove_selected_scene_listener(self.on_enabled_changed)
+		#if self.song.selected_scene_has_listener(self.on_enabled_changed):
+		#	self.song.remove_selected_scene_listener(self.on_enabled_changed)
 	
 
 	def update(self):
@@ -814,17 +812,17 @@ class DeviceControlComponent(CompoundComponent):
 			key = str('@fx' + str(self._bank + 1))
 			found_device = None
 
-			for track in self.song().tracks:
+			for track in self.song.tracks:
 				for device in self.enumerate_track_device(track):
 					if(match(key, str(device.name)) != None):
 						found_device = device
 						break
-			for return_track in self.song().return_tracks:
+			for return_track in self.song.return_tracks:
 				for device in self.enumerate_track_device(return_track):
 					if(match(key, str(device.name)) != None):
 						found_device = device
 						break
-			for device in self.enumerate_track_device(self.song().master_track):
+			for device in self.enumerate_track_device(self.song.master_track):
 				if(match(key, str(device.name)) != None):
 					found_device = device
 					break
@@ -832,7 +830,7 @@ class DeviceControlComponent(CompoundComponent):
 			if found_device != None:
 				#self._script.log_message('device found: ' + str(found_device.name))
 				#self._script.set_appointed_device(device)
-				self.song().view.select_device(found_device)
+				self.song.view.select_device(found_device)
 			if not found_device is None:
 				for slot in self._parameters:
 					key = str('@param' + str(slot._number + 1))
@@ -888,7 +886,7 @@ class DeviceControlComponent(CompoundComponent):
 		self._on_expression_value.subject = pedal
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def _on_select_value(self, value, x, y, is_momentary):
 		#self._script.log_message('launcher select: %(x)s %(y)s %(value)s %(is_momentary)s' % {'x':x, 'y':y, 'value':value, 'is_momentary':is_momentary})
 		buttons = self._on_select_value.subject
@@ -914,30 +912,30 @@ class DeviceControlComponent(CompoundComponent):
 
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def _on_doublepress_select_value(self, value, x, y, is_momentary):
 		self._script.toggle_device_control(x)
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def on_toggle1_value(self, value):
 		if value:
 			self._parameters[0].toggle()
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def on_toggle2_value(self, value):
 		if value:
 			self._parameters[1].toggle()
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def on_toggle3_value(self, value):
 		if value:
 			self._parameters[2].toggle()
 	
 
-	@subject_slot('value')
+	@listens('value')
 	def _on_expression_value(self, value):
 		#self._script.log_message('exp value: ' + str(value))
 		self._exp_parameter.set_value(value)
@@ -965,6 +963,7 @@ class MonoPedal(ControlSurface):
 
 
 	def __init__(self, *a, **k):
+		self.log_message = logger.warning
 		super(MonoPedal, self).__init__(*a, **k)
 		self._monomod_version = 'b995'
 		self._codec_version = 'b996'

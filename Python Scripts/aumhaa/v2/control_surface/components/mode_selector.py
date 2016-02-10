@@ -25,15 +25,16 @@ class MomentaryModeObserver(object):
 		assert(isinstance(controls, (type(None), tuple)))
 		assert(mode_callback == None or callable(mode_callback))
 		self._reset()
-		self._controls = controls != None and controls
-		for control in self._controls:
-			control.add_value_listener(self._control_changed)
+		self._controls = controls 
+		if controls != None:
+			for control in self._controls:
+				control.add_value_listener(self._control_changed)
 
 		self._base_mode = base_mode
 		self._mode_callback = mode_callback
 
 	def is_mode_momentary(self):
-		return self._controls_changed or self._timer_count >= Defaults.MOMENTARY_DELAY_TICKS
+		return self._controls_changed or self._timer_count >= MOMENTARY_DELAY_TICKS
 
 	def on_timer(self):
 		self._timer_count += 1

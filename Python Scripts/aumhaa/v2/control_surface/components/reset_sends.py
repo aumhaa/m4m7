@@ -49,10 +49,10 @@ class ResetSendsComponent(ControlSurfaceComponent):
 	
 
 	def tracks_to_use(self):
-		return self.song().tracks
+		return self.song.tracks
 	
 
 	def returns_to_use(self):
-		return self.song().return_tracks
+		return self.song.return_tracks
 	
 

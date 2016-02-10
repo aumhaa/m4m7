@@ -130,10 +130,12 @@ class MonoButtonElement(ButtonElement):
 	
 
 	def set_light(self, value, *a, **k):
+		if isinstance(value, bool):
+			value = 'DefaultButton.On' if value else 'DefaultButton.Off'
 		try:
 			self._skin[value]
 		except SkinColorMissingError:
-			#debug('skin missing for', value)
+			debug('skin missing for', value)
 			pass
 		#debug('skin value:', value)
 		super(MonoButtonElement, self).set_light(value, *a, **k)

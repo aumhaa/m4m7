@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 from contextlib import contextmanager
 from functools import partial
 from itertools import izip, chain, imap, ifilter
-from _Tools.re import *
+from re import *
 
 from ableton.v2.control_surface.component import Component as ControlSurfaceComponent
 from ableton.v2.control_surface.elements.display_data_source import DisplayDataSource
@@ -44,7 +44,7 @@ from pushbase.step_seq_component import StepSeqComponent
 from pushbase.loop_selector_component import LoopSelectorComponent
 from ableton.v2.control_surface.components.view_control import ViewControlComponent
 from pushbase.clip_control_component import ClipControlComponent
-from pushbase.provider_device_component import ProviderDeviceComponent
+from pushbase.device_component import DeviceComponent as ProviderDeviceComponent
 from Push.device_navigation_component import DeviceNavigationComponent
 
 from pushbase.note_repeat_component import NoteRepeatComponent
@@ -107,6 +107,7 @@ class OldSpecialMixerComponent(MixerComponentBase):
 	num_label_segments = 4
 
 	def __init__(self, *a, **k):
+		debug('OldSpec k:', k)
 		super(OldSpecialMixerComponent, self).__init__(*a, **k)
 		self._pan_send_index = 0
 		self._pan_send_controls = None
@@ -735,13 +736,14 @@ class AumpushDeviceParameterComponent(DeviceParameterComponent):
 class AumPushTrollComponent(CompoundComponent):
 
 
-	def __init__(self, script, *a, **k):
+	def __init__(self, script, device_component, *a, **k):
 		super(AumPushTrollComponent, self).__init__(*a, **k)
 		self._script = script
+		self._device_component = device_component
 
         #self._session_ring = SessionRingComponent(num_tracks=16, num_scenes=1, tracks_to_use=partial(tracks_to_use_from_song, self.song))
 
-		self._mixer = TrollMixerComponent(16, 4)
+		self._mixer = TrollMixerComponent(num_tracks = 16, num_returns = 4, device_component = self._device_component)
 		self._mixer._sends_layer = LayerMode(self._mixer, Layer())
 		self._mixer._left_layer = LayerMode(self._mixer, Layer())
 		self._mixer._right_layer = LayerMode(self._mixer, Layer())
@@ -753,8 +755,8 @@ class AumPushTrollComponent(CompoundComponent):
 		self._send_reset = AumPushResetSendsComponent(self._script)
 		self._send_reset.layer = Layer()
 
-		self._device1 = AumpushDeviceParameterComponent(ProviderDeviceComponent())
-		self._device2 = AumpushDeviceParameterComponent(ProviderDeviceComponent())
+		self._device1 = AumpushDeviceParameterComponent(parameter_provider=self._device_component)
+		self._device2 = AumpushDeviceParameterComponent(parameter_provider=self._device_component)
 		self.register_component(self._device1)
 		self.register_component(self._device2)
 
@@ -775,18 +777,18 @@ class AumPushTrollComponent(CompoundComponent):
 		if self._device1:
 			if len(self.song.return_tracks) > 0:
 				if len(self.song.return_tracks[0].devices) > 0:
-					if self._device1.parameter_provider._locked_to_device:
-						self._device1.parameter_provider.set_lock_to_device(False, self._device1.parameter_provider._device)
-					self._device1.parameter_provider.set_lock_to_device(True, self.song.return_tracks[0].devices[0])
+					#if self._device1.parameter_provider._locked_to_device:
+					#	self._device1.parameter_provider.set_lock_to_device(False, self._device1.parameter_provider._device)
+					self._device1.parameter_provider.set_device(self.song.return_tracks[0].devices[0])
 	
 
 	def _find_device2(self):
 		if self._device2:
 			if len(self.song.return_tracks) > 1:
 				if len(self.song.return_tracks[1].devices) > 0:
-					if self._device2.parameter_provider._locked_to_device:
-						self._device2.parameter_provider.set_lock_to_device(False, self._device2.parameter_provider._device)
-					self._device2.parameter_provider.set_lock_to_device(True, self.song.return_tracks[1].devices[0])
+					#if self._device2.parameter_provider._locked_to_device:
+					#	self._device2.parameter_provider.set_lock_to_device(False, self._device2.parameter_provider._device)
+					self._device2.parameter_provider.set_device(self.song.return_tracks[1].devices[0])
 	
 
 
@@ -816,10 +818,10 @@ class AumPushSpecialMixerComponent(OldSpecialMixerComponent):
 class TrollMixerComponent(AumPushSpecialMixerComponent):
 
 
-	def __init__(self, *a, **k):
+	def __init__(self, device_component, *a, **k):
 		super(TrollMixerComponent, self).__init__(*a, **k)
 		self._input_name_sources = [ DisplayDataSource('In1'),  DisplayDataSource('In2'), DisplayDataSource('In3'), DisplayDataSource('In4')]
-		self._parameter_provider = ProviderDeviceComponent()
+		self._parameter_provider = device_component
 		self._input_device = DeviceParameterComponent(self._parameter_provider)
 		self.register_component(self._input_device)
 	
@@ -1403,7 +1405,7 @@ class AumPush(Push):
 		self._device = self._device_component
 		self._device_component._current_bank_details = self._make_current_bank_details(self._device_component)
 		self.modhandler.set_device_component(self._device_component)
-		
+		self._on_new_device_set.subject = self._device_provider
 		#self._device_navigation._on_selected_device_changed = self._make_on_selected_device_changed(self._device_navigation)
 	
 
@@ -1413,7 +1415,7 @@ class AumPush(Push):
 
 	def _setup_troll(self):
 		debug('setup_troll')
-		self._troll = AumPushTrollComponent(self)
+		self._troll = AumPushTrollComponent(self, self._device_component)
 
 		self._crossfader_strip = TouchStripControllerComponent()
 		self._crossfader_strip.layer = Layer(touch_strip = self.elements.touch_strip_control)
@@ -1509,7 +1511,7 @@ class AumPush(Push):
 		
 	
 
-	#original trigger method disappeared, need to clean up?
+	@listens('device')
 	def _on_new_device_set(self):
 		self.schedule_message(1, self._select_note_mode)
 	
@@ -1563,6 +1565,7 @@ class AumPush(Push):
 	def _make_current_bank_details(self, device_component):
 		def _current_bank_details():
 			if not self.modhandler.active_mod() is None:
+				#debug('bank deets: active_mod')
 				if self.modhandler.active_mod() and self.modhandler.active_mod()._param_component._device_parent != None:
 					bank_name = self.modhandler.active_mod()._param_component._bank_name
 					bank = [param._parameter for param in self.modhandler.active_mod()._param_component._params]
@@ -1574,7 +1577,7 @@ class AumPush(Push):
 					#debug('returning ProviderDeviceComponent...')
 					return ProviderDeviceComponent._current_bank_details(device_component)
 			else:
-				#debug('returning ProviderDeviceComponent...')
+				#debug('no mod found, returning ProviderDeviceComponent...')
 				return ProviderDeviceComponent._current_bank_details(device_component)
 		return _current_bank_details
 		
@@ -1793,6 +1796,7 @@ class PushModHandler(ModHandler):
 	def update_device(self):
 		if self.is_enabled() and not self._device_component is None:
 			self._device_component.update()
+			self._device_component._update_parameters()
 	
 
 	@listens('value')

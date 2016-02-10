@@ -4,7 +4,7 @@ from aumhaa.v2.base.debug import *
 
 debug = initialize_debug()
 
-#PRODUCTS:  BRAIN="01", OHM64="02", BLOCK="03", CODE="04", MCD="05", MCP="06", OHMRGB="07", CNTRLR="08", BRAIN2="09", ENLIGHTEN="0A", ALIAS8="0B", BASE="0C", BRAINJR="0D", DS1="10", BASEII="11"
+#PRODUCTS:  BRAIN="01", OHM64="02", BLOCK="03", CODE="04", MCD="05", MCP="06", OHMRGB="07", CNTRLR="08", BRAIN2="09", ENLIGHTEN="0A", ALIAS8="0B", BASE="0C", BRAINJR="0D", DS1="10", BASEII="11", MINIM="15"
 
 LIVID_RGB_COLORMAP = [2, 64, 4, 8, 16, 127, 32]
 
@@ -18,7 +18,9 @@ CALLS = {'set_streaming_enabled':62,
 		'set_local_control':8,
 		'set_pad_pressure_output_type':10,
 		'set_encoder_mapping':11,
-		'set_encoder_encosion_mode':17}
+		'set_encoder_encosion_mode':17,
+		'set_encoder_speed':30,
+		}
 
 def fallback_send_midi(message = None, *a, **k):
 	debug('control surface not assigned to the sysex call:', message);
