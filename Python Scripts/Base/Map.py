@@ -7,11 +7,15 @@ Created by amounra on 2014-7-26.
 This file allows the reassignment of the controls from their default arrangement.  The order is from left to right; 
 Buttons are Note #'s and Faders/Rotaries are Controller #'s
 """
+USER_OFFSET = 10
+
 OSC_TRANSMIT = False
 
-OSC_OUTPORT = 9001
+OSC_OUTPORT = 7400
 
 SHIFT_LATCHING = False
+
+CAP_BUTTON_TRANSLATIONS = False   #include the top 8 capacitive touch buttons in UserMode translations.
 
 CHANNEL = 0		#main channel (0 - 15)
 
@@ -62,6 +66,17 @@ class BaseColors:
 		Alert = LividRGB.BlinkFast.WHITE
 	
 
+	class MainModes:
+		Clips = LividRGB.WHITE
+		Clips_shifted = LividRGB.BlinkFast.WHITE
+		Sends = LividRGB.MAGENTA
+		Sends_shifted = LividRGB.BlinkFast.MAGENTA
+		Device = LividRGB.CYAN
+		Device_shifted = LividRGB.BlinkFast.CYAN
+		User = LividRGB.RED
+		User_shifted = LividRGB.BlinkFast.RED
+	
+
 	class Session:
 		StopClipTriggered = LividRGB.BlinkFast.BLUE
 		StopClip = LividRGB.BLUE
@@ -75,6 +90,7 @@ class BaseColors:
 		ClipStarted = LividRGB.GREEN
 		ClipRecording = LividRGB.RED
 		NavigationButtonOn = LividRGB.BLUE
+		Empty = LividRGB.OFF
 	
 
 	class NoteEditor:
@@ -179,6 +195,15 @@ class BaseColors:
 		ChainNavOff = LividRGB.OFF
 		ContainNavOn = LividRGB.CYAN
 		ContainNavOff = LividRGB.OFF
+	
+
+	class DeviceNavigator:
+		DeviceNavOn = LividRGB.MAGENTA
+		DeviceNavOff = LividRGB.OFF
+		ChainNavOn = LividRGB.RED
+		ChainNavOff = LividRGB.OFF
+		LevelNavOn = LividRGB.CYAN
+		LevelNavOff = LividRGB.OFF
 	
 
 	class Mod:

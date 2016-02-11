@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import, print_function
 from ableton.v2.control_surface.capabilities import *
-from .Codec import Codec
+from .MonoPedal import MonoPedal
 
 from .MonoPedal import MonoPedal
 

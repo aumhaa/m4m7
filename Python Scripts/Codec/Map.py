@@ -33,8 +33,102 @@ COLOR_MAP = [127, 127, 127, 127, 127, 127, 127]
 
 USE_DEVICE_SELECTOR = True
 
-FACTORY_RESET = True
+FACTORY_RESET = False
 
+SHIFT_LATCHING = True
+
+#from _Framework.ButtonElement import Color
+from ableton.v2.control_surface.elements.color import Color
+
+#from _Mono_Framework.LividColors import *
+from aumhaa.v2.control_surface.elements.livid_colors import *
+
+class CodecColors:
+
+	ResetSendsColor = LividRGB.WHITE
+
+	class Mod:
+		ShiftOff = LividRGB.OFF
+		ShiftOn = LividRGB.WHITE
+	
+
+	class Mode:
+		Main = LividRGB.OFF
+		Main_shifted = LividRGB.BlinkFast.WHITE
+	
+
+	class ShiftMode:
+		Enabled = LividRGB.BlinkFast.WHITE
+		Disabled = LividRGB.OFF
+	
+
+	class DefaultButton:
+		On = LividRGB.WHITE
+		Off = LividRGB.OFF
+		Disabled = LividRGB.OFF
+		Alert = LividRGB.BlinkFast.WHITE
+	
+
+	class Session:
+		StopClipTriggered = LividRGB.BlinkFast.BLUE
+		StopClip = LividRGB.BLUE
+		Scene = LividRGB.CYAN
+		NoScene = LividRGB.OFF
+		SceneTriggered = LividRGB.BlinkFast.BLUE
+		ClipTriggeredPlay = LividRGB.BlinkFast.GREEN
+		ClipTriggeredRecord = LividRGB.BlinkFast.RED
+		RecordButton = LividRGB.OFF
+		ClipStopped = LividRGB.WHITE
+		ClipStarted = LividRGB.GREEN
+		ClipRecording = LividRGB.RED
+		NavigationButtonOn = LividRGB.BLUE
+	
+
+	class Mixer:
+		SoloOn = LividRGB.CYAN
+		SoloOff = LividRGB.OFF
+		MuteOn = LividRGB.YELLOW
+		MuteOff = LividRGB.OFF
+		ArmSelected = LividRGB.GREEN
+		ArmUnselected = LividRGB.RED
+		ArmOff = LividRGB.OFF
+		StopClip = LividRGB.BLUE
+		SelectedOn = LividRGB.BLUE
+		SelectedOff = LividRGB.OFF
+	
+
+	class Recording:
+		Transition = LividRGB.BlinkSlow.GREEN
+	
+
+	class Recorder:
+		On = LividRGB.WHITE
+		Off = LividRGB.BLUE
+		NewOn = LividRGB.BlinkFast.YELLOW
+		NewOff = LividRGB.YELLOW
+		FixedOn = LividRGB.BlinkFast.CYAN
+		FixedOff = LividRGB.CYAN
+		RecordOn = LividRGB.BlinkFast.GREEN
+		RecordOff = LividRGB.GREEN
+		FixedAssigned = LividRGB.MAGENTA
+		FixedNotAssigned = LividRGB.OFF
+	
+
+	class Transport:
+		OverdubOn = LividRGB.BlinkFast.RED
+		OverdubOff = LividRGB.RED
+	
+
+	class Device:
+		NavOn = LividRGB.MAGENTA
+		NavOff = LividRGB.OFF
+		BankOn = LividRGB.YELLOW
+		BankOff = LividRGB.OFF
+		ChainNavOn = LividRGB.RED
+		ChainNavOff = LividRGB.OFF
+		ContainNavOn = LividRGB.CYAN
+		ContainNavOff = LividRGB.OFF
+	
 
 ## a
 

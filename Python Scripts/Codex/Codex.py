@@ -1,38 +1,31 @@
-# by amounra 0513 : http://www.aumhaa.com
+# by amounra 0216 : http://www.aumhaa.com
 
 from __future__ import with_statement
 import Live
 import time
 import math
-
-""" All of the Framework files are listed below, but we are only using using some of them in this script (the rest are commented out) """
-from _Framework.ButtonElement import ButtonElement # Class representing a button a the controller
-from _Framework.ButtonMatrixElement import ButtonMatrixElement # Class representing a 2-dimensional set of buttons
-from _Framework.ChannelStripComponent import ChannelStripComponent # Class attaching to the mixer of a given track
-from _Framework.CompoundComponent import CompoundComponent # Base class for classes encompasing other components to form complex components
-from _Framework.ControlElement import ControlElement # Base class for all classes representing control elements on a controller 
-from _Framework.ControlSurface import ControlSurface # Central base class for scripts based on the new Framework
-from _Framework.ControlSurfaceComponent import ControlSurfaceComponent # Base class for all classes encapsulating functions in Live
-from _Framework.DeviceComponent import DeviceComponent as NewDeviceComponent
-from _Framework.EncoderElement import EncoderElement # Class representing a continuous control on the controller
-from _Framework.InputControlElement import * # Base class for all classes representing control elements on a controller
-from _Framework.MixerComponent import MixerComponent # Class encompassing several channel strips to form a mixer
-from _Framework.ModeSelectorComponent import ModeSelectorComponent # Class for switching between modes, handle several functions with few controls
-from _Framework.NotifyingControlElement import NotifyingControlElement # Class representing control elements that can send values
-from _Framework.SessionComponent import SessionComponent # Class encompassing several scene to cover a defined section of Live's session
-from _Framework.TransportComponent import TransportComponent # Class encapsulating all functions in Live's transport section
+from re import *
 
 from _Generic.Devices import *
 
-"""Imports from _Mono_Framework"""
-from _Mono_Framework.MonoButtonElement import MonoButtonElement
-from _Mono_Framework.MonoEncoderElement import MonoEncoderElement
-from _Mono_Framework.DeviceSelectorComponent import DeviceSelectorComponent, NewDeviceSelectorComponent
-from _Mono_Framework.ResetSendsComponent import ResetSendsComponent
+from ableton.v2.control_surface.components.device import DeviceProvider, DeviceComponent
 
-from Codec.Codec import *
+from ableton.v2.control_surface.mode import DelayMode
 
-from _Tools.re import *
+from ableton.v2.control_surface.components.session_ring import SessionRingComponent
+
+"""Imports from aumhaa"""
+from aumhaa.v2.control_surface.elements.mono_button import MonoButtonElement
+
+from aumhaa.v2.control_surface.elements.mono_encoder import MonoEncoderElement
+
+from aumhaa.v2.control_surface.components.device_selector import DeviceSelectorComponent
+
+from aumhaa.v2.control_surface.components.reset_sends import ResetSendsComponent
+
+from aumhaa.v2.control_surface.mono_modes import ExcludingMomentaryBehaviour, DelayedExcludingMomentaryBehaviour
+
+from Codec2.Codec import *
 
 TROLL_OFFSET = 0
 
@@ -49,135 +42,144 @@ DEVICE_COLORS = {'midi_effect':22,
 				'AudioEffectGroupDevice':8}
 
 
+def release_control(control):
+	if control != None:
+		control.release_parameter()
+
+
+
+class CodexDeviceProvider(Subject, SlotManager):
+
+	device_selection_follows_track_selection = False
+
+	def __init__(self, return_index = 0, song = None, *a, **k):
+		self._return_index = return_index
+		super(CodexDeviceProvider, self).__init__(*a, **k)
+		returns = song.return_tracks
+		self._device = returns[self._return_index].devices[0] if (len(returns)>self._return_index and len(returns[self._return_index].devices)>0) else None
+	
+
+	@listenable_property
+	def device(self):
+		return self._device
+	
+
+		
 class Codex(Codec):
 
 
-	def __init__(self, c_instance, *a, **k):
+	def __init__(self, *a, **k):
 		self._shifted = False
-		super(Codex, self).__init__(c_instance, *a, **k)
-		with self.component_guard():
-			self._setup_alt_mixer()
-			self._setup_alt_device_selector()
-			self._setup_alt_send_reset()
-			self._setup_alt_device_control()
+		super(Codex, self).__init__(*a, **k)
 		self.log_message('<<<<<<<<<<<<<<<<<<<<<<<<< Codex subclass log opened >>>>>>>>>>>>>>>>>>>>>>>>>')
-		self.schedule_message(1, self._mode_update)
 	
 
-	def _setup_alt_device_selector(self):
-		self._alt_device_selector = NewDeviceSelectorComponent(self)
-		self._alt_device_selector.name = 'Alt_Device_Selector'
-	
+	def _setup_send_reset(self):
+		super(Codex, self)._setup_send_reset()
 
-	def _setup_alt_send_reset(self):
 		self._alt_send_reset = ResetSendsComponent(self)
 		self._alt_send_reset.name = 'Alt_Reset_Sends'
-	
-
-	"""these two secondary DeviceComponents are only set up if the MONOHM_LINK flag in Map is turned on"""
-	def _setup_alt_device_control(self):
-		self._device1 = NewDeviceComponent()
-		self._device1.name = 'Device_Component1'
-		self._device2 = NewDeviceComponent()
-		self._device2.name = 'Device_Component2'
-	
-
-	def _setup_alt_mixer(self):
-		is_momentary = True
-		self._num_tracks = (8) #A mixer is one-dimensional
-		self._mixer2 = MixerComponent(8, 4, False, False)
-		self._mixer2.name = 'Mixer'
-		#self._mixer2.set_track_offset(4) #Sets start point for mixer strip (offset from left)
-		for index in range(8):
-			self._mixer2.channel_strip(index).name = 'Mixer_ChannelStrip_' + str(index)
-			self._mixer2.channel_strip(index)._invert_mute_feedback = True
-	
-
-	"""Mode Functions"""
-
-
-	def _enable_alt(self):
-		if self._main_mode._mode_index == 0:
-			for encoder, _ in self._encoder_matrix.submatrix[:, 0:2].iterbuttons():
-				encoder.set_enabled(False)
-				encoder.reset()
-			self._alt_enabled = True
-			self._mode_update()
-		super(Codex, self)._enable_alt()
-	
-
-	def _disable_alt(self):
-		if self._main_mode._mode_index == 0:
-			self._button_matrix.submatrix[:, 0:2].reset()
-			for encoder, _ in self._encoder_matrix.submatrix[:, 0:2].iterbuttons():
-				encoder.set_enabled(True)
-		super(Codex, self)._disable_alt()
-	
-
-	def _deassign_all(self):
-		self._alt_send_reset.set_buttons(None)
+		self._alt_send_reset.layer = Layer(priority = 4, buttons = self._button_matrix.submatrix[4:, 2])
 		self._alt_send_reset.set_enabled(False)
-		self._alt_device_selector.set_buttons(None)
-		self._alt_device_selector.set_enabled(False)
-		self._mixer2.selected_strip().set_send_controls(None)
-		for index in range(8):
-			self._mixer2.channel_strip(index).set_volume_control(None)
-			self._mixer2.channel_strip(index).set_select_button(None)
-			self._mixer2.channel_strip(index).set_mute_button(None)
-			self._dial[index][2].release_parameter()
-		for index in range(3):
-			self._mixer2.return_strip(index).set_volume_control(None)
-		self._device1.set_enabled(False)
-		self._device1._parameter_controls = None
-		self._device2.set_enabled(False)
-		self._device2._parameter_controls = None
-		self._mixer2.return_strip(0).set_send_controls(None)
-		self._mixer2.return_strip(1).set_send_controls(None)
-		self._mixer2.return_strip(2).set_send_controls(None)
-		super(Codex, self)._deassign_all()
 	
 
-	def _assign_volume(self):
-		if self._alt_enabled:
-			inputs = self.find_inputs()
-			if not inputs is None:
-				for index in range(4):
-					self._dial[index][2].connect_to(inputs.parameters[index+1])
-				self._dial[6][2].connect_to(inputs.parameters[5])
-			xfade = self.find_perc_crossfader()
-			if not xfade is None:
-				self._dial[7][3].connect_to(xfade)
-			self._alt_device_selector.set_matrix(self._button_matrix.submatrix[:, 0:2])
-			self._alt_device_selector.set_enabled(True)
-			self._mixer2.return_strip(0).set_send_controls([None, self._dial[4][2]])
-			self._mixer2.return_strip(1).set_send_controls([self._dial[5][2], None])
-		else:
-			self._alt_send_reset.set_buttons(self._button_matrix.submatrix[4:, 2])
-			self._alt_send_reset.set_enabled(True)
-			self._mixer2.selected_strip().set_send_controls([self._dial[0][2], self._dial[1][2], self._dial[2][2], self._dial[3][2]])
-			for index in range(3):
-				self._mixer2.return_strip(index).set_volume_control(self._dial[index+4][2])
-			self._mixer2.set_crossfader_control(self._dial[7][2])
-			self._device1.set_parameter_controls(tuple([self._dial[index%4][int(index/4)] for index in range(8)]))
-			self._device2.set_parameter_controls(tuple([self._dial[(index%4)+4][int(index/4)] for index in range(8)]))
-			self._device1.set_enabled(True)
-			self._device2.set_enabled(True)
-			self._find_devices()
-			self._device1.update()
-			self._device2.update()
-			for index in range(8):
-				self._mixer2.channel_strip(index).set_select_button(self._column_button[index])
-		for index in range(8):
-			self._mixer2.channel_strip(index).set_volume_control(self._dial[index][3])
-			self._mixer2.channel_strip(index).set_mute_button(self._button[index][3])
-		self._mixer2.update()
+	def _setup_device_controls(self):
+		super(Codex, self)._setup_device_controls()
+		self._device1 = DeviceComponent(device_provider = CodexDeviceProvider(song = self.song, return_index = 0), device_bank_registry = DeviceBankRegistry())
+		self._device1.name = 'Device_Component1'
+		self._device1.layer = Layer(priority = 4, parameter_controls = self._encoder_matrix.submatrix[:4,:2])
+		self._device1.set_enabled(False)
+
+
+		self._device2 = DeviceComponent(device_provider = CodexDeviceProvider(song = self.song, return_index = 1), device_bank_registry = DeviceBankRegistry())
+		self._device2.name = 'Device_Component2'
+		self._device2.layer = Layer(priority = 4, parameter_controls = self._encoder_matrix.submatrix[4:,:2])
+		self._device2.set_enabled(False)
+	
+
+	def _setup_mixer_controls(self):
+		super(Codex, self)._setup_mixer_controls()
+		self._mixer._selected_strip_layer = AddLayerMode(self._mixer._selected_strip, Layer(priority = 4, send_controls = self._encoder_matrix.submatrix[:4, 2]))
+		self._mixer._returns_layer = AddLayerMode(self._mixer, Layer(priority = 4, return_controls = self._encoder_matrix.submatrix[4:7,2]))
+		self._mixer._xfade_layer = AddLayerMode(self._mixer, Layer(priority = 4, crossfader_control = self._dial[7][2]))
+		self._mixer._troll_layer = AddLayerMode(self._mixer, Layer(priority = 4, volume_controls = self._encoder_matrix.submatrix[:8,3],
+									mute_buttons = self._button_matrix.submatrix[:8,3],
+									))
+	
+
+	"""def _setup_modes(self):
+		self._main_modes = ModesComponent()
+		self._main_modes.add_mode('disabled', [])
+		self._main_modes.add_mode('mix_shifted', [self._alt_device_selector, self._mixer._troll_layer, self._mixer._select_layer, DelayMode(delay = .1, mode = tuple([self._troll_shifted_enabled, self._troll_shifted_disabled]), parent_task_group = self._task_group)], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('mix', [self._alt_send_reset, self._device1, self._device2, self._mixer._returns_layer, self._mixer._xfade_layer, self._mixer._troll_layer, self._mixer._selected_strip_layer, self._mixer._select_layer, self.normal_encoder_sysex], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('sends_shifted', [self._value_default, self._mixer._sends_layer, self._device_selector, self.slow_encoder_sysex], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('sends', [self._mixer._sends_layer, self.normal_encoder_sysex], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('device_shifted', [self._selected_device_modes, self._value_default, self._device_selector, self._device[0], self._device[1], self._device[2], self._device[3], self.slow_encoder_sysex], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('device', [self._selected_device_modes, self._device[0], self._device[1], self._device[2], self._device[3], self.normal_encoder_sysex], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('special_device_shifted', [self._value_default, self._special_device, self._device_selector, self.slow_encoder_sysex], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('special_device', [self._special_device, self.normal_encoder_sysex], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('mod_shifted', [self.modhandler, self.modhandler.keys_layer, self.modhandler.code_buttons_layer, self.slow_encoder_sysex], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('mod', [self.modhandler, self.normal_encoder_sysex], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('select', [self.normal_encoder_sysex], behaviour = DelayedExcludingMomentaryBehaviour(excluded_groups = ['shifted']))
+		self._main_modes.layer = Layer(mix_button = self._row_button[0],
+										sends_button = self._row_button[1],
+										device_button = self._row_button[2],
+										special_device_button = self._row_button[3],
+										mod_button = self._livid,
+										)
+		self._main_modes.selected_mode = 'disabled'
+		self._main_modes.set_enabled(False)"""
+	
+
+	def _setup_modes(self):
+		self._main_modes = ModesComponent(name = 'MainModes')
+		self._main_modes.add_mode('disabled', [])
+		self._main_modes.add_mode('mix_shifted', [self._mixer, self._mixer._troll_layer, self._device_selector, self._background, DelayMode(delay = .1, mode = tuple([self._troll_shifted_enabled, self._troll_shifted_disabled]), parent_task_group = self._task_group)], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('mix', [self._device1, self._device2, self._mixer, self._mixer._returns_layer, self._mixer._xfade_layer, self._mixer._troll_layer, self._mixer._select_layer, self._mixer._solo_mute_layer, self._mixer._selected_strip_layer, self._session_navigation, self._background, self._main_shift_modes], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('sends_shifted', [self._mixer, self._mixer._sends_layer, self._mixer._select_layer, self._device_selector, self._background], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('sends', [self._mixer, self._mixer._sends_layer, self._mixer._select_layer, self._background, self._main_shift_modes], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('device_shifted', [self._selected_device_modes, self._device_selector, self._device[0], self._device[1], self._device[2], self._device[3], self._device_selector, self._background], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('device', [self._selected_device_modes, self._device[0], self._device[1], self._device[2], self._device[3], self._background, self._mixer._select_layer, self._main_shift_modes], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('special_device_shifted', [self._modswitcher, self._device_selector, self._background], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('special_device', [self._modswitcher, self._background], behaviour = self._shift_latching(color = 'Mode.Main'))
+		#self._main_modes.add_mode('select', [self.normal_encoder_sysex], behaviour = DelayedExcludingMomentaryBehaviour(excluded_groups = ['shifted']))
+		self._main_modes.layer = Layer(priority = 4,
+										mix_button = self._row_button[0],
+										sends_button = self._row_button[1],
+										device_button = self._row_button[2],
+										special_device_button = self._row_button[3],
+										)
+		self._main_modes.selected_mode = 'disabled'
+		self._main_modes.set_enabled(False)
+	
+
+	def _troll_shifted_enabled(self):
+		debug('_troll_shifted_enabled')
+		inputs = self.find_inputs()
+		if not inputs is None:
+			for index in range(4):
+				release_control(self._dial[index][2])
+				debug('assigning inputs:', inputs.parameters[index+1].name)
+				self._dial[index][2].connect_to(inputs.parameters[index+1])
+			self._dial[6][2].connect_to(inputs.parameters[5])
+		xfade = self.find_perc_crossfader()
+		xfade and self._dial[7][2].connect_to(xfade)
+		returns = self.song.return_tracks
+		if len(returns) >= 2:
+			self._dial[4][2].connect_to(returns[0].mixer_device.sends[1])
+			self._dial[5][2].connect_to(returns[1].mixer_device.sends[0])
 		self.request_rebuild_midi_map()
-		#self._mixer2.set_track_offset(TROLL_OFFSET)
+	
+
+	def _troll_shifted_disabled(self):
+		for control in self._dial[:][2]:
+			release_control(control)
+		self.request_rebuild_midi_map()
 	
 
 	def find_inputs(self):
 		found_device = None
-		tracks = self.song().tracks
+		tracks = self.song.tracks
 		for track in tracks:
 			if track.name == 'Inputs':
 				for device in track.devices:
@@ -188,7 +190,7 @@ class Codex(Codec):
 
 	def find_perc_crossfader(self):
 		found_parameter = None
-		tracks = self.song().tracks
+		tracks = self.song.tracks
 		for track in tracks:
 			if track.name == 'Perc':
 				for device in track.devices:
@@ -197,22 +199,6 @@ class Codex(Codec):
 							if parameter.name == 'XFade':
 								found_parameter = parameter
 		return found_parameter
-	
-
-	"""this method is used to find the devices the alt controls will latch to"""
-	def _find_devices(self):
-		if self._device1:
-			if len(self.song().return_tracks) > 0:
-				if len(self.song().return_tracks[0].devices) > 0:
-					if self._device1._locked_to_device:
-						self._device1.set_lock_to_device(False, self._device1._device)
-					self._device1.set_lock_to_device(True, self.song().return_tracks[0].devices[0])
-		if self._device2:
-			if len(self.song().return_tracks) > 1:
-				if len(self.song().return_tracks[1].devices) > 0:
-					if self._device2._locked_to_device:
-						self._device2.set_lock_to_device(False, self._device2._device)
-					self._device2.set_lock_to_device(True, self.song().return_tracks[1].devices[0])
 	
 
 

@@ -5,6 +5,8 @@ import Live
 import time
 import math
 import sys
+from re import *
+
 
 """ _Framework files """
 from _Framework.ButtonElement import ButtonElement # Class representing a button a the controller
@@ -51,7 +53,6 @@ from CNTRLR.Cntrlr import Cntrlr
 from ModDevices import *
 from Map import *
 
-from _Tools.re import *
 
 switchxfader = (240, 00, 01, 97, 02, 15, 01, 247)
 switchxfaderrgb = (240, 00, 01, 97, 07, 15, 01, 247)

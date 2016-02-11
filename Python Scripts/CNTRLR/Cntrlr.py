@@ -56,6 +56,9 @@ from _Mono_Framework.LividColors import *
 from _Mono_Framework.LividUtilities import LividSettings
 from _Mono_Framework.MonoInstrumentComponent import *
 from _Mono_Framework.TranslationComponent import TranslationComponent
+from _Framework.SessionRecordingComponent import *
+from _Framework.ViewControlComponent import ViewControlComponent
+
 
 debug = initialize_debug()
 
@@ -66,18 +69,17 @@ from ModDevices import *
 from Map import *
 
 
-from Push.AutoArmComponent import AutoArmComponent
-from Push.SessionRecordingComponent import *
-from Push.ViewControlComponent import ViewControlComponent
-from Push.DrumGroupComponent import DrumGroupComponent
-from Push.StepSeqComponent import StepSeqComponent
-from Push.PlayheadElement import PlayheadElement
-from Push.PlayheadComponent import PlayheadComponent
-from Push.GridResolution import GridResolution
-from Push.ConfigurableButtonElement import ConfigurableButtonElement
-from Push.LoopSelectorComponent import LoopSelectorComponent
-from Push.Actions import CreateInstrumentTrackComponent, CreateDefaultTrackComponent, CaptureAndInsertSceneComponent, DuplicateDetailClipComponent, DuplicateLoopComponent, SelectComponent, DeleteComponent, DeleteSelectedClipComponent, DeleteSelectedSceneComponent, CreateDeviceComponent
-from Push.SelectPlayingClipComponent import SelectPlayingClipComponent
+from _Mono_Framework._deprecated.AutoArmComponent import AutoArmComponent
+#from _Mono_Framework._deprecated.DrumGroupComponent import DrumGroupComponent
+#from _Mono_Framework._deprecated.StepSeqComponent import StepSeqComponent
+#from _Mono_Framework._deprecated.PlayheadElement import PlayheadElement
+from _Mono_Framework.MonoInstrumentComponent import PlayheadElement
+#from _Mono_Framework._deprecated.PlayheadComponent import PlayheadComponent
+from _Mono_Framework._deprecated.GridResolution import GridResolution
+#from _Mono_Framework._deprecated.ConfigurableButtonElement import ConfigurableButtonElement
+#from _Mono_Framework._deprecated.LoopSelectorComponent import LoopSelectorComponent
+#from _Mono_Framework._deprecated.Actions import CreateInstrumentTrackComponent, CreateDefaultTrackComponent, CaptureAndInsertSceneComponent, DuplicateDetailClipComponent, DuplicateLoopComponent, SelectComponent, DeleteComponent, DeleteSelectedClipComponent, DeleteSelectedSceneComponent, CreateDeviceComponent
+#from _Mono_Framework._deprecated.SelectPlayingClipComponent import SelectPlayingClipComponent
 
 
 check_model = (240, 126, 127, 6, 1, 247)
@@ -541,7 +543,8 @@ class Cntrlr(ControlSurface):
 	def _setup_mixer_control(self):
 		is_momentary = True
 		self._num_tracks = (4)
-		self._mixer = MixerComponent(num_tracks = 4, num_returns = 2, name = 'Mixer', auto_name = True, invert_mute_feedback = True)
+		self._mixer = MixerComponent(num_tracks = 4, num_returns = 2, invert_mute_feedback = True, auto_name = True)
+		self._name = 'Mixer'
 		self._mixer.set_track_offset(0)
 		if self._mixer.channel_strip(0)._track:
 			self.song().view.selected_track = self._mixer.channel_strip(0)._track

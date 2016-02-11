@@ -3,13 +3,12 @@
 from __future__ import with_statement
 import Live
 import Live.DrumPad
-import logging
-logger = logging.getLogger(__name__)
-
 from contextlib import contextmanager
 from functools import partial
 from itertools import izip, chain, imap, ifilter
 from re import *
+import logging
+logger = logging.getLogger(__name__)
 
 from ableton.v2.control_surface.component import Component as ControlSurfaceComponent
 from ableton.v2.control_surface.elements.display_data_source import DisplayDataSource
@@ -73,7 +72,7 @@ from Push.mode_behaviours import CancellableBehaviour
 from Push import sysex
 
 from aumhaa.v2.control_surface.components.mono_device import NewMonoDeviceComponent as MonoDeviceComponent
-from aumhaa.v2.control_surface.components.device_selector import NewDeviceSelectorComponent as DeviceSelectorComponent
+from aumhaa.v2.control_surface.components.device_selector import DeviceSelectorComponent
 from aumhaa.v2.control_surface.components.reset_sends import ResetSendsComponent
 from aumhaa.v2.control_surface.elements.mono_encoder import MonoEncoderElement
 from aumhaa.v2.control_surface.components.mono_mixer import MixerComponentBase, TrackArmState
