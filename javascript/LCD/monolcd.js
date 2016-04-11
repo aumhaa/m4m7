@@ -11,7 +11,14 @@ setinletassist(4, 'clock');
 setinletassist(5, 'jit.displays');
 setoutletassist(0, 'dump output');
 
-DEBUG = 0;
+var script = this;
+
+var DEBUG = false;
+var debug = (DEBUG&&Debug) ? Debug : function(){};
+
+var FORCELOAD = false;
+var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
+
 
 var patch_type = jsarguments[1];
 var unique = jsarguments[2];
@@ -129,7 +136,7 @@ function init()
 		pn[i] = lcd_screen.getnamed('pn'+(i+1));
 		mp[i] = lcd_screen.getnamed('mp'+(i+1));
 	}
-	post(this_name, " script initiated3\n");
+	post(this_name, " script initiated\n");
 	finder = new LiveAPI(callback, 'control_surfaces');
 	/*post('finder properties:\n');
 	for(i in finder)
@@ -252,7 +259,7 @@ function make_cell(parent, num, surface_type)
 
 function make_surface(num, surface_type, bridge_id)
 {
-	if(DEBUG){post('Make surface', num, surface_type, bridge_id, '\n');}
+	debug('Make surface', num, surface_type, bridge_id);
 	var new_surface = [];
 	new_surface.active = false;
 	new_surface.touched = false;
@@ -286,7 +293,7 @@ function make_surface(num, surface_type, bridge_id)
 	new_surface.pipe = function(args)
 	{
 		//args = arrayfromargs(messagename, arguments);
-		if(DEBUG){post(new_surface.n, ':', args, '\n');}
+		debug(new_surface.n, ':', args[0], ',', args[1], ',', args[2], ',', args[3], ',', args[4]);
 		if((args[0]=='value')&&(new_surface[args[1]]))
 		{
 			new_surface[args[1]][args[2]](args.slice(3,4));
@@ -325,7 +332,7 @@ function make_surface(num, surface_type, bridge_id)
 
 function select_surface()
 {
-	//post('select_surface');
+	debug('select_surface');
 	var bring_to_front = false;
 	for(var i in surfaces)
 	{
@@ -343,7 +350,7 @@ function make_active(num, force)
 {
 	if((surfaces[num].active == true)&&(force!=true))
 	{
-		//post(surfaces[num].n, 'already active\n');
+		debug(surfaces[num].n, 'already active');
 		return;
 	}
 	else
@@ -355,7 +362,7 @@ function make_active(num, force)
 				surfaces[i].active = false;
 			}
 		}
-		//post(surfaces[num].n, 'active\n');
+		debug(surfaces[num].n, 'active');
 		surfaces[num].active = true;
 		surfaces[num].update()
 	}
@@ -489,7 +496,7 @@ function show_lcd()
 
 function hide_lcd()
 {
-	if(DEBUG){post('hide_lcd, front==', front, '\n');}
+	debug('hide_lcd, front==', front);
 	if(front==1)
 	{
 		front=0;
@@ -532,7 +539,7 @@ function currentstate(a, b, c, d, e)
 
 function position(x, y, z)
 {
-	//post('position', x, y, z, '\n');
+	debug('position', x, y, z);
 	zoomfactor = z;
 	x_val = x;
 	y_val = y;
@@ -641,4 +648,5 @@ function set_remote(val)
 	remote = val;
 }
 
+forceload(this);
 

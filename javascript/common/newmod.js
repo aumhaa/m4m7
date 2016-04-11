@@ -19,7 +19,7 @@ var legacy = false;
 var control_surface_ids = {0:true};
 var restart = new Task(init, this);
 
-var DEBUG = false;
+var DEBUG = true;
 var debug = (DEBUG&&Debug) ? Debug : function(){};
 
 var FORCELOAD = false;
@@ -236,8 +236,9 @@ function send_stored_messages()
 function send_explicit()
 {
 	var args = arrayfromargs(arguments);
+	debug('send explicit', args);
 	//post('finder.call('+args[0], args[1], args[2], args[3], args[4], args[5]+');');
-	finder.call(args[0], args[1], args[2], args[3], args[4], args[5]);
+	finder.call.apply(finder, args);
 }
 
 function debug(){}

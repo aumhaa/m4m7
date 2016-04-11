@@ -7,7 +7,7 @@ outlets = 1;
 var FORCELOAD = false;
 var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
 
-var DEBUG = true;
+var DEBUG = false;
 var debug = (DEBUG&&Debug) ? Debug : function(){};
 
 var script = this;

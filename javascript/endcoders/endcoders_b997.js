@@ -3,19 +3,28 @@ autowatch = 1;
 inlets = 2;
 outlets = 2;
 
+var finder;
+var mod;
+var mod_finder;
+
+var unique = jsarguments[1];
+
+var script = this;
+
 var FORCELOAD = false;
 var DEBUG = true;
-var DEBUGLCD = 0;
+var DEBUGLCD = false;
 var SHOW_STORAGE = 0;
 
 var debug = (DEBUG&&Debug) ? Debug : function(){};
-
+var debuglcd = (DEBUGLCD&&Debug) ? Debug : function(){};
 var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
 
 var modColor=6;
 
 var FUNCTION_COLORS = [3, 6, 5, 0];
 var ACCEL_FACTORS = [.15, .05];
+var CLEAR_TOLLERANCE = 7;
 var knob_ids=[];
 var knob=[];
 var finder=[];
@@ -34,6 +43,8 @@ var active_preset = 0;
 var script = this;
 var is_shifted = false;
 var is_alted = false;
+var assign_mode_enabled = false;
+var selected_row = 0;
 
 var encs = [];
 for(var i=0;i<32;i++)
@@ -44,40 +55,113 @@ for(var i=0;i<32;i++)
 	encs['Encoder_'+i].y_c = Math.floor(i/8);
 }
 
-function alive(val)
+ENDCODER_BANK_CONTROL = ['ModDevice_knob0', 'ModDevice_knob1', 'ModDevice_knob2', 'ModDevice_knob3', 'ModDevice_knob4', 'ModDevice_knob5', 'ModDevice_knob6', 'ModDevice_knob7']
+
+var banks =[];
+for(var bank=0;bank<8;bank++)
 {
-	if(val)
+	var entry = ENDCODER_BANK_CONTROL.slice(0);
+	for(var index=0;index<24;index++)
 	{
-		init();
+		entry.push('CustomParameter_'+(index+(bank*24)));
 	}
-	else
+	banks.push(entry);
+}
+
+
+var regular_banks = [];
+for(var bank=0;bank<8;bank++)
+{
+	regular_banks.push(ENDCODER_BANK_CONTROL.slice(0));
+	for(var b=0;b<3;b++)
 	{
-		dissolve();
+		var entry = [];
+		for(var e=0;e<8;e++)
+		{
+			entry.push('CustomParameter_'+(b*8+e+(bank*24)));
+		}
+		regular_banks.push(entry);
 	}
 }
 
+CODEC_ENDCODER_BANKS = {'MxDeviceMidiEffect':banks};
+ENDCODER_BANKS = {'MxDeviceMidiEffect':regular_banks};
+
+
+var Mod = ModComponent.bind(script);
+
 function init()
 {
-	if(DEBUG){post('new...')};
+	mod = new Mod(script, 'hex', unique, false);
+	//mod.debug = debug;
+	mod_finder = new LiveAPI(mod_callback, 'this_device');
+	mod.assign_api(mod_finder);
+}
+
+function mod_callback(args)
+{
+	if((args[0]=='value')&&(args[1]!='bang'))
+	{
+		//debug('mod callback:', args);
+		if(args[1] in script)
+		{
+			script[args[1]].apply(script, args.slice(2));
+		}
+		if(args[1]=='disconnect')
+		{
+			mod.restart.schedule(3000);
+		}
+	}
+}
+
+function alive(val)
+{
+	initialize(val);
+}
+
+function initialize()
+{
 	setup_translations();
-	outlet(0, 'code_encoder_grid', 'local', 0);
-	outlet(0, 'set_mod_color', modColor);
-	outlet(0, 'receive_device', 'set_mod_device_type', 'EndCoders');
-	outlet(0, 'receive_device', 'set_number_custom', 192);
-	outlet(0, 'receive_device', 'set_number_params', 32);
+	mod.Send('code_encoder_grid', 'local', 0);
+	mod.Send('create_alt_device_proxy', '_codec_device_proxy');
+	for(var dev_type in CODEC_ENDCODER_BANKS)
+	{
+		for(var bank_num in CODEC_ENDCODER_BANKS[dev_type])
+		{
+			debug('sending entry:', 'receive_alt_device_proxy', '_codec_device_proxy', 'set_bank_dict_entry', dev_type, bank_num, CODEC_ENDCODER_BANKS[dev_type][bank_num]);
+			mod.SendDirect('receive_alt_device_proxy', '_codec_device_proxy', 'set_bank_dict_entry', dev_type, bank_num, CODEC_ENDCODER_BANKS[dev_type][bank_num]);
+		}
+	}
+	mod.Send('receive_alt_device_proxy', '_codec_device_proxy', 'set_number_custom', 192);
+	mod.Send('receive_alt_device_proxy', '_codec_device_proxy', 'set_number_params', 32);
+	mod.Send('code_encoders_to_device', 'value', 1);
+	mod.Send('receive_alt_device_proxy', '_codec_device_proxy', 'rebuild_parameters');
+
+	for(var dev_type in ENDCODER_BANKS)
+	{
+		for(var bank_num in ENDCODER_BANKS[dev_type])
+		{
+			debug('sending entry:', 'receive_device_proxy', 'set_bank_dict_entry', dev_type, bank_num, ENDCODER_BANKS[dev_type][bank_num]);
+			mod.SendDirect('receive_device_proxy', 'set_bank_dict_entry', dev_type, bank_num, ENDCODER_BANKS[dev_type][bank_num]);
+		}
+	}
+	mod.Send('receive_device_proxy', 'set_number_custom', 192);
+	mod.Send('receive_device_proxy', 'set_number_params', 32);
+	mod.Send('receive_device_proxy', 'rebuild_parameters');
+
 	for(var l=0;l<8;l++)
 	{
-		outlet(0, 'trans', 'm_enc_'+l, 'mode', 5);
-		outlet(0, 'trans', 'm_enc_'+l, 'green', 0);
-		outlet(0, 'trans', 'm_enc_'+l, 'value', 0);
-		outlet(0, 'trans', 'm_button_'+l, 'value', 0);
+		mod.Send('trans', 'm_enc_'+l, 'mode', 5);
+		mod.Send('trans', 'm_enc_'+l, 'green', 0);
+		mod.Send('trans', 'm_enc_'+l, 'value', 0);
+		mod.Send('trans', 'm_button_'+l, 'value', 0);
 	}
 	for(var l=0;l<24;l++)
 	{
-		outlet(0, 'trans', 'e_enc_'+l, 'mode', 5);
-		outlet(0, 'trans', 'e_enc_'+l, 'green', 0);
-		outlet(0, 'trans', 'e_enc_'+l, 'value', 0);
-		outlet(0, 'trans', 'e_button_'+l, 'value', 0);
+		mod.Send('trans', 'e_enc_'+l, 'mode', 5);
+		mod.Send('trans', 'e_enc_'+l, 'green', 0);
+		mod.Send('trans', 'e_enc_'+l, 'value', 0);
+		mod.Send('trans', 'e_button_'+l, 'value', 0);
 	}
 	finder = new LiveAPI(finder_cb, 'this_device');
 	var this_device_id = finder.id;
@@ -93,7 +177,6 @@ function init()
 	if(SHOW_STORAGE){storage.message('clientlist');}
 	gui_edit = this.patcher.getnamed('edit');
 	gui_selected = this.patcher.getnamed('selected');
-	//post('1');
 	for(var h=0;h<4;h++)
 	{
 		rows[h]=[];
@@ -129,7 +212,7 @@ function init()
 		knob[i].knob.message('set', knob[i].val * 127);
 		knob[i].assignment = this.patcher.getnamed('breakpoints').subpatcher(i).getnamed('assignments');
 		knob[i].id_numbers = knob[i].assignment.getvalueof();
-		if(DEBUG){post('assignments', i, knob[i].id_numbers, '\n');}
+		debug('assignments', i, knob[i].id_numbers);
 		if(knob[i].id_numbers.length < 24)
 		{
 			knob[i].id_numbers = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -174,31 +257,28 @@ function init()
 				new_name = new_name.join('');
 				new_name = new_name.slice(0, 25);
 				knob[i][j]._title.message('set', new_name);
-				outlet(0, 'send_explicit', 'receive_device', 'set_custom_parameter', j+(i*24), 'id', new_parameter_id);
+				mod.Send('send_explicit', 'receive_alt_device_proxy', '_codec_device_proxy', 'set_custom_parameter', j+(i*24), 'id', new_parameter_id);
+				mod.Send('send_explicit', 'receive_device_proxy', 'set_custom_parameter', j+(i*24), 'id', new_parameter_id);
 			}
 			knob[i][j].breakpoint = this.patcher.getnamed('breakpoints').subpatcher(i).getnamed('breakpoint'+j);
 			knob[i][j].breakpoint.message('setdomain', 100.);
+			knob[i][j].breakpoint.message('mode', 1);
+			knob[i][j].breakpoint.message('grid', 1);
+			knob[i][j].breakpoint.message('gridstep_x', 14.28);
+			knob[i][j].breakpoint.message('gridcolor', 1, 1, 1, 1);
 		}
 	}
-	for(var i in script)
-	{
-		if((/^_/).test(i))
-		{
-			script[i.replace('_', "")] = script[i];
-		}
-	}
+	deprivatize_script_functions(script);
 	Alive = 1;
 	clear_surface();
+	mod.Send('key', 'value', 4, 64);
+	mod.Send('key', 'value', 5, 65);
 	selected = knob[0];
+	select_knob(0);
+	select_row(0);
 	load_preset();
 	storage.message('getslotlist');
-	if(DEBUG){post('init\n');}
-}
-
-function output()
-{
-	var args = arrayfromargs(arguments);
-	outlet(0, args);
+	debug('initialize endcoders');
 }
 
 function setup_translations()
@@ -222,23 +302,42 @@ function setup_translations()
 	//Code stuff:
 	for(var i = 0;i < 8;i++)
 	{
-		outlet(0, 'add_translation', 'm_button_'+i, 'code_grid', 'macro_buttons', i, 0);
-		outlet(0, 'add_translation', 'm_enc_'+i, 'code_encoder_grid', 'macro_encoders', i, 0);
+		mod.Send('add_translation', 'm_button_'+i, 'code_grid', 'macro_buttons', i, 0);
+		mod.Send('add_translation', 'm_enc_'+i, 'code_encoder_grid', 'macro_encoders', i, 0);
 	}
 	for(var i = 0;i < 24;i++)
 	{
-		outlet(0, 'add_translation', 'e_button_'+i, 'code_grid', 'buttons', i%8, Math.floor(i/8)+1);
-		outlet(0, 'add_translation', 'e_enc_'+i, 'code_encoder_grid', 'encoders', i%8, Math.floor(i/8)+1);
+		mod.Send('add_translation', 'e_button_'+i, 'code_grid', 'buttons', i%8, Math.floor(i/8)+1);
+		mod.Send('add_translation', 'e_enc_'+i, 'code_encoder_grid', 'encoders', i%8, Math.floor(i/8)+1);
 	}
 	for(var i = 0;i < 4;i++)
 	{
-		outlet(0, 'add_translation', 'f_button_'+i, 'code_button', 'functions', i);
+		mod.Send('add_translation', 'f_button_'+i, 'code_button', 'functions', i);
 	}
 	for(var i = 0;i < 8;i++)
 	{
-		outlet(0, 'add_translation', 'c_key_'+i, 'code_key', 'sliders', i);
-		outlet(0, 'add_translation', 'key_'+i, 'code_key', 'presets', i);
-	}	
+		mod.Send('add_translation', 'c_key_'+i, 'code_key', 'sliders', i);
+		mod.Send('add_translation', 'key_'+i, 'code_key', 'presets', i);
+	}
+
+	//Grid Stuff
+	for(var i = 0;i < 8;i++)
+	{
+		mod.Send('add_translation', 'm_button_'+i, 'grid', 'grid_macro_buttons', i, 0);
+	}
+	//for(var i = 0;i < 24;i++)
+	//{
+	//	mod.Send('add_translation', 'e_button_'+i, 'grid', 'grid_buttons', i%8, Math.floor(i/8)+1);
+	//}
+	for(var i = 0;i < 4;i++)
+	{
+		mod.Send('add_translation', 'f_button_'+i, 'key', 'grid_functions', i+4);
+	}
+	for(var i = 0;i < 8;i++)
+	{
+		mod.Send('add_translation', 'c_key_'+i, 'grid', 'grid_sliders', i, 7);
+		mod.Send('add_translation', 'key_'+i, 'grid', 'grid_presets', i, 6);
+	}
 		
 }
 
@@ -260,7 +359,7 @@ function slotlist()
 		if(i<8)
 		{
 			//outlet(0, 'key', 'value', i, found);
-			outlet(0, 'trans', 'key_'+i, 'value', found);
+			mod.Send('trans', 'key_'+i, 'value', found);
 		}
 	}
 	if(active_preset > 0)
@@ -269,7 +368,7 @@ function slotlist()
 		if(active_preset<8)
 		{
 			//outlet(0, 'key', 'value', active_preset-1, 8);
-			outlet(0, 'trans', 'key_'+(active_preset-1), 'value', 8);
+			mod.Send('trans', 'key_'+(active_preset-1), 'value', 8);
 		}
 	}
 	//else if(args.length > 0)
@@ -291,11 +390,11 @@ function load_preset()
 				knob[i][j].active = knob[i].active_states[j];
 				if(knob[i][j].active == 0)
 				{
-					knob[i][j].gui_active.message('fgcolor', .35, .35, .35, 1.);
+					knob[i][j].gui_active.message('outlinecolor', .35, .35, .35, 1.);
 				}
 				else
 				{
-					knob[i][j].gui_active.message('fgcolor', .15, .45, .15, 1.);
+					knob[i][j].gui_active.message('outlinecolor', .15, .45, .15, 1.);
 				}
 			}
 		}
@@ -319,7 +418,7 @@ function finder_cb(args)
 		this.obj.val = new_val;
 		if(this.obj.bank == selected.num)
 		{
-			outlet(0, 'wheel', this.obj.x_c, this.obj.y_c, 'value', Math.floor(new_val * 11) + 1);
+			mod.Send('wheel', this.obj.x_c, this.obj.y_c, 'value', Math.floor(new_val * 11) + 1);
 		}
 	}
 }*/
@@ -330,22 +429,7 @@ function anything()
 	switch(messagename)
 	{			
 		default:
-			if(DEBUG){post('anything', messagename, args, '\n');}
-			break;
-	}
-}
-
-//this sorts key and grid input
-function _list()
-{
-	var args=arrayfromargs(arguments);
-	switch(inlet)
-	{
-		case 0:
-			_grid(args[0], args[1], args[2]);
-			break;
-		case 1:
-			_key(args[0], args[1]);
+			debug('anything', messagename, args);
 			break;
 	}
 }
@@ -355,7 +439,7 @@ function _recall(num)
 	active_preset = num;
 	//for(var i=0;i<8;i++)
 	//{
-	//	outlet(0, 'key', i, 7 * ((i + 1)==num));
+	//	mod.Send('key', i, 7 * ((i + 1)==num));
 	//}
 	load_preset();
 }	
@@ -371,17 +455,24 @@ function _button(x, y, val)
 			{
 				for(var i=0;i<24;i++)
 				{
+					set_breakpoint(i);
+				}
+			}
+			else if(rows[1].pressed>0)
+			{
+				for(var i=0;i<24;i++)
+				{
 					clear_breakpoint(i);
 				}
 			}
-			else if(is_shifted)
+			else if(is_alted)
 			{
 				for(var i=0;i<24;i++)
 				{
 					set_breakpoint(i);
 				}
 			}
-			else if(is_alted)
+			else if(is_shifted)
 			{
 				select_knob(x);
 				this.patcher.getnamed('breakpoints').message('wclose');
@@ -396,17 +487,22 @@ function _button(x, y, val)
 		{
 			if(rows[0].pressed>0)
 			{
-				select_parameter(((y-1)*8)+x);
-				//clear_breakpoint(((y-1)*8)+x);
+				//select_parameter(((y-1)*8)+x);
+				set_breakpoint(((y-1)*8)+x);
 			}
-			else if(is_shifted)
+			else if(rows[1].pressed>0)
 			{
-				//set_breakpoint(((y-1)*8)+x);
+				//select_parameter(((y-1)*8)+x);
+				clear_breakpoint(((y-1)*8)+x);
+			}
+			//else if(is_shifted)
+			else if(assign_mode_enabled)
+			{
 				select_parameter(((y-1)*8)+x);
 			}
 			else if(is_alted)
 			{
-				//select_parameter(((y-1)*8)+x);
+				set_breakpoint(((y-1)*8)+x);
 			}
 			else
 			{
@@ -418,7 +514,7 @@ function _button(x, y, val)
 
 function _code_key(num, val)
 {
-	if(DEBUG){post('column', num, val, '\n');}
+	debug('column', num, val);
 	if((num < 8)&&(val>0))
 	{
 		selected.knob.message('int', Math.round((num/7)*100));
@@ -427,16 +523,26 @@ function _code_key(num, val)
 
 function _code_button(num, val)
 {
-	if(DEBUG){post('row', num, val, rows[num].pressed, '\n');}
-	if(num < 3)
+	debug('row', num, val);// rows[num].pressed);
+	if(num < 2)
 	{
 		rows[num].pressed = (val!=0);
-		outlet(0, 'code_button', 'value', num, (val>0) * 127);
+		mod.Send('code_button', 'value', num, (val>0) * 127);
+		mod.Send('key', 'value', num+4, ((val>0)*7) + 64);
+	}
+	else if((num ==2)&&(val>0))
+	{
+		rows[2].pressed = Math.abs(rows[2].pressed - 1);
+		assign_mode_enabled = (!assign_mode_enabled);
+		debug('assign_mode_enabled', assign_mode_enabled);
+		mod.Send('code_button', 'value', 2, assign_mode_enabled * 8);
+		mod.Send('key', 'value', 6, assign_mode_enabled * 8);
 	}
 	else if((num ==3)&&(val>0))
 	{
 		rows[3].pressed = Math.abs(rows[3].pressed - 1);
-		outlet(0, 'code_button', 'value', 3, rows[3].pressed * 127);
+		mod.Send('code_button', 'value', 3, rows[3].pressed * 127);
+		mod.Send('key', 'value', 7, rows[3].pressed * 127);
 		if(rows[3].pressed > 0)
 		{
 			accel = ACCEL_FACTORS[0];
@@ -450,9 +556,9 @@ function _code_button(num, val)
 
 function _key(num, val)
 {
-	if(num<8)
+	/*if(num<8)
 	{
-		if(DEBUG){post('key', num, val);}
+		debug('key', num, val);
 		keys[num].pressed = (val!=0);
 		if(val > 0)
 		{
@@ -461,12 +567,20 @@ function _key(num, val)
 			preset.message('int', active_preset);
 			storage.message('getslotlist');
 		}
+	}*/
+	if(val&&(num<4))
+	{
+		select_row(num);
+	}
+	else if(num>3)
+	{
+		_code_button(num-4, val);
 	}
 }
 
 function _c_key(num, val)
 {
-	if(DEBUG){post('c_key', num, val, '\n');}
+	debug('c_key', num, val);
 	c_keys[num].pressed = (val!=0);
 	if(val > 0)
 	{
@@ -488,11 +602,11 @@ function _c_key(num, val)
 function _c_grid(x, y, val)
 {
 	var num = x+(y*4);
-	if(DEBUG){post('c_grid', x, y, val, '\n');}
+	debug('c_grid', x, y, val);
 	if(num<4)
 	{
 		c_rows[num].pressed=val;
-		outlet(0, 'cntrlr_grid', 'value', num, 0, FUNCTION_COLORS[x] + ((val>0)*7));
+		mod.Send('cntrlr_grid', 'value', num, 0, FUNCTION_COLORS[x] + ((val>0)*7));
 	}
 	else if((num>7)&&(val>0))
 	{
@@ -528,7 +642,7 @@ function _c_grid(x, y, val)
 
 function _c_button(x, y, val)
 {
-	if(DEBUG){post('c_button', x, y, val, '\n');}
+	debug('c_button', x, y, val);
 	if(val>0)
 	{
 		if(c_rows[0].pressed>0)
@@ -557,7 +671,7 @@ function _grid(x, y, val)
 	if((num>7)&&(num<11))
 	{
 		grid_rows[num-8].pressed = val>0;
-		outlet(0, 'grid', 'value', x, y, FUNCTION_COLORS[x]+((val>0)*7));
+		mod.Send('grid', 'value', x, y, FUNCTION_COLORS[x]+((val>0)*7));
 	}
 	else if((num>15)&&(num<40))
 	{
@@ -583,7 +697,7 @@ function _grid(x, y, val)
 	}
 	else if((num>=56)&&(num<64))
 	{
-		_column(x, val);
+		_code_key(x, val);
 	}
 	else if((num<8)&&(val>0))
 	{
@@ -617,17 +731,38 @@ function _grid(x, y, val)
 	}
 }
 
+function _grid(x, y, val)
+{
+	if(y<4){_button(x, y, val);}
+	else if(y==7){selected.knob.message('int', Math.floor(((x)/7)*100));}
+	else if(y==6){_c_key(x, val);}
+}
+
 function _code_grid(x, y, val)
 {
 	button(x, y, val)
 }
 
+function _code_encoder_grid(x, y, val)
+{
+	debug('_code_encoder_grid', x, y, val);
+	if(y==0)
+	{
+		//this.patcher.getnamed('knob'+x).message('int', val);
+	}
+	else
+	{
+	}
+}
+
 function _dial_return(bank, number, value)
 {
-	if(DEBUG){post('dial_return', bank, number, value, '\n');}
+	debug('dial_return', bank, number, value);
+	//knob[bank][number].val = value;
 	if(knob[bank-1].active_states[number])
 	{
-		outlet(0, 'receive_device', 'set_custom_parameter_value', number+((bank-1)*24), value);
+		mod.Send('receive_alt_device_proxy', '_codec_device_proxy', 'set_custom_parameter_value', number+((bank-1)*24), value);
+		mod.Send('receive_device_proxy', 'set_custom_parameter_value', number+((bank-1)*24), value);
 	}
 }
 
@@ -645,45 +780,91 @@ function _alt(value)
 
 function set_breakpoint(num)
 {
-	selected[num].breakpoint.message('list', encs['Encoder_'+selected.num].val, encs['Encoder_'+(selected[num].num+8)].val);
+	var param = selected[num].parameter
+	if(param.id != 0)
+	{
+		finder.id = param.id;
+		var max = finder.get('max');
+		var min = finder.get('min');
+		var val = finder.get('value');
+		var new_val = (val-min/(max-min))*100;
+		debug('val is:', new_val, 'max', max, 'min', min, 'val', val);
+		debug('set_breakpoint', num, selected.val, new_val);
+		selected[num].breakpoint.message('list', selected.val, new_val);
+	}
 }
 
 function clear_breakpoint(num)
 {
-	selected[num].breakpoint.message('clear');
+	if(is_shifted)
+	{
+		selected[num].message('clear');
+	}
+	else
+	{
+		debug('clear_breakpoint', num);
+		var list = selected[num].breakpoint.getvalueof();
+		debug('list is:', list);
+		list = list.slice(3);
+		debug('list is now:', list, list.length);
+		var index = 0;
+		do{
+			var entry = list.splice(0, 4);
+			debug('entry is:', entry);
+			if((entry[0] >= (selected.val - CLEAR_TOLLERANCE))&&(entry[0]<=(selected.val + CLEAR_TOLLERANCE)))
+			{
+				debug('entry is in there....', index);
+				selected[num].breakpoint.message('clear', index);
+			}
+			index+=1;
+		}while(list.length);
+		//selected[num].breakpoint.message('clear');
+	}
+}
+
+function select_row(num)
+{
+	selected_row = num;
+	mod.SendDirect('receive_device', 'set_mod_device_bank', selected_row + (selected.num*4));
+	var i=3;do{
+		mod.Send('key', 'value', i, (i==selected_row)*10);
+	}while(i--);
 }
 
 function select_knob(num)
 {
-	if(DEBUG){post('select knob', num, '\n');}
+	debug('select knob', num);
 	selected = knob[num];
-	outlet(0, 'receive_device', 'set_mod_device_bank', num);
+	mod.Send('receive_alt_device_proxy', '_codec_device_proxy', 'set_mod_device_bank', num);
+	mod.SendDirect('receive_device', 'set_mod_device_bank', selected_row + (selected.num*4));
 	gui_selected.message('set', num);
 	var i=7;do{
-		outlet(0, 'trans', 'm_button_'+i, 'value', (num == i)*127);
+		mod.Send('trans', 'm_button_'+i, 'value', (num == i)*127);
+		mod.Send('grid', 'value', i, 0, (num == i)*1);
 	}while(i--);
 	/*var i=3;do{
 		var j=1;do{
-			outlet(0, 'cntrlr_grid', 'value', i, j+2, (num == (i+(j*4)))*127);
+			mod.Send('cntrlr_grid', 'value', i, j+2, (num == (i+(j*4)))*127);
 		}while(j--);
 	}while(i--);*/
 	for(var i=0;i<24;i++)
 	{
 		var cur_param = selected[i], assigned = (cur_param.parameter.id != 0);
-		//outlet(0, 'code_grid', 'value', j, i+1, 127 * assigned);
-		outlet(0, 'trans', 'e_button_'+i, 'value', 127 * assigned);
-		//outlet(0, 'code_encoder_grid', 'value', j, i+1,  Math.floor(encs['Encoder_'+cur_param.num].val/10)*assigned);
-		outlet(0, 'trans', 'e_enc_'+i, 'value', Math.floor(encs['Encoder_'+cur_param.num].val/10)*assigned);
-		//outlet(0, 'code_encoder_grid', 'green', j, i+1,  cur_param.active);
-		post('active is:', cur_param, cur_param.active);
-		outlet(0, 'trans', 'e_enc_'+i, 'green', cur_param.active);
+		//mod.Send('code_grid', 'value', j, i+1, 127 * assigned);
+		mod.Send('trans', 'e_button_'+i, 'value', 127 * assigned);
+		//mod.Send('code_encoder_grid', 'value', j, i+1,  Math.floor(encs['Encoder_'+cur_param.num].val/10)*assigned);
+		mod.Send('trans', 'e_enc_'+i, 'value', Math.floor(encs['Encoder_'+cur_param.num].val/10)*assigned);
+		//mod.Send('code_encoder_grid', 'green', j, i+1,  cur_param.active);
+		//post('active is:', cur_param, cur_param.active);
+		mod.Send('trans', 'e_enc_'+i, 'green', cur_param.active);
 		/*if(cur_param.cntrlr)
 		{
-			outlet(0, 'code_encoder_grid', 'value', cur_param.c_x_c, cur_param.c_y_c,  Math.floor(encs['Encoder_'+cur_param.num].val/10)*assigned);
-			outlet(0, 'code_grid', 'value', cur_param.c_x_c, cur_param.c_y_c, (cur_param.parameter.id>0)*((cur_param.active*5)+1));
-		}
-		outlet(0, 'grid', 'value', j, i+2, assigned*((cur_param.active*5)+1));*/
-	}	
+			mod.Send('code_encoder_grid', 'value', cur_param.c_x_c, cur_param.c_y_c,  Math.floor(encs['Encoder_'+cur_param.num].val/10)*assigned);
+			mod.Send('code_grid', 'value', cur_param.c_x_c, cur_param.c_y_c, (cur_param.parameter.id>0)*((cur_param.active*5)+1));
+		}*/
+		mod.Send('grid', 'value', i%8, (Math.floor(i/8))+1, assigned*((cur_param.active*5)+1));
+	}
+	refresh_grid_fader();
 }
 
 function select_parameter(num)
@@ -691,8 +872,9 @@ function select_parameter(num)
 	var to_active = (selected[num].parameter.id == 0);
 	finder.goto('live_set', 'view', 'selected_parameter');
 	var new_parameter_id = parseInt(finder.id);
-	outlet(0, 'send_explicit', 'receive_device', 'set_custom_parameter', num+(selected.num*24), 'id', new_parameter_id);
-	if(DEBUG){post('receive_device', 'set_custom_parameter', num+(selected.num*24), 'id', new_parameter_id, '\n');}
+	mod.Send('send_explicit', 'receive_alt_device_proxy', '_codec_device_proxy', 'set_custom_parameter', num+(selected.num*24), 'id', new_parameter_id);
+	mod.Send('send_explicit', 'receive_device', 'set_custom_parameter', num+(selected.num*24), 'id', new_parameter_id);
+	debug('receive_device', 'set_custom_parameter', num+(selected.num*24), 'id', new_parameter_id);
 	var in_this = 0;
 	for(var i in knob_ids)
 	{
@@ -717,20 +899,20 @@ function select_parameter(num)
 		selected[num]._title.message('set', new_name);
 		if(selected[num].parameter.id == 0)
 		{
-			selected[num].gui_select.message('fgcolor', .35, .35, .35, 1.);
+			selected[num].gui_select.message('outlinecolor', .35, .35, .35, 1.);
 		}
 		else
 		{
-			selected[num].gui_select.message('fgcolor', 1., 1., 1., 1.);
+			selected[num].gui_select.message('outlinecolor', 1., 1., 1., 1.);
 		}
-		//outlet(0, 'code_grid', 'value', selected[num].x_c, selected[num].y_c, 127 * (selected[num].parameter.id != 0));
-		outlet(0, 'trans', 'e_button_'+(selected[num].num), 'value', 127 * (selected[num].parameter.id != 0));
+		//mod.Send('code_grid', 'value', selected[num].x_c, selected[num].y_c, 127 * (selected[num].parameter.id != 0));
+		mod.Send('trans', 'e_button_'+(selected[num].num), 'value', 127 * (selected[num].parameter.id != 0));
 		//post('sel cntrlr', selected[num].cntrlr, '\n');
 		/*if(selected[num].cntrlr)
 		{
-			outlet(0, 'cntrlr_grid', 'value', selected[num].c_x_c, selected[num].c_y_c, (selected[num].parameter.id>0)*((selected[num].active*5)+1));
+			mod.Send('cntrlr_grid', 'value', selected[num].c_x_c, selected[num].c_y_c, (selected[num].parameter.id>0)*((selected[num].active*5)+1));
 		}
-		outlet(0, 'grid', 'value', selected[num].x_c, selected[num].y_c + 1, (selected[num].parameter.id>0)*((selected[num].active*5)+1));
+		mod.Send('grid', 'value', selected[num].x_c, selected[num].y_c + 1, (selected[num].parameter.id>0)*((selected[num].active*5)+1));
 		*/
 		if(to_active>0)
 		{
@@ -752,15 +934,15 @@ function set_active(num, state)
 				
 				Knob.active = 0;
 				knob[i].active_states[j] = 0;
-				Knob.gui_active.message('fgcolor', .35, .35, .35, 1.);
+				Knob.gui_active.message('outlinecolor', .35, .35, .35, 1.);
 				if(i == selected.num)
 				{
-					//outlet(0, 'code_encoder_grid', 'green', Knob.x_c, Knob.y_c, 0);
-					outlet(0, 'trans', 'e_enc_'+(Knob.num), 'green', 0);
-					/*outlet(0, 'grid', 'value', Knob.x_c, Knob.y_c + 2, 0);
+					//mod.Send('code_encoder_grid', 'green', Knob.x_c, Knob.y_c, 0);
+					mod.Send('trans', 'e_enc_'+(Knob.num), 'green', 0);
+					/*mod.Send('grid', 'value', Knob.x_c, Knob.y_c + 2, 0);
 					if(Knob.cntrlr)
 					{
-						outlet(0, 'cntrlr_grid', 'value', Knob.c_x_c, Knob.c_y_c, (Knob.parameter.id>0)*((Knob.active*5)+1));
+						mod.Send('cntrlr_grid', 'value', Knob.c_x_c, Knob.c_y_c, (Knob.parameter.id>0)*((Knob.active*5)+1));
 					}*/
 				}
 			}
@@ -773,19 +955,19 @@ function set_active(num, state)
 	//selected[num].gui_active.setvalueof(selected[num].active);
 	if(selected[num].active == 0)
 	{
-		selected[num].gui_active.message('fgcolor', .35, .35, .35, 1.);
+		selected[num].gui_active.message('outlinecolor', .35, .35, .35, 1.);
 	}
 	else
 	{
-		selected[num].gui_active.message('fgcolor', .15, .45, .15, 1.);
+		selected[num].gui_active.message('outlinecolor', .15, .85, .15, 1.);
 	}
-	//outlet(0, 'code_encoder_grid', 'green', selected[num].x_c, selected[num].y_c, selected[num].active);
-	outlet(0, 'trans', 'e_enc_'+(selected[num].num), 'green', selected[num].active);
-	/*outlet(0, 'grid', 'value', selected[num].x_c, selected[num].y_c+1, (selected[num].parameter.id>0)*((selected[num].active*5)+1));
-	if(selected[num].cntrlr)
+	//mod.Send('code_encoder_grid', 'green', selected[num].x_c, selected[num].y_c, selected[num].active);
+	mod.Send('trans', 'e_enc_'+(selected[num].num), 'green', selected[num].active);
+	mod.Send('grid', 'value', selected[num].x_c, selected[num].y_c, (selected[num].parameter.id>0)*((selected[num].active*5)+1));
+	/*if(selected[num].cntrlr)
 	{
-		if(DEBUG){post('sending white', selected[num].c_x_c, selected[num].c_y_c, selected[num].active, '\n');}
-		outlet(0, 'cntrlr_grid', 'value', selected[num].c_x_c, selected[num].c_y_c, (selected[num].parameter.id>0)*((selected[num].active*5)+1));
+		debug('sending white', selected[num].c_x_c, selected[num].c_y_c, selected[num].active);
+		mod.Send('cntrlr_grid', 'value', selected[num].c_x_c, selected[num].c_y_c, (selected[num].parameter.id>0)*((selected[num].active*5)+1));
 	}*/
 }
 
@@ -833,36 +1015,55 @@ function clear_surface()
 {
 	for(var i = 0; i < 8; i ++)
 	{
-		outlet(0, 'trans', 'c_key_'+i, 'value', 0);
-		outlet(0, 'trans', 'key_'+i, 'value', 0);
-		outlet(0, 'trans', 'm_button_'+i, 'value', 0);
-		outlet(0, 'trans', 'm_enc_'+i, 'mode', 5);
-		outlet(0, 'trans', 'm_enc_'+i, 'green', 0);
-		outlet(0, 'trans', 'm_enc_'+i, 'value', 0);
+		mod.Send('trans', 'c_key_'+i, 'value', 0);
+		mod.Send('trans', 'key_'+i, 'value', 0);
+		mod.Send('trans', 'm_button_'+i, 'value', 0);
+		mod.Send('trans', 'm_enc_'+i, 'mode', 5);
+		mod.Send('trans', 'm_enc_'+i, 'green', 0);
+		mod.Send('trans', 'm_enc_'+i, 'value', 0);
 	}
 	for(var i = 0; i < 24; i ++)
 	{
-		outlet(0, 'trans', 'e_button_'+i, 'value', 0);
-		outlet(0, 'trans', 'e_enc_'+i, 'mode', 5);
-		outlet(0, 'trans', 'e_enc_'+i, 'green', 0);
-		outlet(0, 'trans', 'e_enc_'+i, 'value', 0);
+		mod.Send('trans', 'e_button_'+i, 'value', 0);
+		mod.Send('trans', 'e_enc_'+i, 'mode', 5);
+		mod.Send('trans', 'e_enc_'+i, 'green', 0);
+		mod.Send('trans', 'e_enc_'+i, 'value', 0);
 	}
 	for(var i = 0; i < 4; i ++)
 	{
-		outlet(0, 'trans', 'f_button_'+i, 'value', 0);
+		mod.Send('trans', 'f_button_'+i, 'value', 0);
 	}
-	outlet(0, 'grid', 'batch_all', 0);
+	mod.Send('grid', 'batch_all', 0);
 	/*for(var i=0;i<4;i++)
 	{
-		outlet(0, 'c_grid', i, 0, FUNCTION_COLORS[i]);
-		outlet(0, 'grid', i, 1, FUNCTION_COLORS[i]);
+		mod.Send('c_grid', i, 0, FUNCTION_COLORS[i]);
+		mod.Send('grid', i, 1, FUNCTION_COLORS[i]);
 	}*/
+}
+
+function _encoders(num, val)
+{
+	num-=1;
+	debug('_encoders:', num, val, num==selected.num);
+	knob[num].val = val;
+	if((num)==selected.num)
+	{
+		refresh_grid_fader();
+	}
+}
+
+function refresh_grid_fader()
+{
+	var i=7;do{
+		debug('grid', 'value', i, 7, ((selected.val/12.5)>=i)*6);
+		mod.Send('grid', 'value', i, 7, ((selected.val/12.5)>=i)*6);
+	}while(i--);
 }
 
 function _lcd()
 {
 	var args = arrayfromargs(arguments);
-	if(DEBUGLCD){post('lcd:', args, '\n');}
+	debuglcd('lcd:', args)
 	if(args[1]=='encoder_value')
 	{
 		var enc = encs[args[0]];
@@ -872,16 +1073,23 @@ function _lcd()
 		{
 			var new_val = Math.round(args[2]/8.46666);
 			//var i=15;do{
-			//	outlet(0, 'c_key', i+16, new_val>=i);
+			//	mod.Send('c_key', i+16, new_val>=i);
 			//}while(i--);
 			var new_val = Math.round(args[2]/18.14);
 			var i=7;do{
-				//outlet(0, 'code_key', 'value', i, (new_val>=i)*127);
-				outlet(0, 'trans', 'c_key_'+i, 'value', (new_val>=i)*127);
-				//outlet(0, 'grid', 'value', i, 7, (new_val>=i)*6);
+				//mod.Send('code_key', 'value', i, (new_val>=i)*127);
+				//mod.Send('trans', 'c_key_'+i, 'value', (new_val>=i)*127);
+				//mod.Send('grid', 'value', i, 7, (new_val>=i)*6);
 			}while(i--);
 		}	
 	}
+}
+
+function _lcd(){}
+
+function _zoom_button(group, number, val)
+{
+	debug('zoom', group, number, val);
 }
 
 forceload(this);

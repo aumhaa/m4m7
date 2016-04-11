@@ -21,31 +21,6 @@ from aumhaa.v2.base.debug import *
 import logging
 logger = logging.getLogger(__name__)
 
-""" _Framework files """
-#from _Framework.CompoundComponent import CompoundComponent
-#from _Framework.ControlSurface import ControlSurface
-#from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
-#from _Framework.InputControlElement import * 
-#from _Framework.SceneComponent import SceneComponent
-#from _Framework.SubjectSlot import subject_slot, subject_slot_group
-#from _Framework.Layer import Layer
-#from _Framework.ModesComponent import ModesComponent
-#from _Framework.ComboElement import ComboElement, DoublePressElement, MultiElement, DoublePressContext
-
-"""Imports from the Monomodular Framework"""
-#from _Mono_Framework.CodecEncoderElement import CodecEncoderElement
-#from _Mono_Framework.MonoEncoderElement import MonoEncoderElement
-#from _Mono_Framework.ResetSendsComponent import ResetSendsComponent
-#from _Mono_Framework.DeviceSelectorComponent import DeviceSelectorComponent
-#from _Mono_Framework.DetailViewControllerComponent import DetailViewControllerComponent
-#from _Mono_Framework.MonoDeviceComponent import NewMonoDeviceComponent
-#from _Mono_Framework.LiveUtils import *
-#from _Mono_Framework.Debug import *
-#from _Mono_Framework.EncoderMatrixElement import EncoderMatrixElement
-#from _Mono_Framework.MonoChopperComponent import MonoChopperComponent
-#from _Mono_Framework.MonoBridgeElement import MonoBridgeElement
-#from _Mono_Framework.MonoButtonElement import MonoButtonElement
-
 debug = initialize_debug()
 
 PEDAL_DEFS = [64, 65, 66, 67, 68, 69, 70]
@@ -146,7 +121,7 @@ class RGB_LED(MonoButtonElement):
 	
 
 	def flash(self, timer):
-		if (self._is_being_forwarded and self._flash_state in range(1, self._num_flash_states) and (timer % self._flash_state) == 0):
+		if (self._flash_state in range(1, self._num_flash_states) and (timer % self._flash_state) == 0):
 			data_byte2 = self._color * int((timer % (self._flash_state * 2)) > 0)
 			status_byte = self._original_channel
 			self.send_RGB(data_byte2)
@@ -556,6 +531,7 @@ class Monoloop(ControlSurfaceComponent):
 	
 
 	def is_selected(self):
+		debug('is selected:', self._index, self is self._parent._selected_loop or self._parent._all_loops_selected)
 		return self is self._parent._selected_loop or self._parent._all_loops_selected
 	
 
@@ -965,7 +941,7 @@ class MonoPedal(ControlSurface):
 	def __init__(self, *a, **k):
 		self.log_message = logger.warning
 		super(MonoPedal, self).__init__(*a, **k)
-		self._monomod_version = 'b995'
+		self._monomod_version = 'b996'
 		self._codec_version = 'b996'
 		self._cntrlr_version = 'b996'
 		self._cntrlr = None
@@ -1001,11 +977,9 @@ class MonoPedal(ControlSurface):
 	def _setup_controls(self):
 		self._pedal = [None for index in range(8)]
 		for index in range(7):
-			self._pedal[index] = DoublePressElement(MonoButtonElement(True, MIDI_CC_TYPE, 0, PEDAL_DEFS[index], 'Pedal_'+str(index), self))
-			#is_momentary, MIDI_NOTE_TYPE, CHANNEL, LIVID, 'Livid_Button', self
-			self._pedal[index].name = 'Pedal_'+str(index)
+			self._pedal[index] = DoublePressElement(MonoButtonElement(is_momentary = True, msg_type = MIDI_CC_TYPE, channel = 0, identifier = PEDAL_DEFS[index], name = 'Pedal_'+str(index), script = self))
 			self._pedal[index]._report = False
-		self._pedal[7] = LoopPedalExpressionElement(self, MIDI_CC_TYPE, 0, 1, Live.MidiMap.MapMode.absolute)
+		self._pedal[7] = LoopPedalExpressionElement(script = self, msg_type = MIDI_CC_TYPE, channel = 0, identifier = 1, map_mode = Live.MidiMap.MapMode.absolute)
 		self._pedal[7].name = 'Pedal_'+str(7)
 		self._pedal[7]._report = False
 		self._leds = [None for index in range(4)]
@@ -1013,7 +987,7 @@ class MonoPedal(ControlSurface):
 				red_led = ButtonElement(True, MIDI_NOTE_TYPE, 0, LED_DEFS[index])
 				green_led = ButtonElement(True, MIDI_NOTE_TYPE, 0, LED_DEFS[index]+4)
 				blue_led = ButtonElement(True, MIDI_NOTE_TYPE, 0, LED_DEFS[index]+8)
-				self._leds[index] =  RGB_LED(red_led, green_led, blue_led, True, MIDI_NOTE_TYPE, 0, index+13, 'LED_' + str(index), self)
+				self._leds[index] =  RGB_LED(red_led, green_led, blue_led, is_momentary = True, msg_type = MIDI_NOTE_TYPE, channel = 0, identifier = index+13, name = 'LED_' + str(index), script = self)
 		self._select_buttons = ButtonMatrixElement()
 		self._select_buttons.name = 'SelectMatrix'
 		self._select_buttons.add_row([self._pedal[6], self._pedal[5], self._pedal[4], self._pedal[3]])

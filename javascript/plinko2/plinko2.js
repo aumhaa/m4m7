@@ -6,7 +6,7 @@ inlets = 1;
 var script = this;
 
 
-var DEBUG = false;
+var DEBUG = true;
 var SHOW_STORAGE = false;
 var FORCELOAD = false ;
 
@@ -18,9 +18,9 @@ var mod;
 var mod_finder;
 var Mod = ModComponent.bind(script);
 
-var bgcolors = {'OFF': [0, 0, 0, 1], 'WHITE':[1, 1, 1, 1], 'YELLOW':[1, 1, 0, 1], 'CYAN':[0, 1, 1, 1],
+var bgcolors = {'OFF': [0, 0, 0, 0], 'WHITE':[1, 1, 1, 1], 'YELLOW':[1, 1, 0, 1], 'CYAN':[0, 1, 1, 1],
 				'MAGENTA':[1, 0, 1, 1], 'RED':[1, 0, 0, 1], 'GREEN':[0, 1, 0, 1], 'BLUE':[0, 0, 1, 1],
-				'INVISIBLE':[1, 1, 1, 0]};
+				'INVISIBLE':[0, 0, 0, 0]};
 
 
 function NodeComponent(name, num, poly)
@@ -350,22 +350,26 @@ function Display()
 												},
 									'_value': 	{'set': ['', '', '', '', '', '', '', '']
 												},
-									'panel': 	{'bgcolor':[bgcolors.YELLOW, bgcolors.OFF, bgcolors.BLUE, bgcolors.OFF, bgcolors.RED, bgcolors.OFF, bgcolors.GREEN, bgcolors.OFF, bgcolors.WHITE],
-												'bordercolor':[bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF]
+									'button': 	{'outlinecolor':[bgcolors.YELLOW, bgcolors.OFF, bgcolors.BLUE, bgcolors.OFF, bgcolors.RED, bgcolors.OFF, bgcolors.GREEN, bgcolors.OFF, bgcolors.WHITE],
+												'bgcolor':[bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF]
 												},
 									'dial':     {'needlecolor':[bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE],
+												'outlinecolor':[bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE],
+												'hidden':[1, 1, 1, 1, 1, 1, 1, 1, 1],
 												'int':[0, 0, 0, 0, 0, 0, 0, 0, 0]
 												}
 								},
-					'Voices':   {	'_name': 	{'set': ['Mute', '', 'Voices', '', 'Storage', '', 'Routing', '', '?'],
+					'Voices':   {	'_name': 	{'set': ['voices', '', 'Voices', '', 'Storage', '', 'Routing', '', '?'],
 												'fontsize':[9, 9, 9, 9, 9, 9, 9, 9, 40]
 												},
 									'_value': 	{'set': ['', '', '', '', '', '', '', '']
 												},
-									'panel': 	{'bgcolor':[bgcolors.WHITE, bgcolors.YELLOW, bgcolors.CYAN, bgcolors.MAGENTA, bgcolors.RED, bgcolors.GREEN, bgcolors.BLUE, bgcolors.OFF, bgcolors.WHITE],
-												'bordercolor':[bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF]
+									'button': 	{'outlinecolor':[bgcolors.WHITE, bgcolors.YELLOW, bgcolors.CYAN, bgcolors.MAGENTA, bgcolors.RED, bgcolors.GREEN, bgcolors.BLUE, bgcolors.OFF, bgcolors.WHITE],
+												'bgcolor':[bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF]
 												},
-									'dial':     {'needlecolor':[0, 0, 0, 0, 0, 0, 0, 0, 0],
+									'dial':     {'needlecolor':[bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE],
+												'outlinecolor':[bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE, bgcolors.INIVISIBLE],
+												'hidden':[1, 1, 1, 1, 1, 1, 1, 1, 1],
 												'int':[0, 0, 0, 0, 0, 0, 0, 0, 0]
 												}
 								},
@@ -374,8 +378,8 @@ function Display()
 												},
 									'_value': 	{'set': ['', '', '', '', '', '', '', '']
 												},
-									'panel': 	{'bgcolor':[bgcolors.WHITE, bgcolors.YELLOW, bgcolors.CYAN, bgcolors.MAGENTA, bgcolors.RED, bgcolors.GREEN, bgcolors.BLUE, bgcolors.OFF, bgcolors.WHITE],
-												'bordercolor':[bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF]
+									'button': 	{'outlinecolor':[bgcolors.WHITE, bgcolors.YELLOW, bgcolors.CYAN, bgcolors.MAGENTA, bgcolors.RED, bgcolors.GREEN, bgcolors.BLUE, bgcolors.OFF, bgcolors.WHITE],
+												'bgcolor':[bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF]
 												},
 									'dial':     {'needlecolor':[0, 0, 0, 0, 0, 0, 0, 0, 0],
 												'int':[0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -386,8 +390,8 @@ function Display()
 												},
 									'_value': 	{'set': ['', '', '', '', '', '', '', '']
 												},
-									'panel': 	{'bgcolor':[bgcolors.WHITE, bgcolors.YELLOW, bgcolors.CYAN, bgcolors.MAGENTA, bgcolors.RED, bgcolors.GREEN, bgcolors.BLUE, bgcolors.OFF, bgcolors.WHITE],
-												'bordercolor':[bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF]
+									'button': 	{'outlinecolor':[bgcolors.WHITE, bgcolors.YELLOW, bgcolors.CYAN, bgcolors.MAGENTA, bgcolors.RED, bgcolors.GREEN, bgcolors.BLUE, bgcolors.OFF, bgcolors.WHITE],
+												'bgcolor':[bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF, bgcolors.OFF]
 												},
 									'dial':     {'needlecolor':[0, 0, 0, 0, 0, 0, 0, 0, 0],
 												'int':[0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -397,11 +401,11 @@ function Display()
 
 	for(var i=0;i<9;i++)
 	{
-		this.panel[i] = patcher.getnamed('panel['+i+']');
+		//this.panel[i] = patcher.getnamed('panel['+i+']');
 		this.dial[i] = patcher.getnamed('dial['+i+']');
 		this.button[i] = patcher.getnamed('button['+i+']');
-		this._name[i] = patcher.getnamed('name['+i+']');
-		this._value[i] = patcher.getnamed('value['+i+']');
+		this._name[i] = patcher.getnamed('_name['+i+']');
+		this._value[i] = patcher.getnamed('_value['+i+']');
 	}
 	this._update = function()
 	{
@@ -409,7 +413,7 @@ function Display()
 		{
 			for(var obj in this.layers[this.layer])
 			{
-				//post('obj', obj, '\n');
+				post('obj', obj, '\n');
 				var object = this.layers[this.layer][obj];
 				for(var prop in object)
 				{
@@ -439,6 +443,7 @@ var trigger_mode = false;
 var preset = 1;
 var slotlist = [];
 var channel = 0;
+var offsets = [0, 0];
 
 var speed = [0, 0, 0, 0];
 var matrix = new Grid('Grid', 'grid', 16, 16);
@@ -636,16 +641,16 @@ function _grid(x, y, val)
 			var num = (x + (y*16));
 			var dir = coordMath.indexOf(num - pressed);
 			debug('dir is:', dir);
-			var x_offset = (x<4)*4;
+			var x_offset = ((x-offsets[0])<4)*4;
 			if(dir > -1)									//press is surrounding node
 			{
 				var func = alted ? 'toggle_direction_fill' : shifted ? 'toggle_direction_single' : 'toggle_direction_replace';
 				node[pressed][func](dir);
 				display_node(pressed);
 			}
-			else if(((!x_offset)&&(x>4))||((x_offset)&&(x<3)))	//press is in fader strip
+			else if(((!x_offset)&&((x-offsets[0])>4))||((x_offset)&&((x-offsets[0])<3)))	//press is in fader strip
 			{
-				var x = x%5;
+				var x = (x-offsets[0])%5;
 				var func = alted ? 'set_single_fill' : shifted ? 'set_single' : 'set_single_replace';
 				switch(x)
 				{
@@ -751,13 +756,16 @@ function _channel(num)
 function display_node(num)
 {
 	debug('display_node', num);
+	offsets = mod.finder.call('get_handler_offsets');
+	debug('new offsets are:', offsets);
 	var x = node[num]._x;
 	var y = node[num]._y;
 	var dirs = dectobin(node[num].get_single('direction'));
 	var voice = packDial(node[num].get_single('voice'), colors.VOICE_FADER);
 	var note = packDial(node[num].get_single('note'), colors.NOTE_FADER);
 	var plane = packFader(node[num]._edit_plane, colors.PLANE_FADER);
-	var x_offset = (x<4)*5;
+	var x_offset = ((x-offsets[0])<4)*5;
+	//var y_offset = offsets[1];
 	clear_surface();
 	matrix.button[x][y].send(node[num].start > 0 ? colors.NODE_START : colors.NODE_SELECTED, true);
 	
@@ -768,9 +776,9 @@ function display_node(num)
 			//debug('dirs:', dirs);
 			matrix.button[adj%16][Math.floor(adj/16)].send(dirs[i] ? colors.DIRECTION_ON : colors.DIRECTION_OFF, true);
 		}
-		matrix.button[x_offset][i].mask(voice[i], true);
-		matrix.button[x_offset+1][i].mask(note[i], true);		
-		matrix.button[x_offset+2][i].mask(plane[i], true);
+		matrix.button[x_offset+offsets[0]][i + offsets[1]].mask(voice[i], true);
+		matrix.button[x_offset+1+offsets[0]][i + offsets[1]].mask(note[i], true);
+		matrix.button[x_offset+2+offsets[0]][i + offsets[1]].mask(plane[i], true);
 		
 	}while(i--);
 

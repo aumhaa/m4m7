@@ -1,5 +1,43 @@
 
 
+function inherits(ctor, superCtor)
+{
+	ctor.super_ = superCtor;
+	ctor.prototype = Object.create(superCtor.prototype, {constructor:{value: ctor, enumerable: false, writable: true, configurable: true}});
+}
+
+function extend(destination, source)
+{
+	for (var k in source) 
+	{
+		if (source.hasOwnProperty(k))
+		{
+			destination[k] = source[k];
+		}
+	}
+	return destination; 
+}
+
+function override(object, methodName, callback)
+{
+	object[methodName] = callback(object[methodName])
+}
+
+function after(extraBehavior)
+{
+	return function(original)
+	{
+		return function()
+		{
+			var returnValue = original.apply(this, arguments)
+			extraBehavior.apply(this, arguments)
+			return returnValue
+		}
+	}
+}
+
+var toClass = {}.toString
+
 function protoarrayfromargs(args)
 {
 	return Array.prototype.slice.call(args, 0);
@@ -165,7 +203,10 @@ ModComponent.prototype.init = function()
 						var new_id = this.finder.get('monomodular');
 						this.debug('found, focusing on', new_id);
 						this.finder.id = parseInt(new_id[1]);
-						this.finder.id = parseInt(this.finder.call('add_mod', 'id', this.this_device_id)[1]);
+						var modclient_id = this.finder.call('add_mod', 'id', this.this_device_id);
+						
+						this.debug('modclient id is:', modclient_id);
+						this.finder.id = parseInt(modclient_id[1])
 						this.debug('client id returned is: ', this.finder.id);
 						this.finder.property = 'value';
 						var children = this.finder.info.toString().split(new RegExp("\n"));	
@@ -241,6 +282,18 @@ ModComponent.prototype.make_receive_func = function(address)
 	return func;
 }
 
+ModComponent.prototype.make_receive_func = function(address)
+{
+	this.debug('make receive func', address);
+	var func = function()
+	{
+		var args = protoarrayfromargs(arguments);
+		this.debug('accessing Receive func', address);
+		this.finder.call.apply(this.finder, ['Receive', address].concat(args));
+	}
+	return func;
+}
+
 ModComponent.prototype.make_func = function(address)
 {
 	this.debug('make func', address);
@@ -249,6 +302,18 @@ ModComponent.prototype.make_func = function(address)
 		var args = protoarrayfromargs(arguments);
 		this.debug('accessing func', address, args.join('^').replace(',','^'));
 		this.finder.call('distribute', address, args.join('^').replace(',','^'))
+	}
+	return func;
+}
+
+ModComponent.prototype.make_func = function(address)
+{
+	this.debug('make func', address);
+	var func = function()
+	{
+		var args = protoarrayfromargs(arguments);
+		this.debug('accessing Distribute func', address, args);
+		this.finder.call.apply(this.finder, ['Distribute', address].concat(args));
 	}
 	return func;
 }
@@ -296,8 +361,21 @@ ModComponent.prototype.send_stored_messages = function()
 ModComponent.prototype.send_explicit = function()
 {
 	var args = protoarrayfromargs(arguments);
-	//post('finder.call('+args[0], args[1], args[2], args[3], args[4], args[5]+');');
+	//debug('finder.call('+args[0], args[1], args[2], args[3], args[4], args[5]+');');
 	this.finder.call(args[0], args[1], args[2], args[3], args[4], args[5]);
+}
+
+ModComponent.prototype.SendDirect = function()
+{
+	var args = flatten1(arguments);
+	try
+	{
+		this.finder.call.apply(this.finder, args);
+	}
+	catch(err)
+	{
+		this.debug('SendDirect error:', err, args);
+	}
 }
 
 ModComponent.prototype.Send = function()
@@ -320,7 +398,7 @@ ModComponent.prototype.wiki = function()
 }
 
 
-
+/*
 function Grid(name, call, width, height)
 {
 	var self = this;
@@ -454,7 +532,7 @@ function Key(name, call, x, parent)
 	}	
 
 }
-
+*/
 
 function deprivatize_script_functions(script)
 {
@@ -467,7 +545,6 @@ function deprivatize_script_functions(script)
 		}
 	}
 }
-
 
 
 
