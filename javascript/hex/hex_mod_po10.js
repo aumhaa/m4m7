@@ -23,7 +23,7 @@ aumhaa = require('_base');
 aumhaa.init_deprecated_prototypes(this);
 
 var FORCELOAD = false;
-var DEBUG = true;
+var DEBUG = false;
 var NEW_DEBUG = false;
 var DEBUG_LCD = false;
 var DEBUG_PTR = false;
@@ -249,12 +249,17 @@ var Mod = ModComponent.bind(script);
 function init()
 {
 	debug('INIT_______________________________');
-	if(!mod)
+	if(!Alive)
 	{
+		debug('making new mod');
 		mod = new Mod(script, 'hex', unique, false);
 		//mod.debug = debug;
 		mod_finder = new LiveAPI(mod_callback, 'this_device');
 		mod.assign_api(mod_finder);
+	}
+	else
+	{
+		debug('mod already exists');
 	}
 }
 
@@ -262,7 +267,7 @@ function mod_callback(args)
 {
 	if((args[0]=='value')&&(args[1]!='bang'))
 	{
-		debug('mod callback:', args);
+		//debug('mod callback:', args);
 		if(args[1] in script)
 		{
 			script[args[1]].apply(script, args.slice(2));
@@ -3678,4 +3683,5 @@ function _moddial_change(val)
 {
 	refresh_c_keys();
 }
+
 forceload(this);

@@ -63,7 +63,7 @@ exports.Forceload = Forceload;
 //because of limitations when using LiveAPI and jsextensions, the LiveAPI object must be 
 //created in the parent patcher and passed to the prototype object via assign_api().
 
-var DEBUG_MOD = true;
+var DEBUG_MOD = false;
 
 function ModComponent(parent, callback, type, unique, legacy, attrs)
 {
