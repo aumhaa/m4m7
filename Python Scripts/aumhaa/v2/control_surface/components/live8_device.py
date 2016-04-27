@@ -1,10 +1,7 @@
 import Live
 from _Generic.Devices import *
-#from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
+
 from ableton.v2.control_surface.component import Component as ControlSurfaceComponent
-#from _Framework.EncoderElement import EncoderElement
-#from _Framework.ButtonElement import ButtonElement
-#from _Framework.DisplayDataSource import DisplayDataSource
 from ableton.v2.control_surface.elements import EncoderElement, ButtonElement, DisplayDataSource
 	
 class Live8DeviceComponent(ControlSurfaceComponent):

@@ -1,58 +1,38 @@
 # by amounra 0915 : http://www.aumhaa.com
 
 import Live
-#from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
-from ableton.v2.control_surface.component import Component as ControlSurfaceComponent
-#from _Framework.SubjectSlot import subject_slot, subject_slot_group
+from ableton.v2.control_surface.component import Component
 from ableton.v2.base.slot import listens, listens_group
 
-#from _Mono_Framework.Debug import *
-from aumhaa.v2.base.debug import *
+from aumhaa.v2.base.debug import initialize_debug
 
 debug = initialize_debug()
 
-class DeviceNavigator(ControlSurfaceComponent):
+class DeviceNavigator(Component):
 	__module__ = __name__
 	__doc__ = ' Component that can navigate devices and chains '
 
 
-	def __init__(self, device_provider, mixer, script):
+	def __init__(self, device_provider, mixer, script, name = None):
 		super(DeviceNavigator, self).__init__()
+		if name:
+			self.name = name
 		self._device = device_provider
 		self._mixer = mixer
 		self._script = script
 		self._on_device_changed.subject = self.song
-		self._device_color_on = 4
-		self._device_color_off = 0
-		self._chain_color_on = 5
-		self._chain_color_off = 0
-		self._level_color_on = 3
-		self._level_color_off = 0
+		self._device_color_on = 'DefaultButton.On'
+		self._device_color_off = 'DefaultButton.Off'
+		self._chain_color_on = 'DefaultButton.On'
+		self._chain_color_off = 'DefaultButton.Off'
+		self._level_color_on = 'DefaultButton.On'
+		self._level_color_off = 'DefaultButton.Off'
 	
 
 	def deassign_all(self):
 		self.set_nav_buttons(None, None)
 		self.set_layer_buttons(None, None)
 		self.set_chain_nav_buttons(None, None)
-	
-
-	def set_nav_buttons(self, prev_button, next_button):
-		#debug('set nav: ' + str(prev_button) + ' ' + str(next_button))
-		identify_sender = True
-		if self._prev_button != None:
-			if self._prev_button.value_has_listener(self._nav_value):
-				self._prev_button.remove_value_listener(self._nav_value)
-		self._prev_button = prev_button
-		if self._prev_button != None:
-			self._prev_button.add_value_listener(self._nav_value, identify_sender)
-		if self._next_button != None:
-			if self._next_button.value_has_listener(self._nav_value):
-				self._next_button.remove_value_listener(self._nav_value)
-		self._next_button = next_button
-		if self._next_button != None:
-			self._next_button.add_value_listener(self._nav_value, identify_sender)
-		self.update()
-		return None
 	
 
 	def set_prev_button(self, button):
@@ -199,40 +179,40 @@ class DeviceNavigator(ControlSurfaceComponent):
 		if track != None:
 			if not self._on_prev_value.subject is None:
 				if self._device.device and len(track.devices)>0 and self._device.device in track.devices and [t for t in track.devices].index(self._device.device)>0:
-					self._on_prev_value.subject.send_value(self._device_color_on, True)
+					self._on_prev_value.subject.set_light(self._device_color_on)
 				else:
-					self._on_prev_value.subject.send_value(self._device_color_off, True)
+					self._on_prev_value.subject.set_light(self._device_color_off)
 			if not self._on_next_value.subject is None:
 				if self._device.device and len(track.devices)>0 and self._device.device in track.devices and [t for t in track.devices].index(self._device.device)<(len(track.devices)-1):
-					self._on_next_value.subject.send_value(self._device_color_on, True)
+					self._on_next_value.subject.set_light(self._device_color_on)
 				else:
-					self._on_next_value.subject.send_value(self._device_color_off, True)
+					self._on_next_value.subject.set_light(self._device_color_off)
 			if not self._on_prev_chain_value.subject is None:
 				if self._device.device and isinstance(self._device.device.canonical_parent, Live.Chain.Chain):
 					parent_chain = self._device.device.canonical_parent
 					parent = parent_chain.canonical_parent
 					if len(parent.chains)>0 and parent_chain in parent.chains and [c for c in parent.chains].index(parent_chain)>0:
-						self._on_prev_chain_value.subject.turn_on()
+						self._on_prev_chain_value.subject.set_light(self._chain_color_on)
 					else:
-						self._on_prev_chain_value.subject.turn_off()
+						self._on_prev_chain_value.subject.set_light(self._chain_color_off)
 			if not self._on_next_chain_value.subject is None:
 				if self._device.device and isinstance(self._device.device.canonical_parent, Live.Chain.Chain):
 					parent_chain = self._device.device.canonical_parent
 					parent = parent_chain.canonical_parent
 					if len(parent.chains)>0 and parent_chain in parent.chains and [c for c in parent.chains].index(parent_chain)<(len(parent.chains)-1):
-						self._on_next_chain_value.subject.turn_on()
+						self._on_next_chain_value.subject.set_light(self._chain_color_on)
 					else:
-						self._on_next_chain_value.subject.turn_off()
+						self._on_next_chain_value.subject.set_light(self._chain_color_off)
 			if not self._on_enter_value.subject is None:
 				if self._device.device and self._device.device.can_have_chains and len(self._device.device.chains):
-					self._on_enter_value.subject.turn_on()
+					self._on_enter_value.subject.set_light(self._level_color_on)
 				else:
-					self._on_enter_value.subject.turn_off()
+					self._on_enter_value.subject.set_light(self._level_color_off)
 			if not self._on_exit_value.subject is None:
 				if self._device.device and self._device.device.canonical_parent and isinstance(self._device.device.canonical_parent, Live.Chain.Chain):
-					self._on_exit_value.subject.turn_on()
+					self._on_exit_value.subject.set_light(self._level_color_on)
 				else:
-					self._on_exit_value.subject.turn_off()
+					self._on_exit_value.subject.set_light(self._level_color_off)
 	
 
 	def disconnect(self):

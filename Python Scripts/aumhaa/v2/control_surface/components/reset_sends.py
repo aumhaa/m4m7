@@ -1,19 +1,17 @@
-# by amounra 0915 : http://www.aumhaa.com
+# by amounra 0216 : http://www.aumhaa.com
+# written against Live 9.6 release on 021516
 
+from __future__ import absolute_import, print_function
 import Live 
 
-#from _Framework.ControlSurfaceComponent import ControlSurfaceComponent 
-from ableton.v2.control_surface.component import Component as ControlSurfaceComponent
-
-#from _Framework.SubjectSlot import SubjectEvent, subject_slot, subject_slot_group
+from ableton.v2.control_surface.component import Component
 from ableton.v2.base.slot import listens
 
-#from _Mono_Framework.Debug import *
-from aumhaa.v2.base.debug import *
+from aumhaa.v2.base.debug import initialize_debug
 
 debug = initialize_debug()
 
-class ResetSendsComponent(ControlSurfaceComponent):
+class ResetSendsComponent(Component):
 	' Special Component to reset all track sends to zero for the first four returns '
 	__module__ = __name__
 

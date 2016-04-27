@@ -1,28 +1,17 @@
-# by amounra 0915 : http://www.aumhaa.com
+# by amounra 0216 : http://www.aumhaa.com
 
 import Live
-#from _Framework.ControlSurfaceComponent import ControlSurfaceComponent
-from ableton.v2.control_surface.component import Component as ControlSurfaceComponent
-
-#from _Framework.ButtonElement import ButtonElement
-from ableton.v2.control_surface.elements import ButtonElement
-
-#from _Framework.ButtonMatrixElement import ButtonMatrixElement
-from ableton.v2.control_surface.elements import ButtonMatrixElement
-
-#from _Framework.ModeSelectorComponent import ModeSelectorComponent
-from aumhaa.v2.control_surface.components.mode_selector import ModeSelectorComponent
-
-#from _Framework.SubjectSlot import SubjectEvent, SubjectSlotGroup, subject_slot, subject_slot_group
-from ableton.v2.base.slot import Event as SubjectEvent, SlotGroup as SubjectSlotGroup, listens, listens_group
-
-#from _Mono_Framework.MonoButtonElement import MonoButtonElement
-from aumhaa.v2.control_surface.elements.mono_button import MonoButtonElement
-
 from re import *
 
-#from _Mono_Framework.Debug import *
-from aumhaa.v2.base.debug import *
+from ableton.v2.control_surface.component import Component
+from ableton.v2.control_surface.elements import ButtonElement, ButtonMatrixElement
+from aumhaa.v2.control_surface.components.mode_selector import ModeSelectorComponent
+from ableton.v2.base.slot import Event as SubjectEvent, SlotGroup as SubjectSlotGroup, listens, listens_group
+from ableton.v2.control_surface.control import ButtonControl
+
+from aumhaa.v2.control_surface.elements.mono_button import MonoButtonElement
+
+from aumhaa.v2.base.debug import initialize_debug
 
 debug = initialize_debug()
 
@@ -54,8 +43,10 @@ def enumerate_track_device(track):
 
 
 
-class DeviceSelectorComponent(ControlSurfaceComponent):
+class DeviceSelectorComponent(Component):
 
+
+	assign_button = ButtonControl(color = 'DeviceSelector.AssignOff', pressed_color = 'DeviceSelector.AssignOn')
 
 	def __init__(self, script, prefix = '@d', *a, **k):
 		super(DeviceSelectorComponent, self).__init__(*a, **k)
@@ -104,27 +95,14 @@ class DeviceSelectorComponent(ControlSurfaceComponent):
 
 	def set_assign_button(self, button):
 		debug('set assign button:', button)
-		self._on_assign_button_value.subject = button
-		self._update_assign_button()
-	
-
-	@listens('value')
-	def _on_assign_button_value(self, value):
-		debug('device_selector._on_assign_button_value', value)
-		self._update_assign_button()
-	
-
-	def _update_assign_button(self):
-		button = self._on_assign_button_value.subject
-		if button:
-			button.is_pressed() and button.set_light('DeviceSelector.AssignOn') or button.set_light('DeviceSelector.AssignOff')
+		self.assign_button.set_control_element(button)
 	
 
 	@listens_group('value')
 	def _on_button_value(self, value, sender):
 		if self.is_enabled():
 			if value:
-				if self._on_assign_button_value.subject and self._on_assign_button_value.subject.is_pressed():
+				if self.assign_button.is_pressed:
 					self.assign_device(self._buttons.index(sender))
 				else:
 					self.select_device(self._buttons.index(sender))

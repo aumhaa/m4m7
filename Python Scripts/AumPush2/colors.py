@@ -31,6 +31,7 @@ class Colors(ColorsBase):
 		Disabled = Basic.OFF
 		Alert = Basic.FULL_PULSE_SLOW
 		Transparent = Basic.TRANSPARENT
+	
 
 	class Instrument:
 		NoteBase = SelectedTrackColor
@@ -40,6 +41,7 @@ class Colors(ColorsBase):
 		Feedback = Rgb.GREEN
 		FeedbackRecord = Rgb.RED
 		NoteAction = Rgb.RED
+	
 
 	class DrumGroup:
 		PadSelected = Rgb.WHITE
@@ -52,15 +54,19 @@ class Colors(ColorsBase):
 		PadSoloedSelected = Rgb.WHITE
 		PadInvisible = Rgb.BLACK
 		PadAction = Rgb.WHITE
+		PadHotswapping = Pulse(Rgb.WHITE, Rgb.LIGHT_GREY, 48)
+	
 
 	class SlicedSimpler:
 		SliceSelected = Rgb.WHITE
 		SliceUnselected = SelectedTrackColor
 		NoSlice = SelectedTrackColorShade2
+	
 
 	class Melodic:
 		Playhead = Rgb.GREEN
 		PlayheadRecord = RECORDING_COLOR
+	
 
 	class LoopSelector:
 		Playhead = Rgb.GREEN
@@ -69,6 +75,7 @@ class Colors(ColorsBase):
 		InsideLoopStartBar = Rgb.LIGHT_GREY
 		InsideLoop = Rgb.LIGHT_GREY
 		OutsideLoop = Rgb.BLACK
+	
 
 	class NoteEditor:
 
@@ -83,7 +90,7 @@ class Colors(ColorsBase):
 			High = Pulse(Rgb.WHITE, Rgb.LIGHT_GREY, 48)
 			Full = Pulse(Rgb.WHITE, Rgb.LIGHT_GREY, 48)
 			Muted = Rgb.WHITE
-
+		
 		StepSelected = Rgb.WHITE
 		StepEmpty = Rgb.DARK_GREY
 		StepDisabled = Rgb.BLACK
@@ -95,9 +102,12 @@ class Colors(ColorsBase):
 		NoteScale = Rgb.DARK_GREY
 		NoteNotScale = Rgb.BLACK
 		NoteInvalid = Rgb.BLACK
+		
+	
 
 	class DrumGroupNoteEditor(NoteEditor):
 		pass
+	
 
 	class Option:
 		Selected = Rgb.WHITE
@@ -105,6 +115,7 @@ class Colors(ColorsBase):
 		On = Rgb.WHITE
 		Off = Rgb.DARK_GREY
 		Unused = Rgb.BLACK
+	
 
 	class Mixer:
 		TrackSelected = Rgb.WHITE
@@ -114,40 +125,57 @@ class Colors(ColorsBase):
 		MuteOff = Rgb.YELLOW
 		SoloOn = TRACK_SOLOED_COLOR
 		SoloOff = Rgb.DEEP_OCEAN
+		LockedMuteMode = Pulse(Rgb.BLACK, Rgb.YELLOW, 48)
+		LockedSoloMode = Pulse(Rgb.BLACK, TRACK_SOLOED_COLOR, 48)
+	
 
 	class MixerControlView:
 		SectionSelected = Rgb.WHITE
 		SectionUnSelected = Rgb.DARK_GREY
+	
 
 	class TrackControlView:
 		ButtonOn = Rgb.WHITE
 		ButtonOff = Rgb.DARK_GREY
 		ButtonDisabled = Rgb.BLACK
+	
+
+	class MixOrRoutingChooser:
+		ModeActive = Rgb.WHITE
+		ModeInactive = SelectedTrackColor
+	
 
 	class ItemNavigation:
 		ItemSelected = Rgb.WHITE
 		NoItem = Rgb.BLACK
 		ItemNotSelected = SelectedTrackColor
+	
 
 	class Browser:
 		Navigation = FallbackColor(Rgb.WHITE, Basic.ON)
 		NavigationDisabled = FallbackColor(Rgb.DARK_GREY, Basic.OFF)
 		Option = Rgb.WHITE
 		OptionDisabled = Rgb.DARK_GREY
+	
 
 	class Scales:
+		Navigation = FallbackColor(Rgb.WHITE, Basic.ON)
+		NavigationDisabled = FallbackColor(Rgb.DARK_GREY, Basic.OFF)
 		OptionOn = Rgb.WHITE
 		OptionOff = Rgb.DARK_GREY
 		NoOption = Rgb.BLACK
 		Close = Rgb.WHITE
+	
 
 	class Clip:
 		Option = Rgb.WHITE
 		OptionDisabled = Rgb.DARK_GREY
+	
 
 	class Transport:
 		PlayOn = Rgb.GREEN
 		PlayOff = Rgb.WHITE
+	
 
 	class Recording:
 		On = RECORDING_COLOR
@@ -156,47 +184,54 @@ class Colors(ColorsBase):
 		ArrangementRecordingOn = Pulse(RECORDING_COLOR, Rgb.BLACK, 48)
 		FixedLengthRecordingOn = Rgb.WHITE
 		FixedLengthRecordingOff = Rgb.DARK_GREY
+	
 
 	class Automation:
 		On = Rgb.RED
 		Off = Rgb.WHITE
+	
 
 	class Session:
 		Scene = Rgb.GREEN
 		SceneTriggered = FallbackColor(Blink(Rgb.GREEN, Rgb.BLACK, 24), 24)
 		NoScene = Rgb.BLACK
 		ClipStopped = Rgb.AMBER
-		ClipStarted = Pulse(Rgb.GREEN_SHADE, Rgb.GREEN, 48)
-		ClipRecording = Pulse(Rgb.BLACK, Rgb.RED, 48)
-		ClipTriggeredPlay = Blink(Rgb.GREEN, Rgb.BLACK, 24)
 		ClipTriggeredRecord = Blink(Rgb.RED, Rgb.BLACK, 24)
 		ClipEmpty = Rgb.BLACK
+		EmptySlotTriggeredPlay = Blink(Rgb.GREEN, Rgb.BLACK, 24)
 		RecordButton = Rgb.RED_SHADE
 		StopClip = Rgb.RED
 		StopClipTriggered = Blink(Rgb.RED, Rgb.BLACK, 24)
 		StoppedClip = Rgb.DARK_GREY
+	
 
 	class StopClips:
 		SoloedTrack = Pulse(Rgb.BLACK, TRACK_SOLOED_COLOR, 48)
 		MutedTrack = Pulse(Rgb.BLACK, Rgb.DARK_GREY, 48)
+		LockedStopMode = Pulse(Rgb.BLACK, Rgb.RED, 48)
+	
 
 	class Zooming:
 		Selected = Rgb.WHITE
 		Stopped = Rgb.LIGHT_GREY
 		Playing = Pulse(Rgb.GREEN_SHADE, Rgb.GREEN, 48)
 		Empty = Rgb.BLACK
+	
 
 	class NoteRepeat:
 		RateSelected = Rgb.GREEN
 		RateUnselected = Rgb.WHITE
+	
 
 	class Metronome:
 		On = Basic.FAST_PULSE
 		Off = Basic.ON
+	
 
 	class FixedLength:
 		On = Basic.FULL_PULSE_SLOW
 		Off = Basic.ON
+	
 
 	class Accent:
 		On = Basic.FULL_PULSE_SLOW

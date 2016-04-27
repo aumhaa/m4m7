@@ -1,8 +1,6 @@
-#from _Framework.ButtonElement import Color, ButtonValue
-from ableton.v2.control_surface.elements.color import Color
 
-#from Debug import *
-from aumhaa.v2.base.debug import *
+from ableton.v2.control_surface.elements.color import Color
+from aumhaa.v2.base.debug import initialize_debug
 
 debug = initialize_debug()
 

@@ -1,7 +1,7 @@
 # by amounra 0216 : http://www.aumhaa.com
 
 
-from aumhaa.v2.control_surface.elements.livid_colors import *
+from aumhaa.v2.livid.colors import *
 
 DEVICE_COLORS = {'midi_effect':2,
 				'audio_effect':5,

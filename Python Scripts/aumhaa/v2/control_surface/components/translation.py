@@ -1,13 +1,9 @@
-#from _Framework.ButtonMatrixElement import ButtonMatrixElement
+# by amounra 0216 : http://www.aumhaa.com
 from ableton.v2.control_surface.elements.button_matrix import ButtonMatrixElement
-
-#from _Framework.CompoundComponent import CompoundComponent
 from ableton.v2.control_surface.compound_component import CompoundComponent
-
-#from _Framework.SubjectSlot import SubjectEvent, subject_slot, subject_slot_group
 from ableton.v2.base.slot import Event, listens, listens_group
 
-from aumhaa.v2.base.debug import *
+from aumhaa.v2.base.debug import initialize_debug
 
 debug = initialize_debug()
 
@@ -59,9 +55,9 @@ class TranslationComponent(CompoundComponent):
 					channel = self._channel - self._user_channel_offset
 					selected = coords[0] + (coords[1]*buttons.width())
 					if channel == selected:
-						button.turn_on()
+						button.set_light('Translation.SelectorOn')
 					else:
-						button.turn_off()
+						button.set_light('Translation.SelectorOff')
 	
 
 	@listens('value')
@@ -84,18 +80,20 @@ class TranslationComponent(CompoundComponent):
 	def update(self):
 		if self.is_enabled():
 			for control in self._controls:
-				control.clear_send_cache()
-				control.release_parameter()
-				try:
-					control.set_light('Translation.Channel_'+str(self._channel)+'.'+str(control.name))
-				except:
-					control.send_value(self._color, True)
-				control.set_channel(self._channel)
-				control.set_enabled(False)
+				if control:
+					control.clear_send_cache()
+					control.release_parameter()
+					try:
+						control.set_light('Translation.Channel_'+str(self._channel)+'.'+str(control.name))
+					except:
+						control.send_value(self._color, True)
+					control.set_channel(self._channel)
+					control.set_enabled(False)
 		else:
 			for control in self._controls:
-				control.use_default_message()
-				control.set_enabled(True)
+				if control:
+					control.use_default_message()
+					control.set_enabled(True)
 		self.update_channel_selector_buttons()
 		self.update_channel_selector_control()
 	

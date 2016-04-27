@@ -9,30 +9,12 @@ logger = logging.getLogger(__name__)
 
 from itertools import izip, izip_longest, product
 
-from ableton.v2.base import slicer, to_slice, liveobj_changed, group, flatten
-from ableton.v2.control_surface.elements.button import ButtonElement
-from ableton.v2.control_surface.elements.button_matrix import ButtonMatrixElement
-from ableton.v2.control_surface.components.channel_strip import ChannelStripComponent
-from ableton.v2.control_surface.compound_component import CompoundComponent
-from ableton.v2.control_surface.control_element import ControlElement
-from ableton.v2.control_surface.control_surface import ControlSurface
-from ableton.v2.control_surface.component import Component as ControlSurfaceComponent
-from ableton.v2.control_surface.elements.encoder import EncoderElement
+from ableton.v2.base import slicer, to_slice, liveobj_changed, group, flatten, liveobj_valid
+from ableton.v2.control_surface.elements import ButtonElement, ButtonMatrixElement, EncoderElement, ComboElement, DoublePressElement, MultiElement, DoublePressContext
+from ableton.v2.control_surface.components import ChannelStripComponent, MixerComponent, SessionComponent, TransportComponent, SessionNavigationComponent, M4LInterfaceComponent, BackgroundComponent, SessionRingComponent
+from ableton.v2.control_surface import ControlSurface, ControlElement, Component, CompoundComponent, PrioritizedResource, Skin, DeviceBankRegistry, Layer
 from ableton.v2.control_surface.input_control_element import *
-from ableton.v2.control_surface.components.mixer import MixerComponent
-from ableton.v2.control_surface.components.session import SessionComponent
-from ableton.v2.control_surface.components.transport import TransportComponent
-from ableton.v2.control_surface.components.session_navigation import SessionNavigationComponent
 from ableton.v2.control_surface.mode import AddLayerMode, LayerMode, ModesComponent, ModeButtonBehaviour, DelayMode
-from ableton.v2.control_surface.resource import PrioritizedResource
-from ableton.v2.control_surface.skin import Skin
-from ableton.v2.control_surface import DeviceBankRegistry
-from ableton.v2.control_surface.components.device import DeviceComponent
-from ableton.v2.control_surface.layer import Layer
-from ableton.v2.control_surface.components.m4l_interface import M4LInterfaceComponent
-from ableton.v2.control_surface.elements.combo import ComboElement, DoublePressElement, MultiElement, DoublePressContext
-from ableton.v2.control_surface.components.background import BackgroundComponent
-from ableton.v2.control_surface.components.session_ring import SessionRingComponent
 from ableton.v2.base.slot import *
 from ableton.v2.base.task import *
 
@@ -40,17 +22,13 @@ from Push.mode_behaviours import CancellableBehaviour
 
 from _Generic.Devices import *
 
-
-"""Imports from _Mono_Framework"""
-from aumhaa.v2.control_surface.elements.mono_encoder import CodecEncoderElement
-from aumhaa.v2.control_surface.components.device_selector import DeviceSelectorComponent
-from aumhaa.v2.control_surface.elements.mono_bridge import MonoBridgeElement
-from aumhaa.v2.control_surface.elements.mono_button import MonoButtonElement
-from aumhaa.v2.control_surface.mono_modes import SendLividSysexMode, MomentaryBehaviour, ExcludingMomentaryBehaviour, DelayedExcludingMomentaryBehaviour, CancellableBehaviourWithRelease, ShiftedBehaviour, LatchingShiftedBehaviour, FlashingBehaviour
-from aumhaa.v2.control_surface.components.device_navigator import DeviceNavigator
-from aumhaa.v2.livid.utilities import LividSettings
+from aumhaa.v2.control_surface.elements import CodecEncoderElement, MonoBridgeElement, MonoButtonElement
+from aumhaa.v2.control_surface.components import DeviceSelectorComponent, DeviceNavigator
+from aumhaa.v2.control_surface.components.device import DeviceComponent
+from aumhaa.v2.control_surface.mono_modes import SendLividSysexMode, MomentaryBehaviour, ExcludingMomentaryBehaviour, DelayedExcludingMomentaryBehaviour, CancellableBehaviourWithRelease, ShiftedBehaviour, LatchingShiftedBehaviour, FlashingBehaviour, DefaultedBehaviour
+from aumhaa.v2.livid import LividControlSurface, LividSettings
 from aumhaa.v2.control_surface.mod import *
-from aumhaa.v2.base.debug import *
+from aumhaa.v2.base.debug import initialize_debug
 
 debug = initialize_debug()
 
@@ -139,7 +117,9 @@ def special_parameter_bank_names(device, bank_name_dict = BANK_NAME_DICT):
 def special_parameter_banks(device, device_dict = DEVICE_DICT):
 	""" Determine the parameters to use for a device """
 	if device != None:
-		if device.class_name in device_dict.keys():
+		if device.class_name is 'LegacyModDeviceProxy':
+			return group(device_parameters_to_map(device), 32)
+		elif device.class_name in device_dict.keys():
 			def names_to_params(bank):
 				return map(partial(get_parameter_by_name, device), bank)
 			
@@ -261,7 +241,8 @@ class CodecDeviceComponent(DeviceComponent):
 		if self._preset_device is None:
 			device = self._dynamic_device_provider.device if self._dynamic_device_provider else None
 			#debug('_on_provided_device_changed:', self.name, device)
-			self._device_provider.device = device
+			if liveobj_valid(self._device_provider):
+				self._device_provider.device = device
 	
 
 	def set_dynamic_device_provider(self, provider):
@@ -272,10 +253,10 @@ class CodecDeviceComponent(DeviceComponent):
 	
 
 	def display_device(self):
-		track = self.find_track(self._get_device())
+		track = self.find_track(livedevice(self._get_device()))
 		if (self.song.view.selected_track is not track):
 			self.song.view.selected_track = track
-		self.song.view.select_device(self._get_device())
+		self.song.view.select_device(livedevice(self._get_device()))
 		if ((not self.application().view.is_view_visible('Detail')) or (not self.application().view.is_view_visible('Detail/DeviceChain'))):
 			self.application().view.show_view('Detail')
 			self.application().view.show_view('Detail/DeviceChain')
@@ -315,10 +296,10 @@ class SpecialCodecDeviceComponent(DeviceComponent):
 	
 
 	def display_device(self):
-		track = self.find_track(self._get_device())
+		track = self.find_track(livedevice(self._get_device()))
 		if (self.song.view.selected_track is not track):
 			self.song.view.selected_track = track
-		self.song.view.select_device(self._get_device())
+		self.song.view.select_device(livedevice(self._get_device()))
 		if ((not self.application().view.is_view_visible('Detail')) or (not self.application().view.is_view_visible('Detail/DeviceChain'))):
 			self.application().view.show_view('Detail')
 			self.application().view.show_view('Detail/DeviceChain')
@@ -409,7 +390,7 @@ class SpecialCodecDeviceComponent(DeviceComponent):
 	
 
 
-class CodecResetSendsComponent(ControlSurfaceComponent):
+class CodecResetSendsComponent(Component):
 	' Special Component to reset all track sends to zero for the first four returns '
 	__module__ = __name__
 
@@ -529,32 +510,44 @@ class CodecMixerComponent(MixerComponent):
 	
 
 
-class Codec(ControlSurface):
-	__module__ = __name__
-	__doc__ = " MonoCode controller script "
+class CodecModDeviceProvider(ModDeviceProvider):
 
 
+	def mod_device_from_device(self, device):
+		modrouter = get_modrouter()
+		if modrouter:
+			mod_device = modrouter.is_mod(device)
+			if mod_device:
+				device = mod_device._codec_device_proxy if hasattr(mod_device, '_codec_device_proxy') else mod_device._device_proxy
+		debug('DEVICE PROVIDER RETURNING:', device, device._name if hasattr(device, '_name') else None)
+		if device:
+			debug('parameters from provider:', [parameter.name if hasattr(parameter, 'name') else None for parameter in device.parameters])
+		return device
+	
+
+
+class Codec(LividControlSurface):
+
+
+	_sysex_id = 4
+	_model_name = 'Code'
+	_host_name = 'Codec'
+	_version_check = 'b996'
+	monomodular = None
+	device_provider_class = CodecModDeviceProvider
 	def __init__(self, c_instance, *a, **k):
 		self.log_message = logger.warning
 		super(Codec, self).__init__(c_instance, *a, **k)
-		self._monomod_version = 'b996'
-		self._host_name = 'Codec'
-		self._linked_script = None
-		self._timer = 0
-		self._touched = 0
 		self._locked = False
-		self.flash_status = 1
 		self._shift_button = None
 		self._device_selection_follows_track_selection=FOLLOW
 		self._leds_last = 0
-		self._device_component = None
 		self._shift_latching = LatchingShiftedBehaviour if SHIFT_LATCHING else ShiftedBehaviour
 		self._skin = Skin(CodecColors)
 		with self.component_guard():
+			self._define_sysex()
 			self._setup_controls()
 			self._setup_background()
-			self._define_sysex()
-			self._setup_monobridge()
 			self._setup_mixer_controls()
 			self._setup_device_navigator()
 			self._setup_device_controls()
@@ -568,36 +561,35 @@ class Codec(ControlSurface):
 			self._setup_modswitcher()
 			self._setup_modes() 
 			self._setup_m4l_interface()
-			self._initialize_code()
-		self.log_message('<<<<<<<<<<<<<<<<<<<<<<<<< Codec ' + str(self._monomod_version) + ' log opened >>>>>>>>>>>>>>>>>>>>>>>>>')
-		self.show_message('Codec Control Surface Loaded')
 		self._background.set_enabled(True)
-		self.schedule_message(2, self._init)
 	
 
-	def _init(self):
+	def _initialize_hardware(self):
+		super(Codec, self)._initialize_hardware()
+	
+
+	def _initialize_script(self):
+		super(Codec, self)._initialize_script()
 		self._on_device_changed.subject = self._device_provider
 		self._main_modes.set_enabled(True)
 		self._main_modes.selected_mode = 'mix'
 	
 
-	def _initialize_code(self):
-		#if FACTORY_RESET:
-		#	self._send_midi(factoryreset)
-		#	self._send_midi(btn_channels)
-		#	self._send_midi(enc_channels)	
-		pass
+	def _define_sysex(self):
+		self.fast_encoder_sysex = SendLividSysexMode(livid_settings = self._livid_settings, call = 'set_encoder_speed', message = FAST_ENCODER_MSG)
+		self.normal_encoder_sysex = SendLividSysexMode(livid_settings = self._livid_settings, call = 'set_encoder_speed', message = NORMAL_ENCODER_MSG)
+		self.slow_encoder_sysex = SendLividSysexMode(livid_settings = self._livid_settings, call = 'set_encoder_speed', message = SLOW_ENCODER_MSG)
 	
 
 	def _setup_controls(self):
 		is_momentary = True
 		optimized = False
 		resource = PrioritizedResource
-		self._livid = DoublePressElement(MonoButtonElement(is_momentary, MIDI_NOTE_TYPE, CHANNEL, LIVID, 'Livid_Button', self, skin = self._skin, color_map = COLOR_MAP, optimized_send_midi = optimized, resource_type = resource))
-		self._dial = [[CodecEncoderElement(MIDI_CC_TYPE, CHANNEL, CODE_DIALS[row][column], Live.MidiMap.MapMode.absolute, 'Dial_' + str(column) + '_' +	str(row), (column + (row*8)), self, optimized_send_midi = optimized, resource_type = resource)	for row in range(4)] for column in range(8)]
-		self._button = [[MonoButtonElement(is_momentary, MIDI_NOTE_TYPE, CHANNEL, CODE_BUTTONS[row][column], 'Button_' + str(column) + '_' + str(row), self, skin = self._skin, color_map = COLOR_MAP, optimized_send_midi = optimized, resource_type = resource) for row in range(4)] for column in range(8)]
-		self._column_button = [MonoButtonElement(is_momentary, MIDI_NOTE_TYPE, CHANNEL, CODE_COLUMN_BUTTONS[index], 'Column_Button_' + str(index), self, skin = self._skin, color_map = COLOR_MAP, optimized_send_midi = optimized, resource_type = resource) for index in range(8)]		
-		self._row_button = [MonoButtonElement(is_momentary, MIDI_NOTE_TYPE, CHANNEL, CODE_ROW_BUTTONS[index], 'Row_Button_' + str(index), self, skin = self._skin, color_map = COLOR_MAP, optimized_send_midi = optimized, resource_type = resource) for index in range(4)]	
+		self._livid = DoublePressElement(MonoButtonElement(is_momentary = is_momentary, msg_type = MIDI_NOTE_TYPE, channel = CHANNEL, identifier = LIVID, name = 'Livid_Button', script = self, skin = self._skin, color_map = COLOR_MAP, optimized_send_midi = optimized, resource_type = resource, monobridge = self._monobridge))
+		self._dial = [[CodecEncoderElement(msg_type = MIDI_CC_TYPE, channel = CHANNEL, identifier = CODE_DIALS[row][column], name = 'Dial_' + str(column) + '_' +	str(row), num = (column + (row*8)), script = self, optimized_send_midi = optimized, resource_type = resource, monobridge = self._monobridge)	for row in range(4)] for column in range(8)]
+		self._button = [[MonoButtonElement(is_momentary = is_momentary, msg_type = MIDI_NOTE_TYPE, channel = CHANNEL, identifier = CODE_BUTTONS[row][column], name = 'Button_' + str(column) + '_' + str(row), script = self, skin = self._skin, color_map = COLOR_MAP, optimized_send_midi = optimized, resource_type = resource, monobridge = self._monobridge) for row in range(4)] for column in range(8)]
+		self._column_button = [MonoButtonElement(is_momentary = is_momentary, msg_type = MIDI_NOTE_TYPE, channel = CHANNEL, identifier = CODE_COLUMN_BUTTONS[index], name = 'Column_Button_' + str(index), script = self, skin = self._skin, color_map = COLOR_MAP, optimized_send_midi = optimized, resource_type = resource, monobridge = self._monobridge) for index in range(8)]		
+		self._row_button = [MonoButtonElement(is_momentary = is_momentary, msg_type = MIDI_NOTE_TYPE, channel = CHANNEL, identifier = CODE_ROW_BUTTONS[index], name = 'Row_Button_' + str(index), script = self, skin = self._skin, color_map = COLOR_MAP, optimized_send_midi = optimized, resource_type = resource, monobridge = self._monobridge) for index in range(4)]	
 		self._code_keys = ButtonMatrixElement(name = 'Code_Keys', rows = [self._column_button])
 		self._code_buttons = ButtonMatrixElement(name = 'Code_Buttons', rows = [self._row_button])
 		self._encoder_matrix = ButtonMatrixElement(name = 'Encoder_Matrix', rows = [[self._dial[column][row] for column in range(8)] for row in range(4)])
@@ -608,19 +600,6 @@ class Codec(ControlSurface):
 		self._background = BackgroundComponent()
 		self._background.layer = Layer(priority = 3, matrix = self._button_matrix, encoders = self._encoder_matrix, livid = self._livid, buttons = self._code_buttons, keys = self._code_keys)
 		self._background.set_enabled(False)
-	
-
-	def _define_sysex(self):
-		self._livid_settings = LividSettings(model = 4, control_surface = self)
-
-		self.fast_encoder_sysex = SendLividSysexMode(livid_settings = self._livid_settings, call = 'set_encoder_speed', message = FAST_ENCODER_MSG)
-		self.normal_encoder_sysex = SendLividSysexMode(livid_settings = self._livid_settings, call = 'set_encoder_speed', message = NORMAL_ENCODER_MSG)
-		self.slow_encoder_sysex = SendLividSysexMode(livid_settings = self._livid_settings, call = 'set_encoder_speed', message = SLOW_ENCODER_MSG)
-	
-
-	def _setup_monobridge(self):
-		self._monobridge = MonoBridgeElement(self)
-		self._monobridge.name = 'MonoBridge'
 	
 
 	def _setup_transport_control(self):
@@ -675,12 +654,11 @@ class Codec(ControlSurface):
 	def _setup_special_device_control(self):
 		self._special_device = SpecialCodecDeviceComponent(self, device_bank_registry = DeviceBankRegistry(), device_provider = self._device_provider)
 		self._special_device.name = 'SpecialCodecDeviceComponent'
-		self._is_active_device = True
-		self._special_device.layer = Layer(priority = 4, parameter_controls = self._encoder_matrix.submatrix[:,:],
+		self._special_device.main_layer = AddLayerMode(self._special_device, Layer(priority = 4, parameter_controls = self._encoder_matrix.submatrix[:,:],
 											on_off_button = self._button[1][0],
 											bank_prev_button = self._button[4][0],
 											bank_next_button = self._button[5][0],
-											)
+											))
 		self._special_device.set_enabled(False)
 	
 
@@ -689,10 +667,11 @@ class Codec(ControlSurface):
 		self._last_selected_device = self._device[0]
 
 		self._selected_device_modes = ModesComponent()
-		self._selected_device_modes.add_mode('device_0', [self._device_navigator._dev1_layer])
-		self._selected_device_modes.add_mode('device_1', [self._device_navigator._dev2_layer])
-		self._selected_device_modes.add_mode('device_2', [self._device_navigator._dev3_layer])
-		self._selected_device_modes.add_mode('device_3', [self._device_navigator._dev4_layer])
+		self._selected_device_modes.add_mode('disabled', [None])
+		self._selected_device_modes.add_mode('device_0', [self._device_navigator._dev1_layer], behaviour = DefaultedBehaviour())
+		self._selected_device_modes.add_mode('device_1', [self._device_navigator._dev2_layer], behaviour = DefaultedBehaviour())
+		self._selected_device_modes.add_mode('device_2', [self._device_navigator._dev3_layer], behaviour = DefaultedBehaviour())
+		self._selected_device_modes.add_mode('device_3', [self._device_navigator._dev4_layer], behaviour = DefaultedBehaviour())
 		self._selected_device_modes.layer = Layer(priority = 4, device_0_button = self._button[0][0], device_1_button = self._button[0][1], device_2_button = self._button[0][2], device_3_button = self._button[0][3])
 		self._selected_device_modes.selected_mode = 'device_0'
 		self._selected_device_modes.set_enabled(False)
@@ -734,7 +713,7 @@ class Codec(ControlSurface):
 	def _setup_mod(self):
 		self.monomodular = get_monomodular(self)
 		self.monomodular.name = 'monomodular_switcher'
-		self.modhandler = CodecModHandler(self)
+		self.modhandler = CodecModHandler(script = self, device_provider = self._device_provider)
 		self.modhandler.name = 'ModHandler'
 		self.modhandler.layer = Layer(priority = 4, code_grid = self._button_matrix.submatrix[:,:], code_encoder_grid = self._encoder_matrix.submatrix[:,:])
 		self.modhandler.set_enabled(False)
@@ -742,12 +721,14 @@ class Codec(ControlSurface):
 		self.modhandler.keys_layer = AddLayerMode(self.modhandler, Layer(priority = 5, key_buttons = self._code_keys))
 		self.modhandler.code_keys_layer = AddLayerMode(self.modhandler, Layer(priority = 5, code_keys = self._code_buttons))
 		self.modhandler.alt_layer = AddLayerMode(self.modhandler, Layer(priority = 4, lock_button = self._livid))
+
+		self._device_provider.restart_mod()
 	
 
 	def _setup_modswitcher(self):
 		self._modswitcher = ModesComponent(name = 'ModSwitcher')
-		self._modswitcher.add_mode('mod', [self.modhandler, self._mod_shift_modes])
-		self._modswitcher.add_mode('special_device', [self._special_device, self._main_shift_modes])
+		self._modswitcher.add_mode('mod', [self._special_device, self.modhandler, self._mod_shift_modes])
+		self._modswitcher.add_mode('special_device', [self._special_device, self._special_device.main_layer, self._mixer, self._mixer._select_layer, self._main_shift_modes])
 		self._modswitcher.selected_mode = 'special_device'
 		self._modswitcher.set_enabled(False)
 
@@ -764,7 +745,7 @@ class Codec(ControlSurface):
 		self._main_modes.add_mode('sends_shifted', [self._mixer, self._mixer._sends_layer, self._mixer._select_layer, self._device_selector, self._background], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
 		self._main_modes.add_mode('sends', [self._mixer, self._mixer._sends_layer, self._mixer._select_layer, self._background, self._main_shift_modes], behaviour = self._shift_latching(color = 'Mode.Main'))
 		self._main_modes.add_mode('device_shifted', [self._selected_device_modes, self._device_selector, self._device[0], self._device[1], self._device[2], self._device[3], self._device_selector, self._background], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
-		self._main_modes.add_mode('device', [self._selected_device_modes, self._device[0], self._device[1], self._device[2], self._device[3], self._background, self._mixer._select_layer, self._main_shift_modes], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('device', [self._mixer, self._mixer._select_layer, self._selected_device_modes, self._device[0], self._device[1], self._device[2], self._device[3], self._background, self._mixer._select_layer, self._main_shift_modes], behaviour = self._shift_latching(color = 'Mode.Main'))
 		self._main_modes.add_mode('special_device_shifted', [self._modswitcher, self._device_selector, self._background], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
 		self._main_modes.add_mode('special_device', [self._modswitcher, self._background], behaviour = self._shift_latching(color = 'Mode.Main'))
 		#self._main_modes.add_mode('select', [self.normal_encoder_sysex], behaviour = DelayedExcludingMomentaryBehaviour(excluded_groups = ['shifted']))
@@ -788,14 +769,18 @@ class Codec(ControlSurface):
 
 	@listens('selected_mode')
 	def _on_device_selector_mode_changed(self, mode):
-		active_device = self._device[DEVICE_COMPONENTS.index(self._selected_device_modes.selected_mode)]
-		for device in self._device:
-			if device is active_device:
-				device.set_dynamic_device_provider(self._device_provider)
-			else:
+		if mode == 'disabled':
+			for device in self._device:
 				device.set_dynamic_device_provider(None)
-		if active_device.find_track(active_device._get_device()) == self.song.view.selected_track:
-			active_device.display_device()
+		elif mode in DEVICE_COMPONENTS:
+			active_device = self._device[DEVICE_COMPONENTS.index(self._selected_device_modes.selected_mode)]
+			for device in self._device:
+				if device is active_device:
+					device.set_dynamic_device_provider(self._device_provider)
+				else:
+					device.set_dynamic_device_provider(None)
+			if active_device.find_track(active_device._get_device()) == self.song.view.selected_track:
+				active_device.display_device()
 	
 
 	@listens('device')
@@ -811,8 +796,10 @@ class Codec(ControlSurface):
 	
 
 	def _on_selected_track_changed(self):
-		super(Base, self)._on_selected_track_changed()
-		self.schedule_message(1, self._update_modswitcher)
+		super(Codec, self)._on_selected_track_changed()
+		#self.schedule_message(1, self._update_modswitcher)
+		if not len(self.song.view.selected_track.devices):
+			self._update_modswitcher()
 	
 
 	def _update_modswitcher(self):
@@ -831,76 +818,7 @@ class Codec(ControlSurface):
 
 	def update_display(self):
 		super(Codec, self).update_display()
-		self._timer = (self._timer + 1) % 256
 		self.modhandler.send_ring_leds()
-		self.flash()
-	
-
-	def flash(self):
-		if(self.flash_status > 0):
-			for control in self.controls:
-				if isinstance(control, MonoButtonElement):
-					control.flash(self._timer)
-	
-
-	def handle_sysex(self, *a):
-		pass
-	
-
-
-	"""m4l bridge"""
-	def generate_strip_string(self, display_string):
-		NUM_CHARS_PER_DISPLAY_STRIP = 12
-		if (not display_string):
-			return (' ' * NUM_CHARS_PER_DISPLAY_STRIP)
-		if ((len(display_string.strip()) > (NUM_CHARS_PER_DISPLAY_STRIP - 1)) and (display_string.endswith('dB') and (display_string.find('.') != -1))):
-			display_string = display_string[:-2]
-		if (len(display_string) > (NUM_CHARS_PER_DISPLAY_STRIP - 1)):
-			for um in [' ',
-			 'i',
-			 'o',
-			 'u',
-			 'e',
-			 'a']:
-				while ((len(display_string) > (NUM_CHARS_PER_DISPLAY_STRIP - 1)) and (display_string.rfind(um, 1) != -1)):
-					um_pos = display_string.rfind(um, 1)
-					display_string = (display_string[:um_pos] + display_string[(um_pos + 1):])
-		else:
-			display_string = display_string.center((NUM_CHARS_PER_DISPLAY_STRIP - 1))
-		ret = u''
-		for i in range((NUM_CHARS_PER_DISPLAY_STRIP - 1)):
-			if ((ord(display_string[i]) > 127) or (ord(display_string[i]) < 0)):
-				ret += ' '
-			else:
-				ret += display_string[i]
-
-		ret += ' '
-		assert (len(ret) == NUM_CHARS_PER_DISPLAY_STRIP)
-		return ret
-	
-
-	def notification_to_bridge(self, name, value, sender):
-		if(isinstance(sender, CodecEncoderElement)):
-			self._monobridge._send(sender.name, 'lcd_name', str(self.generate_strip_string(name)))
-			self._monobridge._send(sender.name, 'lcd_value', str(self.generate_strip_string(value)))
-	
-
-	def touched(self):
-		if self._touched is 0:
-			self._monobridge._send('touch', 'on')
-			self.schedule_message(2, self.check_touch)
-		self._touched +=1
-	
-
-	def check_touch(self):
-		if self._touched > 5:
-			self._touched = 5
-		elif self._touched > 0:
-			self._touched -= 1
-		if self._touched is 0:
-			self._monobridge._send('touch', 'off')
-		else:
-			self.schedule_message(2, self.check_touch)
 	
 
 	def restart_monomodular(self):
@@ -919,14 +837,14 @@ class Codec(ControlSurface):
 	
 
 
-class ParameterDefaultComponent(ControlSurfaceComponent):
+class ParameterDefaultComponent(Component):
 	__module__ = __name__
 	__doc__ = " MonoCode controller script "
 
 
 	def __init__(self, script, dials = None):
 		"""everything except the '_on_selected_track_changed' override and 'disconnect' runs from here"""
-		ControlSurfaceComponent.__init__(self)
+		Component.__init__(self)
 		self._script = script
 		self._dials = dials
 	
@@ -964,14 +882,16 @@ class CodecModHandler(ModHandler):
 
 
 	def __init__(self, *a, **k):
-		#super(CodecModHandler, self).__init__(*a, **k)
+		self._name = 'CodecModHandler'
 		self._local = True
+		self._encoders_to_device = True
 		self._last_sent_leds = 1
 		self._code_grid = None
 		self._code_encoder_grid = None
 		self._code_keys = None
 		self._code_buttons = None
-		addresses = {'code_grid': {'obj':Grid('code_grid', 8, 4), 'method':self._receive_code_grid},
+		addresses = {'code_encoders_to_device': {'obj':StoredElement(_name = 'code_encoders_to_device', _value = True), 'method':self._receive_code_encoders_to_device},
+					'code_grid': {'obj':Grid('code_grid', 8, 4), 'method':self._receive_code_grid},
 					'code_encoder_grid': {'obj':RingedGrid('code_encoder_grid', 8, 4), 'method':self._receive_code_encoder_grid},
 					'code_key': {'obj':  Array('code_key', 8), 'method': self._receive_code_key},
 					'code_button': {'obj':  Array('code_button', 4), 'method': self._receive_code_button}}
@@ -981,31 +901,31 @@ class CodecModHandler(ModHandler):
 
 		self._colors = range(128)
 	
-
-		#'code_encoder_grid_relative': {'obj':StoredElement(_name = 'code_encoder_grid_relative'), 'method':self._receive_code_encoder_grid_relative},
+		#'code_encoder_grid_relative': {'obj':StoredElement(_name = 'code_encoder_grid_relative', _value = 'True'), 'method':self._receive_code_encoder_grid_relative},
 		#'code_encoder_grid_local': {'obj':StoredElement(_name = 'code_encoder_grid_local'), 'method':self._receive_code_encoder_grid_local},
 
+
 	def _receive_code_grid(self, x, y, value, *a, **k):
-		#self.log_message('_receive_code_grid: %(x)s %(y)s %(value)s ' % {'x':x, 'y':y, 'value':value})
+		#debug('_receive_code_grid:', x, y, value)
 		if self.is_enabled() and self._active_mod and not self._active_mod.legacy and not self._code_grid_value.subject is None and x < 8 and y < 4:
 			self._code_grid_value.subject.send_value(x, y, self._colors[value], True)
 	
 
 	def _receive_code_encoder_grid(self, x, y, *a, **k):
-		#self.log_message('_receive_code_encoder_grid: %(x)s %(y)s %(k)s' % {'x':x, 'y':y, 'k':k})
-		if self.is_enabled() and self._active_mod and not self._code_encoder_grid_value.subject is None and x < 8 and y < 4:
+		#debug('_receive_code_encoder_grid:', x, y, k)
+		if self.is_enabled() and self._active_mod and not self._code_encoder_grid is None and x < 8 and y < 4:
 			keys = k.keys()
 			if 'value' in keys:
 				if self._local:
-					self._code_encoder_grid_value.subject.send_value(x, y, k['value'], True)
+					self._code_encoder_grid.send_value(x, y, k['value'], True)
 				else:
-					self._code_encoder_grid_value.subject.get_button(x, y)._ring_value = k['value']
+					self._code_encoder_grid.get_button(x, y)._ring_value = k['value']
 			if 'mode' in keys:
-				self._code_encoder_grid_value.subject.get_button(x, y).set_mode(k['mode'])
+				self._code_encoder_grid.get_button(x, y).set_mode(k['mode'])
 			if 'green' in keys:
-				self._code_encoder_grid_value.subject.get_button(x, y).set_green(k['green'])
+				self._code_encoder_grid.get_button(x, y).set_green(k['green'])
 			if 'custom' in keys:
-				self._code_encoder_grid_value.subject.get_button(x, y).set_custom(k['custom'])
+				self._code_encoder_grid.get_button(x, y).set_custom(k['custom'])
 			if 'local' in keys:
 				self._receive_code_encoder_grid_local(k['local'])
 			if 'relative' in keys:
@@ -1013,21 +933,28 @@ class CodecModHandler(ModHandler):
 	
 
 	def _receive_code_encoder_grid_relative(self, value, *a):
-		#self.log_message('_receive_code_encoder_grid_relative: %(v)s' % {'v':value})
+		debug('_receive_code_encoder_grid_relative:', value)
 		if self.is_enabled() and self._active_mod:
 			value and self._script._send_midi(tuple([240, 0, 1, 97, 4, 17, 127, 127, 127, 127, 127, 127, 127, 127, 247])) or self._script._send_midi(tuple([240, 0, 1, 97, 4, 17, 0, 0, 0, 0, 0, 0, 0, 0, 247]))
 	
 
 	def _receive_code_encoder_grid_local(self, value, *a):
-		#self.log_message('_receive_code_encoder_grid_local: %(v)s' % {'v':value})
+		debug('_receive_code_encoder_grid_local:', value)
 		if self.is_enabled() and self._active_mod:
 			self.clear_rings()
 			self._local = bool(value)
 			value and self._script._send_midi(tuple([240, 0, 1, 97, 4, 8, 72, 247])) or self._script._send_midi(tuple([240, 0, 1, 97, 4, 8, 64, 247]))
 	
 
+	def _receive_code_encoders_to_device(self, value, *a):
+		debug('_receive_code_encoders_to_device:', value)
+		if self.is_enabled() and self._active_mod:
+			self._encoders_to_device = bool(value)
+			self._script._special_device.set_parameter_controls(self._code_encoder_grid if value else None)
+	
+
 	def _receive_code_button(self, num, value, *a):
-		#self._script.log_message('receive code_button' + str(num) + str(value))
+		#debug('receive code_button', num, value)
 		if self.is_enabled() and self._active_mod:
 			if not self._code_buttons_value.subject is None:
 				self._code_buttons_value.subject.send_value(num, 0, self._colors[value], True)
@@ -1053,11 +980,15 @@ class CodecModHandler(ModHandler):
 	
 
 	def set_code_encoder_grid(self, grid):
-		self._code_encoder_grid and self._code_encoder_grid.reset()
 		self._code_encoder_grid = grid
-		self._code_encoder_grid_value.subject = self._code_encoder_grid
-		self.set_parameter_controls(grid)
-		#self.log_message('parameter controls are: ' + str(self._parameter_controls))
+		if self._encoders_to_device:
+			self._script._special_device.set_parameter_controls(grid)
+		else:
+			self._code_encoder_grid and self._code_encoder_grid.reset()
+			self._code_encoder_grid_value.subject = self._code_encoder_grid
+
+		#self.set_parameter_controls(grid)
+		#debug('parameter controls are:', self._parameter_controls)
 	
 
 	def set_code_keys(self, keys):
@@ -1067,10 +998,12 @@ class CodecModHandler(ModHandler):
 	
 
 	def set_code_buttons(self, buttons):
-		#self.log_message('set code buttons ' + str(buttons))
+		#debug('set code buttons', buttons)
 		self._code_buttons and self._code_buttons.reset()
 		self._code_buttons = buttons
 		self._code_buttons_value.subject = self._code_buttons
+		if not self.active_mod() is None:
+			self.active_mod()._addresses['code_button'].restore()
 	
 
 	@listens('value')
@@ -1084,21 +1017,21 @@ class CodecModHandler(ModHandler):
 
 	@listens('value')
 	def _code_keys_value(self, value, x, y, *a, **k):
-		#self.log_message('_code_keys_value: %(x)s %(y)s %(value)s ' % {'x':x, 'y':y, 'value':value})
+		#debug('_code_keys_value:', x, y, value)
 		if self._active_mod:
 			self._active_mod.send('code_key', x, int(value>0))
 	
 
 	@listens('value')
 	def _code_buttons_value(self, value, x, y, *a, **k):
-		#self.log_message('_code_buttons_value: %(x)s %(y)s %(value)s ' % {'x':x, 'y':y, 'value':value})
+		#debug('_code_buttons_value:', x, y, value)
 		if self._active_mod:
 			self._active_mod.send('code_button', x, int(value>0))
 	
 
 	@listens('value')
 	def _code_grid_value(self, value, x, y, *a, **k):
-		#self.log_message('_code_grid_value: %(x)s %(y)s %(value)s ' % {'x':x, 'y':y, 'value':value})
+		#debug('_code_grid_value', x, y, value)
 		if self._active_mod:
 			if self._active_mod.legacy:
 				self._active_mod.send('grid', x + self.x_offset, y + self.y_offset, int(value>0))
@@ -1108,18 +1041,18 @@ class CodecModHandler(ModHandler):
 
 	@listens('value')
 	def _code_encoder_grid_value(self, value, x, y, *a, **k):
-		#self.log_message('_code_encoder_grid_value: %(x)s %(y)s %(value)s ' % {'x':x, 'y':y, 'value':value})
+		#debug('_code_encoder_grid_value:', x, y, value)
 		if self._active_mod:
-			self._active_mod.send('code_encoder_grid', x, y, int(value>0))
+			self._active_mod.send('code_encoder_grid', x, y, value)
 	
 
 	def update(self, *a, **k):
 		mod = self.active_mod()
-		#self.log_message('modhandler update: ' + str(mod))
+		#debug('modhandler update:', mod)
 		if self.is_enabled() and not mod is None:
 			mod.restore()
 		else:
-			#self._script.log_message('disabling modhandler')
+			#debug('disabling modhandler')
 			self._script._send_midi(tuple([240, 0, 1, 97, 4, 17, 0, 0, 0, 0, 0, 0, 0, 0, 247]))
 			self._script._send_midi(tuple([240, 0, 1, 97, 4, 8, 72, 247]))
 			if not self._code_grid_value.subject is None:
@@ -1131,25 +1064,30 @@ class CodecModHandler(ModHandler):
 	
 
 	def send_ring_leds(self):
-		if self.is_enabled() and self._active_mod and not self._local and self._code_encoder_grid_value:
-			leds = [240, 0, 1, 97, 4, 31]
-			def xiterbuttons(matrix):
-				for i, j in product(xrange(matrix.width()), xrange(matrix.height())):
-					button = matrix.get_button(i, j)
-					yield (button, (i, j))
-			for encoder, coords in xiterbuttons(self._code_encoder_grid):
-				bytes = encoder._get_ring()
-				leds.append(bytes[0])
-				leds.append(int(bytes[1]) + int(bytes[2]))
-			leds.append(247)
-			if not leds==self._last_sent_leds:
-				self._script._send_midi(tuple(leds))
-				self._last_sent_leds = leds
+		if self.is_enabled() and self._active_mod and not self._local:
+			grid = self._script._special_device._parameter_controls if self._encoders_to_device else self._code_encoder_grid
+			if not grid is None:
+				leds = [240, 0, 1, 97, 4, 31]
+				def xiterbuttons(matrix):
+					for i, j in product(xrange(matrix.width()), xrange(matrix.height())):
+						button = matrix.get_button(i, j)
+						yield (button, (i, j))
+				
+				for encoder, coords in xiterbuttons(grid):
+					bytes = encoder._get_ring()
+					leds.append(bytes[0])
+					leds.append(int(bytes[1]) + int(bytes[2]))
+				leds.append(247)
+				if not leds==self._last_sent_leds:
+					self._script._send_midi(tuple(leds))
+					self._last_sent_leds = leds
+					#debug('sending ring leds:', leds)
 	
 
 	def clear_rings(self):
 		self._last_sent_leds = 1
 	
+
 
 
 

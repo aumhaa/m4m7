@@ -1,12 +1,49 @@
+autowatch = 1;
 
 
-function inherits(ctor, superCtor)
+
+/*
+aumhaaInit = function(script)
+{
+	script['autowatch'] = 1;
+	require('util');
+	require('mod');
+	require('notifiers');
+	Function.prototype.clone = function()
+	{
+		var that = this;
+		var temp = function temporary() { return that.apply(this, arguments); };
+		for(var key in this) {
+			if (this.hasOwnProperty(key)) {
+				temp[key] = this[key];
+			}
+		}
+		return temp;
+	};
+
+	var loadProtos = function(dict)
+	{
+		for(var i in dict)
+		{
+			script[i] = dict[i];
+		}
+	}
+
+	loadProtos(util);
+	loadProtos(mod);
+	loadProtos(notifiers);
+}
+
+*/
+
+
+/*function inherits(ctor, superCtor)
 {
 	ctor.super_ = superCtor;
 	ctor.prototype = Object.create(superCtor.prototype, {constructor:{value: ctor, enumerable: false, writable: true, configurable: true}});
-}
+}*/
 
-function extend(destination, source)
+/*function extend(destination, source)
 {
 	for (var k in source) 
 	{
@@ -16,8 +53,9 @@ function extend(destination, source)
 		}
 	}
 	return destination; 
-}
+}*/
 
+/*
 function override(object, methodName, callback)
 {
 	object[methodName] = callback(object[methodName])
@@ -397,6 +435,7 @@ ModComponent.prototype.wiki = function()
 	this.max.launchbrowser(this.wiki_addy);
 }
 
+*/
 
 /*
 function Grid(name, call, width, height)
@@ -534,6 +573,7 @@ function Key(name, call, x, parent)
 }
 */
 
+/*
 function deprivatize_script_functions(script)
 {
 	for(var i in script)
@@ -546,7 +586,7 @@ function deprivatize_script_functions(script)
 	}
 }
 
-
+*/
 
 
 

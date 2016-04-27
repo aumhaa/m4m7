@@ -1,18 +1,14 @@
-# by amounra 0915 : http://www.aumhaa.com
+# by amounra 0216 : http://www.aumhaa.com
+# written against Live 9.6 release on 021516
+
+from __future__ import absolute_import, print_function
 
 import Live
 
-#from _Framework.ButtonElement import ButtonElement, ON_VALUE, OFF_VALUE
 from ableton.v2.control_surface.elements.button import ButtonElement, ON_VALUE, OFF_VALUE
-
-#from _Framework.Skin import Skin, SkinColorMissingError
 from ableton.v2.control_surface.skin import Skin, SkinColorMissingError
-
-#from MonoBridgeElement import MonoBridgeProxy
 from aumhaa.v2.control_surface.elements.mono_bridge import MonoBridgeProxy
-
-#from Debug import *
-from aumhaa.v2.base.debug import *
+from aumhaa.v2.base.debug import initialize_debug
 
 MIDI_NOTE_TYPE = 0
 MIDI_CC_TYPE = 1
@@ -34,8 +30,8 @@ class MonoButtonElement(ButtonElement):
 	__doc__ = ' Special button class that can be configured with custom on- and off-values, some of which flash at specified intervals called by _Update_Display'
 
 
-	def __init__(self, is_momentary, msg_type, channel, identifier, name = 'Button', script = None, color_map = None, *a, **k):
-		super(MonoButtonElement, self).__init__(is_momentary, msg_type, channel, identifier, name = name, *a, **k)
+	def __init__(self, name = 'MonoButton', script = None, color_map = None, monobridge = None, *a, **k):
+		super(MonoButtonElement, self).__init__(name = name, *a, **k)
 		self._script = script
 		self._color_map = color_map or [2, 64, 4, 8, 16, 127, 32]
 		self._num_colors = 7
@@ -46,11 +42,17 @@ class MonoButtonElement(ButtonElement):
 		self._off_value = 0
 		self._darkened = 0
 		self._is_enabled = True
-		self._force_forwarding = False
-		self._is_notifying = False
+		#self._force_forwarding = False
+		#self._is_notifying = False
 		self._force_next_value = False
 		self._parameter = None
-		self._report_input = True
+		#self._report_input = True
+		if not monobridge is None:
+			self._monobridge = monobridge
+		elif hasattr(script, '_monobridge'):
+			self._monobridge = script._monobridge
+		else:
+			self._monobridge = MonoBridgeProxy()
 	
 
 	def set_color_map(self, color_map):
@@ -130,18 +132,21 @@ class MonoButtonElement(ButtonElement):
 	
 
 	def set_light(self, value, *a, **k):
+		if value is None:
+			value = False
 		if isinstance(value, bool):
 			value = 'DefaultButton.On' if value else 'DefaultButton.Off'
 		try:
 			self._skin[value]
 		except SkinColorMissingError:
 			debug('skin missing for', value)
-			pass
-		#debug('skin value:', value)
+			value = 'DefaultButton.On'
+		#debug(self.name, 'skin value:', value)
 		super(MonoButtonElement, self).set_light(value, *a, **k)
 	
 
 	def send_value(self, value, force = False):
+		#debug(self.name, 'send_value', value)
 		if (value != None) and isinstance(value, int) and (value in range(128)):
 			if (force or self._force_next_send or ((value != self._last_sent_value) and self._is_being_forwarded)):
 				data_byte1 = self._original_identifier
@@ -172,11 +177,15 @@ class MonoButtonElement(ButtonElement):
 			debug('Button bad send value:', value)
 	
 
-	def script_wants_forwarding(self):
-		if not self._is_enabled and not self._force_forwarding:
-			return False
-		else:
-			return super(MonoButtonElement, self).script_wants_forwarding()
+	#def script_wants_forwarding(self):
+	#	if not self._is_enabled and not self._force_forwarding:
+	#		return False
+	#	else:
+	#		return super(MonoButtonElement, self).script_wants_forwarding()
+	
+
+	def set_enabled(self, enabled):
+		self.suppress_script_forwarding = not enabled
 	
 
 	def flash(self, timer):

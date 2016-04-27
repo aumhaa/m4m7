@@ -1,29 +1,45 @@
 # by amounra 0915 : http://www.aumhaa.com
 
-from __future__ import with_statement
+from __future__ import absolute_import, print_function
 import contextlib
-#from _Framework.SubjectSlot import SubjectEvent
-from ableton.v2.base.slot import Slot as SubjectSlot, Event as SubjectEvent
+from ableton.v2.base import Event, Signal, in_range
+from ableton.v2.control_surface import NotifyingControlElement, InputSignal
 
-#from _Framework.Signal import Signal
-from ableton.v2.base.signal import Signal
-
-#from _Framework.NotifyingControlElement import NotifyingControlElement
-from ableton.v2.control_surface.control_element import NotifyingControlElement
-
-#from _Framework.Util import in_range
-from ableton.v2.base.util import in_range
-
-#from _Framework.Disconnectable import Disconnectable
-from ableton.v2.base.disconnectable import Disconnectable
-
-#from _Framework.InputControlElement import InputSignal
-from ableton.v2.control_surface.input_control_element import InputSignal
-
-#from Debug import *
-from aumhaa.v2.base.debug import *
+from aumhaa.v2.base.debug import initialize_debug
 
 debug = initialize_debug()
+
+def generate_strip_string(display_string):
+	NUM_CHARS_PER_DISPLAY_STRIP = 12
+	if (not display_string):
+		return (' ' * NUM_CHARS_PER_DISPLAY_STRIP)
+	else:
+		display_string = str(display_string)
+	if ((len(display_string.strip()) > (NUM_CHARS_PER_DISPLAY_STRIP - 1)) and (display_string.endswith('dB') and (display_string.find('.') != -1))):
+		display_string = display_string[:-2]
+	if (len(display_string) > (NUM_CHARS_PER_DISPLAY_STRIP - 1)):
+		for um in [' ',
+		 'i',
+		 'o',
+		 'u',
+		 'e',
+		 'a']:
+			while ((len(display_string) > (NUM_CHARS_PER_DISPLAY_STRIP - 1)) and (display_string.rfind(um, 1) != -1)):
+				um_pos = display_string.rfind(um, 1)
+				display_string = (display_string[:um_pos] + display_string[(um_pos + 1):])
+	else:
+		display_string = display_string.center((NUM_CHARS_PER_DISPLAY_STRIP - 1))
+	ret = u''
+	for i in range((NUM_CHARS_PER_DISPLAY_STRIP - 1)):
+		if ((ord(display_string[i]) > 127) or (ord(display_string[i]) < 0)):
+			ret += ' '
+		else:
+			ret += display_string[i]
+	ret += ' '
+	ret = ret.replace(' ', '_')
+	assert (len(ret) == NUM_CHARS_PER_DISPLAY_STRIP)
+	return ret
+
 
 class ModInputSignal(Signal):
 	"""
@@ -82,14 +98,14 @@ class ModInputSignal(Signal):
 class MonoBridgeElement(NotifyingControlElement):
 	__module__ = __name__
 	__doc__ = ' Class representing a 2-dimensional set of buttons '
-	__subject_events__ = (SubjectEvent(name='value', signal=InputSignal, override=True),)
+	__subject_events__ = (Event(name='value', signal=InputSignal, override=True),)
 	_input_signal_listener_count = 0
 	
 
 
 	def __init__(self, script, *a, **k):
-		super(MonoBridgeElement, self).__init__(*a, **k)
 		self._script = script
+		super(MonoBridgeElement, self).__init__(*a, **k)
 	
 
 	def refresh_state(self, *a, **k):
@@ -98,7 +114,7 @@ class MonoBridgeElement(NotifyingControlElement):
 		self._script.refresh_state()
 	
 
-	def _send(self, args1 = None, args2 = None, args3 = None, args4 = None):
+	def _send(self, args1 = None, args2 = None, args3 = None, *a):
 		self.notify_value(args1, args2, args3)
 	
 
@@ -112,53 +128,23 @@ class MonoBridgeElement(NotifyingControlElement):
 
 	def notification_to_bridge(self, name = None, value = None, sender = None):
 		if hasattr(sender, 'name'):
-			self._send(sender.name, 'lcd_name', str(self.generate_strip_string(name)))
-			self._send(sender.name, 'lcd_value', str(self.generate_strip_string(value)))
+			#debug('has name:',  sender.name)
+			self._send(sender.name, 'lcd_name', str(generate_strip_string(name)))
+			self._send(sender.name, 'lcd_value', str(generate_strip_string(value)))
 		else:
-			self._send(name, 'lcd_name', str(self.generate_strip_string(name)))
-			self._send(name, 'lcd_value', str(self.generate_strip_string(value)))
-	
-
-	def generate_strip_string(self, display_string):
-		NUM_CHARS_PER_DISPLAY_STRIP = 12
-		if (not display_string):
-			return (' ' * NUM_CHARS_PER_DISPLAY_STRIP)
-		else:
-			display_string = str(display_string)
-		if ((len(display_string.strip()) > (NUM_CHARS_PER_DISPLAY_STRIP - 1)) and (display_string.endswith('dB') and (display_string.find('.') != -1))):
-			display_string = display_string[:-2]
-		if (len(display_string) > (NUM_CHARS_PER_DISPLAY_STRIP - 1)):
-			for um in [' ',
-			 'i',
-			 'o',
-			 'u',
-			 'e',
-			 'a']:
-				while ((len(display_string) > (NUM_CHARS_PER_DISPLAY_STRIP - 1)) and (display_string.rfind(um, 1) != -1)):
-					um_pos = display_string.rfind(um, 1)
-					display_string = (display_string[:um_pos] + display_string[(um_pos + 1):])
-		else:
-			display_string = display_string.center((NUM_CHARS_PER_DISPLAY_STRIP - 1))
-		ret = u''
-		for i in range((NUM_CHARS_PER_DISPLAY_STRIP - 1)):
-			if ((ord(display_string[i]) > 127) or (ord(display_string[i]) < 0)):
-				ret += ' '
-			else:
-				ret += display_string[i]
-
-		ret += ' '
-		ret = ret.replace(' ', '_')
-		assert (len(ret) == NUM_CHARS_PER_DISPLAY_STRIP)
-		return ret
+			#debug('missing name:',  sender, name)
+			self._send(name, 'lcd_name', str(generate_strip_string(name)))
+			self._send(name, 'lcd_value', str(generate_strip_string(value)))
 	
 
 
 class OSCMonoBridgeElement(MonoBridgeElement):
 
 
-	def __init__(self, *a, **k):
-		super(OSCMonoBridgeElement, self).__init__(*a, **k)
-		self._osc_display = k['osc_display'] if 'osc_display' in k else None
+	def __init__(self, script, osc_display = None, *a, **k):
+		self._osc_display = osc_display
+		super(OSCMonoBridgeElement, self).__init__(script, *a, **k)
+		#self._osc_display = k['osc_display'] if 'osc_display' in k else None
 	
 
 	def _send(self, args1 = None, args2 = None, args3 = None, args4 = None):
@@ -176,8 +162,10 @@ class MonoBridgeProxy(object):
 
 	def notification_to_bridge(self, *a, **k):
 		debug('proxy bridge call:', a)
+		#pass
 	
 
 	def _send(self, *a, **k):
 		debug('proxy send call:', a)
+		#pass
 	

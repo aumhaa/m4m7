@@ -1,4 +1,4 @@
-# by amounra 0413 : http://www.aumhaa.com
+# by amounra 0216 : http://www.aumhaa.com
 
 """
 Codec_Map.py
@@ -37,11 +37,7 @@ FACTORY_RESET = False
 
 SHIFT_LATCHING = True
 
-#from _Framework.ButtonElement import Color
-from ableton.v2.control_surface.elements.color import Color
-
-#from _Mono_Framework.LividColors import *
-from aumhaa.v2.control_surface.elements.livid_colors import *
+from aumhaa.v2.livid.colors import *
 
 class CodecColors:
 
@@ -53,7 +49,7 @@ class CodecColors:
 	
 
 	class Mode:
-		Main = LividRGB.OFF
+		Main = LividRGB.WHITE
 		Main_shifted = LividRGB.BlinkFast.WHITE
 	
 

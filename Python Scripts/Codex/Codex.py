@@ -25,7 +25,7 @@ from aumhaa.v2.control_surface.components.reset_sends import ResetSendsComponent
 
 from aumhaa.v2.control_surface.mono_modes import ExcludingMomentaryBehaviour, DelayedExcludingMomentaryBehaviour
 
-from Codec2.Codec import *
+from Codec.Codec import *
 
 TROLL_OFFSET = 0
 

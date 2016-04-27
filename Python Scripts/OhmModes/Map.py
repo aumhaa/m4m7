@@ -1,5 +1,10 @@
-#!/usr/bin/env python
-# encoding: utf-8
+# by amounra 0216 : http://www.aumhaa.com
+# written against Live 9.6 release on 021516
+
+
+from ableton.v2.control_surface.elements.color import Color
+from aumhaa.v2.livid.colors import *
+
 """
 Ohm64_Map.py
 
@@ -17,10 +22,6 @@ FADER_BANKING = False
 DIAL_BANKING = False
 
 USER_CHANNEL = 8
-
-FORCE_TYPE = False  ##If set to True, the script will bypass the autodetection script and init the script as though it is connected to the type listed next....
-
-FORCE_COLOR_TYPE = 1	##If FORCE_COLOR is set to True, the script will assign RGB if 0, Monochrome if 1
 
 OHM_BUTTONS = [65, 73, 66, 74, 67, 75, 68, 76]    #there are 8 of these
 
@@ -138,6 +139,590 @@ DEVICE_NAV_COLOR = [2, 1]
 SOLO_COLOR = [3, 7]
 TAP_COLOR = [1, 1]
 SELECT_COLOR = [1, 127]
+
+
+class OhmColors:
+
+
+	class DefaultButton:
+		On = LividRGB.WHITE
+		Off = LividRGB.OFF
+		Disabled = LividRGB.OFF
+		Alert = LividRGB.BlinkFast.WHITE
+	
+
+	class MainModes:
+		Clips = LividRGB.WHITE
+		Clips_shifted = LividRGB.BlinkFast.WHITE
+		Sends = LividRGB.MAGENTA
+		Sends_shifted = LividRGB.BlinkFast.MAGENTA
+		Device = LividRGB.CYAN
+		Device_shifted = LividRGB.BlinkFast.CYAN
+		User = LividRGB.RED
+		User_shifted = LividRGB.BlinkFast.RED
+	
+
+	class Session:
+		StopClipTriggered = LividRGB.BlinkFast.BLUE
+		StopClip = LividRGB.BLUE
+		Scene = LividRGB.CYAN
+		NoScene = LividRGB.OFF
+		SceneTriggered = LividRGB.BlinkFast.BLUE
+		ClipTriggeredPlay = LividRGB.BlinkFast.GREEN
+		ClipTriggeredRecord = LividRGB.BlinkFast.RED
+		RecordButton = LividRGB.OFF
+		ClipStopped = LividRGB.WHITE
+		ClipStarted = LividRGB.GREEN
+		ClipRecording = LividRGB.RED
+		NavigationButtonOn = LividRGB.MAGENTA
+		PageNavigationButtonOn = LividRGB.CYAN
+		Empty = LividRGB.OFF
+	
+
+	class Zooming:
+		Selected = LividRGB.BlinkFast.YELLOW
+		Stopped = LividRGB.WHITE
+		Playing = LividRGB.GREEN
+		Empty = LividRGB.OFF
+	
+
+	class LoopSelector:
+		Playhead = LividRGB.YELLOW
+		OutsideLoop = LividRGB.BLUE
+		InsideLoopStartBar = LividRGB.CYAN
+		SelectedPage = LividRGB.WHITE
+		InsideLoop = LividRGB.CYAN
+		PlayheadRecord = LividRGB.RED
+	
+
+	class DrumGroup:
+		PadAction = LividRGB.GREEN
+		PadFilled = LividRGB.GREEN
+		PadFilledAlt = LividRGB.GREEN
+		PadSelected = LividRGB.GREEN
+		PadSelectedNotSoloed = LividRGB.GREEN
+		PadEmpty = LividRGB.GREEN
+		PadMuted = LividRGB.GREEN
+		PadSoloed = LividRGB.GREEN
+		PadMutedSelected = LividRGB.GREEN
+		PadSoloedSelected = LividRGB.GREEN
+		PadInvisible = LividRGB.GREEN
+		PadAction = LividRGB.GREEN
+	
+
+	class Mixer:
+		SoloOn = LividRGB.CYAN
+		SoloOff = LividRGB.OFF
+		MuteOn = LividRGB.YELLOW
+		MuteOff = LividRGB.OFF
+		ArmSelected = LividRGB.GREEN
+		ArmUnselected = LividRGB.RED
+		ArmOff = LividRGB.OFF
+		StopClip = LividRGB.BLUE
+		SelectedOn = LividRGB.BLUE
+		SelectedOff = LividRGB.OFF
+		XFadeOff = LividRGB.OFF
+		XFadeAOn = LividRGB.YELLOW
+		XFadeBOn = LividRGB.MAGENTA
+	
+
+	class Recording:
+		On = LividRGB.BlinkFast.GREEN
+		Off = LividRGB.GREEN
+		Transition = LividRGB.BlinkSlow.GREEN
+	
+
+	class Recorder:
+		On = LividRGB.WHITE
+		Off = LividRGB.BLUE
+		NewOn = LividRGB.BlinkFast.YELLOW
+		NewOff = LividRGB.YELLOW
+		FixedOn = LividRGB.BlinkFast.CYAN
+		FixedOff = LividRGB.CYAN
+		RecordOn = LividRGB.BlinkFast.GREEN
+		RecordOff = LividRGB.GREEN
+		FixedAssigned = LividRGB.MAGENTA
+		FixedNotAssigned = LividRGB.OFF
+		OverdubOn = LividRGB.BlinkFast.RED
+		OverdubOff = LividRGB.RED
+	
+
+	class Transport:
+		OverdubOn = LividRGB.BlinkFast.RED
+		OverdubOff = LividRGB.RED
+		PlayOn = LividRGB.BlinkSlow.GREEN
+		PlayOff = LividRGB.GREEN
+		StopOn = LividRGB.BLUE
+		StopOff = LividRGB.BLUE
+	
+
+	class Device:
+		NavOn = LividRGB.MAGENTA
+		NavOff = LividRGB.OFF
+		BankOn = LividRGB.YELLOW
+		BankOff = LividRGB.OFF
+		ChainNavOn = LividRGB.RED
+		ChainNavOff = LividRGB.OFF
+		ContainNavOn = LividRGB.CYAN
+		ContainNavOff = LividRGB.OFF
+	
+
+	class DeviceNavigator:
+		DevNavOff = LividRGB.OFF
+		DevNavOn = LividRGB.MAGENTA
+		ChainNavOn = LividRGB.RED
+		ChainNavOff = LividRGB.OFF
+		LevelNavOn = LividRGB.CYAN
+		LevelNavOff = LividRGB.OFF
+	
+
+	class Mod:
+		class Nav:
+			OnValue = LividRGB.RED
+			OffValue = LividRGB.WHITE
+		
+	
+
+	class MonoInstrument:
+
+		PressFlash = LividRGB.WHITE
+		OffsetOnValue = LividRGB.GREEN
+		OffsetOffValue = LividRGB.OFF
+		ScaleOffsetOnValue = LividRGB.RED
+		ScaleOffsetOffValue = LividRGB.OFF
+		SplitModeOnValue = LividRGB.WHITE
+		SplitModeOffValue = LividRGB.OFF
+		SequencerModeOnValue = LividRGB.CYAN
+		SequencerModeOffValue = LividRGB.OFF
+		DrumOffsetOnValue = LividRGB.MAGENTA
+		DrumOffsetOffValue = LividRGB.OFF
+		VerticalOffsetOnValue = LividRGB.BLUE
+		VerticalOffsetOffValue = LividRGB.OFF
+		OffsetOnColor = LividRGB.YELLOW
+		OffsetOffColor = LividRGB.OFF
+
+		class Keys:
+			SelectedNote = LividRGB.GREEN
+			RootWhiteValue = LividRGB.RED
+			RootBlackValue = LividRGB.MAGENTA
+			WhiteValue = LividRGB.CYAN
+			BlackValue = LividRGB.BLUE
+			OnValue = LividRGB.YELLOW
+		
+
+		class Drums:
+			SelectedNote = LividRGB.GREEN
+			EvenValue = LividRGB.GREEN
+			OddValue = LividRGB.GREEN
+	
+
+		class Bass:
+			OnValue = LividRGB.RED
+		
+
+	class Translation:
+
+		SelectorOn = LividRGB.WHITE
+		SelectorOff = LividRGB.OFF
+	
+
+		class Channel_8:
+			Grid_0 = LividRGB.OFF
+			Grid_1 = LividRGB.OFF
+			Grid_2 = LividRGB.OFF
+			Grid_3 = LividRGB.OFF
+			Grid_4 = LividRGB.OFF
+			Grid_5 = LividRGB.OFF
+			Grid_6 = LividRGB.OFF
+			Grid_7 = LividRGB.OFF
+			Grid_8 = LividRGB.OFF
+			Grid_9 = LividRGB.OFF
+			Grid_10 = LividRGB.OFF
+			Grid_11 = LividRGB.OFF
+			Grid_12 = LividRGB.OFF
+			Grid_13 = LividRGB.OFF
+			Grid_14 = LividRGB.OFF
+			Grid_15 = LividRGB.OFF
+			Grid_16 = LividRGB.OFF
+			Grid_17 = LividRGB.OFF
+			Grid_18 = LividRGB.OFF
+			Grid_19 = LividRGB.OFF
+			Grid_20 = LividRGB.OFF
+			Grid_21 = LividRGB.OFF
+			Grid_22 = LividRGB.OFF
+			Grid_23 = LividRGB.OFF
+			Grid_24 = LividRGB.OFF
+			Grid_25 = LividRGB.OFF
+			Grid_26 = LividRGB.OFF
+			Grid_27 = LividRGB.OFF
+			Grid_28 = LividRGB.OFF
+			Grid_29 = LividRGB.OFF
+			Grid_30 = LividRGB.OFF
+			Grid_31 = LividRGB.OFF
+			Grid_32 = LividRGB.OFF
+			Grid_33 = LividRGB.OFF
+			Grid_34 = LividRGB.OFF
+			Grid_35 = LividRGB.OFF
+			Grid_36 = LividRGB.OFF
+			Grid_37 = LividRGB.OFF
+			Grid_38 = LividRGB.OFF
+			Grid_39 = LividRGB.OFF
+			Grid_40 = LividRGB.OFF
+			Grid_41 = LividRGB.OFF
+			Grid_42 = LividRGB.OFF
+			Grid_43 = LividRGB.OFF
+			Grid_44 = LividRGB.OFF
+			Grid_45 = LividRGB.OFF
+			Grid_46 = LividRGB.OFF
+			Grid_47 = LividRGB.OFF
+			Grid_48 = LividRGB.OFF
+			Grid_49 = LividRGB.OFF
+			Grid_50 = LividRGB.OFF
+			Grid_51 = LividRGB.OFF
+			Grid_52 = LividRGB.OFF
+			Grid_53 = LividRGB.OFF
+			Grid_54 = LividRGB.OFF
+			Grid_55 = LividRGB.OFF
+			Grid_56 = LividRGB.OFF
+			Grid_57 = LividRGB.OFF
+			Grid_58 = LividRGB.OFF
+			Grid_59 = LividRGB.OFF
+			Grid_60 = LividRGB.OFF
+			Grid_61 = LividRGB.OFF
+			Grid_62 = LividRGB.OFF
+			Grid_63 = LividRGB.OFF
+	
+
+		class Channel_9:
+			Grid_0 = LividRGB.OFF
+			Grid_1 = LividRGB.OFF
+			Grid_2 = LividRGB.OFF
+			Grid_3 = LividRGB.OFF
+			Grid_4 = LividRGB.OFF
+			Grid_5 = LividRGB.OFF
+			Grid_6 = LividRGB.OFF
+			Grid_7 = LividRGB.OFF
+			Grid_8 = LividRGB.OFF
+			Grid_9 = LividRGB.OFF
+			Grid_10 = LividRGB.OFF
+			Grid_11 = LividRGB.OFF
+			Grid_12 = LividRGB.OFF
+			Grid_13 = LividRGB.OFF
+			Grid_14 = LividRGB.OFF
+			Grid_15 = LividRGB.OFF
+			Grid_16 = LividRGB.OFF
+			Grid_17 = LividRGB.OFF
+			Grid_18 = LividRGB.OFF
+			Grid_19 = LividRGB.OFF
+			Grid_20 = LividRGB.OFF
+			Grid_21 = LividRGB.OFF
+			Grid_22 = LividRGB.OFF
+			Grid_23 = LividRGB.OFF
+			Grid_24 = LividRGB.OFF
+			Grid_25 = LividRGB.OFF
+			Grid_26 = LividRGB.OFF
+			Grid_27 = LividRGB.OFF
+			Grid_28 = LividRGB.OFF
+			Grid_29 = LividRGB.OFF
+			Grid_30 = LividRGB.OFF
+			Grid_31 = LividRGB.OFF
+			Grid_32 = LividRGB.OFF
+			Grid_33 = LividRGB.OFF
+			Grid_34 = LividRGB.OFF
+			Grid_35 = LividRGB.OFF
+			Grid_36 = LividRGB.OFF
+			Grid_37 = LividRGB.OFF
+			Grid_38 = LividRGB.OFF
+			Grid_39 = LividRGB.OFF
+			Grid_40 = LividRGB.OFF
+			Grid_41 = LividRGB.OFF
+			Grid_42 = LividRGB.OFF
+			Grid_43 = LividRGB.OFF
+			Grid_44 = LividRGB.OFF
+			Grid_45 = LividRGB.OFF
+			Grid_46 = LividRGB.OFF
+			Grid_47 = LividRGB.OFF
+			Grid_48 = LividRGB.OFF
+			Grid_49 = LividRGB.OFF
+			Grid_50 = LividRGB.OFF
+			Grid_51 = LividRGB.OFF
+			Grid_52 = LividRGB.OFF
+			Grid_53 = LividRGB.OFF
+			Grid_54 = LividRGB.OFF
+			Grid_55 = LividRGB.OFF
+			Grid_56 = LividRGB.OFF
+			Grid_57 = LividRGB.OFF
+			Grid_58 = LividRGB.OFF
+			Grid_59 = LividRGB.OFF
+			Grid_60 = LividRGB.OFF
+			Grid_61 = LividRGB.OFF
+			Grid_62 = LividRGB.OFF
+			Grid_63 = LividRGB.OFF
+
+		class Channel_10:
+			Grid_0 = LividRGB.OFF
+			Grid_1 = LividRGB.OFF
+			Grid_2 = LividRGB.OFF
+			Grid_3 = LividRGB.OFF
+			Grid_4 = LividRGB.OFF
+			Grid_5 = LividRGB.OFF
+			Grid_6 = LividRGB.OFF
+			Grid_7 = LividRGB.OFF
+			Grid_8 = LividRGB.OFF
+			Grid_9 = LividRGB.OFF
+			Grid_10 = LividRGB.OFF
+			Grid_11 = LividRGB.OFF
+			Grid_12 = LividRGB.OFF
+			Grid_13 = LividRGB.OFF
+			Grid_14 = LividRGB.OFF
+			Grid_15 = LividRGB.OFF
+			Grid_16 = LividRGB.OFF
+			Grid_17 = LividRGB.OFF
+			Grid_18 = LividRGB.OFF
+			Grid_19 = LividRGB.OFF
+			Grid_20 = LividRGB.OFF
+			Grid_21 = LividRGB.OFF
+			Grid_22 = LividRGB.OFF
+			Grid_23 = LividRGB.OFF
+			Grid_24 = LividRGB.OFF
+			Grid_25 = LividRGB.OFF
+			Grid_26 = LividRGB.OFF
+			Grid_27 = LividRGB.OFF
+			Grid_28 = LividRGB.OFF
+			Grid_29 = LividRGB.OFF
+			Grid_30 = LividRGB.OFF
+			Grid_31 = LividRGB.OFF
+			Grid_32 = LividRGB.OFF
+			Grid_33 = LividRGB.OFF
+			Grid_34 = LividRGB.OFF
+			Grid_35 = LividRGB.OFF
+			Grid_36 = LividRGB.OFF
+			Grid_37 = LividRGB.OFF
+			Grid_38 = LividRGB.OFF
+			Grid_39 = LividRGB.OFF
+			Grid_40 = LividRGB.OFF
+			Grid_41 = LividRGB.OFF
+			Grid_42 = LividRGB.OFF
+			Grid_43 = LividRGB.OFF
+			Grid_44 = LividRGB.OFF
+			Grid_45 = LividRGB.OFF
+			Grid_46 = LividRGB.OFF
+			Grid_47 = LividRGB.OFF
+			Grid_48 = LividRGB.OFF
+			Grid_49 = LividRGB.OFF
+			Grid_50 = LividRGB.OFF
+			Grid_51 = LividRGB.OFF
+			Grid_52 = LividRGB.OFF
+			Grid_53 = LividRGB.OFF
+			Grid_54 = LividRGB.OFF
+			Grid_55 = LividRGB.OFF
+			Grid_56 = LividRGB.OFF
+			Grid_57 = LividRGB.OFF
+			Grid_58 = LividRGB.OFF
+			Grid_59 = LividRGB.OFF
+			Grid_60 = LividRGB.OFF
+			Grid_61 = LividRGB.OFF
+			Grid_62 = LividRGB.OFF
+			Grid_63 = LividRGB.OFF
+
+		class Channel_11:
+			Grid_0 = LividRGB.OFF
+			Grid_1 = LividRGB.OFF
+			Grid_2 = LividRGB.OFF
+			Grid_3 = LividRGB.OFF
+			Grid_4 = LividRGB.OFF
+			Grid_5 = LividRGB.OFF
+			Grid_6 = LividRGB.OFF
+			Grid_7 = LividRGB.OFF
+			Grid_8 = LividRGB.OFF
+			Grid_9 = LividRGB.OFF
+			Grid_10 = LividRGB.OFF
+			Grid_11 = LividRGB.OFF
+			Grid_12 = LividRGB.OFF
+			Grid_13 = LividRGB.OFF
+			Grid_14 = LividRGB.OFF
+			Grid_15 = LividRGB.OFF
+			Grid_16 = LividRGB.OFF
+			Grid_17 = LividRGB.OFF
+			Grid_18 = LividRGB.OFF
+			Grid_19 = LividRGB.OFF
+			Grid_20 = LividRGB.OFF
+			Grid_21 = LividRGB.OFF
+			Grid_22 = LividRGB.OFF
+			Grid_23 = LividRGB.OFF
+			Grid_24 = LividRGB.OFF
+			Grid_25 = LividRGB.OFF
+			Grid_26 = LividRGB.OFF
+			Grid_27 = LividRGB.OFF
+			Grid_28 = LividRGB.OFF
+			Grid_29 = LividRGB.OFF
+			Grid_30 = LividRGB.OFF
+			Grid_31 = LividRGB.OFF
+			Grid_32 = LividRGB.OFF
+			Grid_33 = LividRGB.OFF
+			Grid_34 = LividRGB.OFF
+			Grid_35 = LividRGB.OFF
+			Grid_36 = LividRGB.OFF
+			Grid_37 = LividRGB.OFF
+			Grid_38 = LividRGB.OFF
+			Grid_39 = LividRGB.OFF
+			Grid_40 = LividRGB.OFF
+			Grid_41 = LividRGB.OFF
+			Grid_42 = LividRGB.OFF
+			Grid_43 = LividRGB.OFF
+			Grid_44 = LividRGB.OFF
+			Grid_45 = LividRGB.OFF
+			Grid_46 = LividRGB.OFF
+			Grid_47 = LividRGB.OFF
+			Grid_48 = LividRGB.OFF
+			Grid_49 = LividRGB.OFF
+			Grid_50 = LividRGB.OFF
+			Grid_51 = LividRGB.OFF
+			Grid_52 = LividRGB.OFF
+			Grid_53 = LividRGB.OFF
+			Grid_54 = LividRGB.OFF
+			Grid_55 = LividRGB.OFF
+			Grid_56 = LividRGB.OFF
+			Grid_57 = LividRGB.OFF
+			Grid_58 = LividRGB.OFF
+			Grid_59 = LividRGB.OFF
+			Grid_60 = LividRGB.OFF
+			Grid_61 = LividRGB.OFF
+			Grid_62 = LividRGB.OFF
+			Grid_63 = LividRGB.OFF
+
+		class Channel_12:
+			Grid_0 = LividRGB.OFF
+			Grid_1 = LividRGB.OFF
+			Grid_2 = LividRGB.OFF
+			Grid_3 = LividRGB.OFF
+			Grid_4 = LividRGB.OFF
+			Grid_5 = LividRGB.OFF
+			Grid_6 = LividRGB.OFF
+			Grid_7 = LividRGB.OFF
+			Grid_8 = LividRGB.OFF
+			Grid_9 = LividRGB.OFF
+			Grid_10 = LividRGB.OFF
+			Grid_11 = LividRGB.OFF
+			Grid_12 = LividRGB.OFF
+			Grid_13 = LividRGB.OFF
+			Grid_14 = LividRGB.OFF
+			Grid_15 = LividRGB.OFF
+			Grid_16 = LividRGB.OFF
+			Grid_17 = LividRGB.OFF
+			Grid_18 = LividRGB.OFF
+			Grid_19 = LividRGB.OFF
+			Grid_20 = LividRGB.OFF
+			Grid_21 = LividRGB.OFF
+			Grid_22 = LividRGB.OFF
+			Grid_23 = LividRGB.OFF
+			Grid_24 = LividRGB.OFF
+			Grid_25 = LividRGB.OFF
+			Grid_26 = LividRGB.OFF
+			Grid_27 = LividRGB.OFF
+			Grid_28 = LividRGB.OFF
+			Grid_29 = LividRGB.OFF
+			Grid_30 = LividRGB.OFF
+			Grid_31 = LividRGB.OFF
+			Grid_32 = LividRGB.OFF
+			Grid_33 = LividRGB.OFF
+			Grid_34 = LividRGB.OFF
+			Grid_35 = LividRGB.OFF
+			Grid_36 = LividRGB.OFF
+			Grid_37 = LividRGB.OFF
+			Grid_38 = LividRGB.OFF
+			Grid_39 = LividRGB.OFF
+			Grid_40 = LividRGB.OFF
+			Grid_41 = LividRGB.OFF
+			Grid_42 = LividRGB.OFF
+			Grid_43 = LividRGB.OFF
+			Grid_44 = LividRGB.OFF
+			Grid_45 = LividRGB.OFF
+			Grid_46 = LividRGB.OFF
+			Grid_47 = LividRGB.OFF
+			Grid_48 = LividRGB.OFF
+			Grid_49 = LividRGB.OFF
+			Grid_50 = LividRGB.OFF
+			Grid_51 = LividRGB.OFF
+			Grid_52 = LividRGB.OFF
+			Grid_53 = LividRGB.OFF
+			Grid_54 = LividRGB.OFF
+			Grid_55 = LividRGB.OFF
+			Grid_56 = LividRGB.OFF
+			Grid_57 = LividRGB.OFF
+			Grid_58 = LividRGB.OFF
+			Grid_59 = LividRGB.OFF
+			Grid_60 = LividRGB.OFF
+			Grid_61 = LividRGB.OFF
+			Grid_62 = LividRGB.OFF
+			Grid_63 = LividRGB.OFF
+
+		class Channel_13:
+			Grid_0 = LividRGB.OFF
+			Grid_1 = LividRGB.OFF
+			Grid_2 = LividRGB.OFF
+			Grid_3 = LividRGB.OFF
+			Grid_4 = LividRGB.OFF
+			Grid_5 = LividRGB.OFF
+			Grid_6 = LividRGB.OFF
+			Grid_7 = LividRGB.OFF
+			Grid_8 = LividRGB.OFF
+			Grid_9 = LividRGB.OFF
+			Grid_10 = LividRGB.OFF
+			Grid_11 = LividRGB.OFF
+			Grid_12 = LividRGB.OFF
+			Grid_13 = LividRGB.OFF
+			Grid_14 = LividRGB.OFF
+			Grid_15 = LividRGB.OFF
+			Grid_16 = LividRGB.OFF
+			Grid_17 = LividRGB.OFF
+			Grid_18 = LividRGB.OFF
+			Grid_19 = LividRGB.OFF
+			Grid_20 = LividRGB.OFF
+			Grid_21 = LividRGB.OFF
+			Grid_22 = LividRGB.OFF
+			Grid_23 = LividRGB.OFF
+			Grid_24 = LividRGB.OFF
+			Grid_25 = LividRGB.OFF
+			Grid_26 = LividRGB.OFF
+			Grid_27 = LividRGB.OFF
+			Grid_28 = LividRGB.OFF
+			Grid_29 = LividRGB.OFF
+			Grid_30 = LividRGB.OFF
+			Grid_31 = LividRGB.OFF
+			Grid_32 = LividRGB.OFF
+			Grid_33 = LividRGB.OFF
+			Grid_34 = LividRGB.OFF
+			Grid_35 = LividRGB.OFF
+			Grid_36 = LividRGB.OFF
+			Grid_37 = LividRGB.OFF
+			Grid_38 = LividRGB.OFF
+			Grid_39 = LividRGB.OFF
+			Grid_40 = LividRGB.OFF
+			Grid_41 = LividRGB.OFF
+			Grid_42 = LividRGB.OFF
+			Grid_43 = LividRGB.OFF
+			Grid_44 = LividRGB.OFF
+			Grid_45 = LividRGB.OFF
+			Grid_46 = LividRGB.OFF
+			Grid_47 = LividRGB.OFF
+			Grid_48 = LividRGB.OFF
+			Grid_49 = LividRGB.OFF
+			Grid_50 = LividRGB.OFF
+			Grid_51 = LividRGB.OFF
+			Grid_52 = LividRGB.OFF
+			Grid_53 = LividRGB.OFF
+			Grid_54 = LividRGB.OFF
+			Grid_55 = LividRGB.OFF
+			Grid_56 = LividRGB.OFF
+			Grid_57 = LividRGB.OFF
+			Grid_58 = LividRGB.OFF
+			Grid_59 = LividRGB.OFF
+			Grid_60 = LividRGB.OFF
+			Grid_61 = LividRGB.OFF
+			Grid_62 = LividRGB.OFF
+			Grid_63 = LividRGB.OFF
+
 
 ## a
 

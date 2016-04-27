@@ -531,7 +531,7 @@ class Monoloop(ControlSurfaceComponent):
 	
 
 	def is_selected(self):
-		debug('is selected:', self._index, self is self._parent._selected_loop or self._parent._all_loops_selected)
+		#debug('is selected:', self._index, self is self._parent._selected_loop or self._parent._all_loops_selected)
 		return self is self._parent._selected_loop or self._parent._all_loops_selected
 	
 

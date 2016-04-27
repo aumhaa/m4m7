@@ -1,7 +1,8 @@
-# by amounra 0413 : http://www.aumhaa.com
+# by amounra 0216 : http://www.aumhaa.com
 
-from Base import Base
-from _Framework.Capabilities import controller_id, inport, outport, CONTROLLER_ID_KEY, PORTS_KEY, HIDDEN, NOTES_CC, SCRIPT, REMOTE, SYNC, TYPE_KEY, FIRMWARE_KEY, AUTO_LOAD_KEY
+from __future__ import absolute_import, print_function
+from ableton.v2.control_surface.capabilities import *
+from .Base import Base
 
 
 def get_capabilities():

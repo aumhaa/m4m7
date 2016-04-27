@@ -1,19 +1,17 @@
-# by amounra 0915 : http://www.aumhaa.com
+# by amounra 0216 : http://www.aumhaa.com
+# written against Live 9.6 release on 021516
 
+from __future__ import absolute_import, print_function
 import Live
-#from _Framework.EncoderElement import EncoderElement
+
 from ableton.v2.control_surface.elements.encoder import EncoderElement
-
-#from _Framework.InputControlElement import InputControlElement
 from ableton.v2.control_surface.input_control_element import InputControlElement
-
-#from _Framework.NotifyingControlElement import NotifyingControlElement
 from ableton.v2.control_surface.control_element import NotifyingControlElement
 
-#from MonoBridgeElement import MonoBridgeProxy
 from aumhaa.v2.control_surface.elements.mono_bridge import MonoBridgeProxy
+from aumhaa.v2.base.debug import initialize_debug
 
-from aumhaa.v2.base.debug import *
+debug = initialize_debug()
 
 MIDI_NOTE_TYPE = 0
 MIDI_CC_TYPE = 1
@@ -26,18 +24,16 @@ MIDI_NOTE_OFF_STATUS = 128
 MIDI_CC_STATUS = 176
 MIDI_PB_STATUS = 224
 
-debug = initialize_debug()
-
 class MonoEncoderElement(EncoderElement):
 	__module__ = __name__
 	__doc__ = ' Class representing a slider on the controller '
 
 
-	def __init__(self, msg_type, channel, identifier, map_mode, name, num, script, mapping_feedback_delay = 1, monobridge = None, *a, **k):
-		super(MonoEncoderElement, self).__init__(msg_type, channel, identifier, map_mode=Live.MidiMap.MapMode.absolute, *a, **k)
+	def __init__(self, name = 'MonoEncoder', num = 0, script = None, mapping_feedback_delay = 1, monobridge = None, *a, **k):
+		super(MonoEncoderElement, self).__init__(map_mode=Live.MidiMap.MapMode.absolute, *a, **k)
 		self._mapping_feedback_delay = mapping_feedback_delay
-		self.name = name
 		self.num = num
+		self.name = name
 		self._parameter = None
 		self._script = script
 		self._is_enabled = True
@@ -46,8 +42,8 @@ class MonoEncoderElement(EncoderElement):
 		self._mapped_to_midi_velocity = False
 		if not monobridge is None:
 			self._monobridge = monobridge
-		elif hasattr(script, 'notification_to_bridge'):
-			self._monobridge = script
+		elif hasattr(script, '_monobridge'):
+			self._monobridge = script._monobridge
 		else:
 			self._monobridge = MonoBridgeProxy()
 		self.set_report_values(True, False)
@@ -105,6 +101,7 @@ class MonoEncoderElement(EncoderElement):
 		if(self._parameter_to_map_to != None):
 			self.remove_parameter_listener(self._parameter_to_map_to)
 		super(MonoEncoderElement, self).release_parameter()
+		self.send_value(0, True)
 	
 
 	def script_wants_forwarding(self):
@@ -284,7 +281,6 @@ class CodecEncoderElement(MonoEncoderElement):
 		if(self._parameter_to_map_to != None):
 			self.remove_parameter_listener(self._parameter_to_map_to)
 		super(CodecEncoderElement, self).release_parameter()
-		self.send_value(0, True)
 		self._parameter_last_num_value = 0
 	
 

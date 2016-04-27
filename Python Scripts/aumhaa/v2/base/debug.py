@@ -1,9 +1,6 @@
 # by amounra 0915 : http://www.aumhaa.com
 import Live
 import logging
-from _Mono_Framework.Debug import Debug as OldDebug
-
-#import os, __builtin__, __main__, _ast, _codecs, _functools, _md5, _random, _sha, _sha256, _sha512, _socket, _sre, _ssl, _struct, _symtable, _types, _weakref, binascii, cStringIO, collections, datetime, errno, exceptions, fcntl, gc, imp, itertools, marshal, math, operator, posix, pwd, select, signal, sys, thread, time, unicodedata, xxsubtype, zipimport, zlib
 
 import os, __builtin__, __main__, _ast, _codecs, _functools, _md5, _random, _sha, _sha256, _sha512, _socket, _sre, _ssl, _struct, _symtable, _weakref, binascii, cStringIO, collections, datetime, errno, exceptions, gc, imp, itertools, marshal, math, sys, time
 
@@ -97,7 +94,7 @@ def initialize_debug():
 	debug = no_debug
 	for module in get_control_surfaces():
 		#logger.info('module is:' + str(module))
-		if isinstance(module, Debug) or isinstance(module, OldDebug):
+		if isinstance(module, Debug):
 			debug = log_flattened_arguments
 	return debug
 
@@ -105,7 +102,7 @@ def initialize_debug():
 def log_flattened_arguments(*a, **k):
 	args = ''
 	for item in a:
-		args = args + str(a) + ' '
+		args = args + str(item) + ' '
 	logger.info(args)
 
 
@@ -291,17 +288,26 @@ class Debug(ControlSurface):
 		super(Debug, self).__init__(*a, **k)
 		self.mtimes = {}
 		self.changed_files = []
-		self.reloader = Reloader()
-		self.reloader.enable()
-		self._log_version_data()
-		self._log_sys_modules()
+		#self.reloader = Reloader()
+		#self.reloader.enable()
+		#self._log_version_data()
+		#self._log_sys_modules()
 		#self._log_paths()
-		self._log_dirs()
-		self._log_C_modules()
+		#self._log_dirs()
+		#self._log_C_modules()
 		#self.log_filenames()
+		self.load_script()
 		self.log_message('_^_^_^_^_^_^_^_^_^_^_^_^_^_^_^_^_ DEBUG ON _^_^_^_^_^_^_^_^_^_^_^_^_^_^_^_^_')
 		self._scripts = []
-		self._scan()
+		#self._scan()
+	
+
+	def load_script(self):
+		try:
+			from .Livid_Minim import Minim
+			reload(Minim)
+		except:
+			print_debug('nevermind :(')
 	
 
 	def log_filenames(self):
@@ -466,7 +472,8 @@ class Debug(ControlSurface):
 	
 
 	def disconnect(self):
-		self.reloader.disable()
+		#self.reloader.disable()
+		self.log_message('_v_v_v_v_v_v_v_v_v_v_v_v_v_v_v_v_ DEBUG OFF _v_v_v_v_v_v_v_v_v_v_v_v_v_v_v_v_')
 		super(Debug, self).disconnect()
 	
 

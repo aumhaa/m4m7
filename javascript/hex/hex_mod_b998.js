@@ -19,11 +19,15 @@ autowatch = 1;
 outlets = 4;
 inlets = 5;
 
+aumhaa = require('_base');
 var FORCELOAD = true;
-var NEW_DEBUG = false;
 var DEBUG = true;
+aumhaa.init(this);
+
+
+var NEW_DEBUG = false;
 var DEBUG_LCD = false;
-var DEBUG_PTR = false;
+var DEBUG_PTR = true;
 var DEBUG_STEP = false;
 var DEBUG_BLINK = false;
 var DEBUG_REC = false;
@@ -32,7 +36,6 @@ var DEBUGANYTHING = false;
 var SHOW_POLYSELECTOR = false;
 var SHOW_STORAGE = false;
 
-var debug = (DEBUG&&Debug) ? Debug : function(){};
 var newdebug = (NEW_DEBUG&&Debug) ? Debug : function(){};
 var debuglcd = (DEBUG_LCD&&Debug) ? Debug : function(){};
 var debugptr = (DEBUG_PTR&&Debug) ? Debug :function(){};
@@ -40,8 +43,6 @@ var debugstep = (DEBUG_STEP&&Debug) ? Debug : function(){};
 var debugblink = (DEBUG_BLINK&&Debug) ? Debug : function(){};
 var debugrec = (DEBUG_REC&&Debug) ? Debug : function(){};
 var debuganything = (DEBUGANYTHING&&Debug) ? Debug : function(){};
-
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
 
 var finder;
 var mod;
@@ -238,7 +239,7 @@ var current_rule = 0;
 var handlers = [];
 var codec_handler = false;
 
-var Protos = require('protos');
+//var Protos = require('protos');
 var ControlRegistry;
 var GridButtons;
 var KeyButtons;
@@ -373,43 +374,9 @@ function setup_patchers()
 	}while(y--);
 	for(var i = 0; i < 16; i++)
 	{
-		var poly_num = i;
-		storage.message('priorty', 'poly.'+(poly_num+1), 'tickspattr', 10);
-		storage.message('priorty', 'poly.'+(poly_num+1),  'notetypepattr', 11);
-		storage.message('priorty', 'poly.'+(poly_num+1),  'notevaluepattr', 12);
-		part[i] = {'n': 'part', 'num':i, 'nudge':0, 'offset':0, 'channel':0, 'len':16, 'start':0, 
-					'jitter':0, 'active':1, 'swing':.5, 'lock':1, 'ticks':480, 'notevalues':3, 'notetype':0, 
-					'pushed':0, 'direction':0, 'noteoffset':i, 'root':i, 'octave':0, 'add':0, 'quantize':1, 'repeat':6, 'clutch':1,
-					'random':0, 'note':i, 'steps':15, 'mode':0, 'polyenable':0, 'polyoffset':36, 'mode':0,
-					'hold':0, 'held':[], 'triggered':[], 'recdirty':0, 'timedivisor':16, 'basetime':1, 'behavior_enable':1};//'speed':480,'notevalue':'4n'
-		part[i].num = parseInt(i);
-		part[i].pattern = default_pattern.slice();
-		part[i].edit_buffer = default_pattern.slice();
-		part[i].edit_velocity = default_velocity.slice();
-		part[i].step_pattern = default_step_pattern.slice();
-		part[i].duration = default_duration.slice();
-		part[i].velocity = default_velocity.slice();
-		part[i].behavior = default_pattern.slice();
-		part[i].rulebends = default_pattern.slice();
-		part[i].note = default_pattern.slice();
-		part[i].obj = [];
-		part[i].obj.set = [];
-		part[i].obj.get = [];
-		for(var j in Objs)
-		{
-			//debug(Objs[j].Name, '\n');
-			part[i].obj[Objs[j].Name] = this.patcher.getnamed('poly').subpatcher(poly_num).getnamed(Objs[j].Name);
-			part[i].obj.set[Objs[j].Name] = make_obj_setter(part[i], Objs[j]);
-			part[i].obj.get[Objs[j].Name] = make_obj_getter(part[i], Objs[j]);
-		}
-		part[i].funcs = make_funcs(part[i]);
+		part[i] = new Part(i, 'Part'+i);
 		script['Speed'+(i+1)].message('set', part[i].obj.timedivisor.getvalueof());
-		//part[i].notes_assignment = part[i].obj.notes.getvalueof();
-		//part[i].note = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-		//part[i].note = default_note.slice();
-		//part[i].note = i;
-	}
-	
+	}	
 	script.rulemap = this.patcher.getnamed('settings').subpatcher().getnamed('rulemap');
 	this.patcher.getnamed('poly').message('target', 0);
 	selected_filter.message('offset', 1);
@@ -422,26 +389,26 @@ function setup_patchers()
 
 function setup_controls()
 {
-	GridControlRegistry = new Protos.ControlRegistry('GridRegistry');
-	KeysControlRegistry = new Protos.ControlRegistry('KeysRegistry');
+	GridControlRegistry = new ControlRegistry('GridRegistry');
+	KeysControlRegistry = new ControlRegistry('KeysRegistry');
 	GridButtons = [];
 	KeyButtons = [];
-	Grid = new Protos.Grid(16, 16, 'Grid');
-	Keys = new Protos.Grid(8, 1, 'Keys');
+	Grid = new GridClass(16, 16, 'Grid');
+	Keys = new GridClass(8, 1, 'Keys');
 	for(var x=0;x<16;x++)
 	{
 		GridButtons[x] = [];
 		for(var y=0;y<16;y++)
 		{
 			var id = x+(y*16);
-			GridButtons[x][y] = new Protos.Button(id, 'Button_'+id, make_send_func('grid', 'value', x, y));
+			GridButtons[x][y] = new ButtonClass(id, 'Button_'+id, make_send_func('grid', 'value', x, y));
 			GridControlRegistry.register_control(id, GridButtons[x][y]);
 			Grid.add_control(x, y, GridButtons[x][y]);
 		}
 	}
 	for(var id=0;id<8;id++)
 	{
-		KeyButtons[id] = new Protos.Button(id, 'Key_'+id, make_send_func('key', 'value', x));
+		KeyButtons[id] = new ButtonClass(id, 'Key_'+id, make_send_func('key', 'value', x));
 		KeysControlRegistry.register_control(id, KeyButtons[id]);
 		Keys.add_control(id, 0, KeyButtons[id]);
 	}
@@ -489,17 +456,17 @@ function make_gui_send_function(patcher_object, message_header)
 function setup_hex()
 {
 	script['GuiPads'] = [];
-	script['PadGrid'] = new Protos.Grid(4,4,'GuiPadGrid');
+	script['PadGrid'] = new GridClass(4,4,'GuiPadGrid');
 	script['GuiKeys'] = [];
-	script['KeyGrid'] = new Protos.Grid(16, 1, 'GuiKeyGrid');
+	script['KeyGrid'] = new GridClass(16, 1, 'GuiKeyGrid');
 	for(var i=0;i<16;i++)
 	{
 		var x = i%4;
 		var y = Math.floor(i/4);
-		GuiPads[i] = new Protos.GUIButton('guiPads_'+i);
+		GuiPads[i] = new GUIButton('guiPads_'+i);
 		GuiPads[i].set_send_function(make_gui_send_function(padgui, [x, y])); 
 		PadGrid.add_control(x, y, GuiPads[i]);
-		GuiKeys[i] = new Protos.GUIButton('guiKeys_'+i);
+		GuiKeys[i] = new GUIButton('guiKeys_'+i);
 		GuiKeys[i].set_send_function(make_gui_send_function(keygui, [i, 0]));
 		KeyGrid.add_control(i, 0, GuiKeys[i]);
 	}
@@ -510,7 +477,7 @@ function setup_hex()
 
 function setup_scales()
 {
-	Scales = new Protos.HexScalesClass({'colors':main_colors, 'KEYCOLORS':[main_colors.BLUE, main_colors.CYAN, main_colors.MAGENTA, main_colors.RED, main_colors.GREEN, main_colors.GREEN, main_colors.GREEN, main_colors.GREEN]});
+	Scales = new HexScalesClass({'colors':main_colors, 'KEYCOLORS':[main_colors.BLUE, main_colors.CYAN, main_colors.MAGENTA, main_colors.RED, main_colors.GREEN, main_colors.GREEN, main_colors.GREEN, main_colors.GREEN]});
 }
 
 function test_new_stuff()
@@ -649,6 +616,9 @@ function init_poly()
 	grid_out('batch', 'grid', 0);
 	for(var i=0;i<16;i++)
 	{
+		part[i].init();
+	}
+	/*
 		part[i].obj.quantize.message('int', part[i].quantize);
 		part[i].obj.active.message('int', part[i].active);
 		part[i].obj.swing.message('float', part[i].swing);
@@ -666,8 +636,7 @@ function init_poly()
 		part[i].obj.channel.message('int', part[i].channel);
 		part[i].obj.behavior_enable.message('int', part[i].behavior_enable);
 		//update_note_pattr(part[i]);
-		
-	}
+	*/
 }
 
 //called by init to initialize state of gui objects
@@ -2588,8 +2557,8 @@ function _grid_play(x, y, voice, val, poly)
 //called by pattr when it recalls a preset
 ////need to figure out how to deal with global preset loading....there's missing data doing things this way.
 function _recall()
-{	 
-		if(DEBUG_PTR){post('recall\n');}
+{
+		debugptr('_recall');
 		for(var item in Objs)
 		{
 			//post(Objs[item], typeof(selected[Objs[item]]), 'retrieving...\n');
@@ -3250,7 +3219,8 @@ function update_speed(part)
 {
 	part.notevalues = part.obj.notevalues.getvalueof();
 	part.notetype = part.obj.notetype.getvalueof();
-	script['Speed'+(part.num+1)].message('set', part.obj.timedivisor.getvalueof());
+	debugptr('update_speed');
+	//script['Speed'+(part.num+1)].message('set', part.obj.timedivisor.getvalueof());
 }
 
 //release any polyplay sequences from being held when the hold key is turned off
@@ -3642,6 +3612,7 @@ function demask()
 //update gui elements to reflect current data
 function update_gui()
 {
+	debug('update_gui');
 	directiongui.message('set', selected.obj.direction.getvalueof());
 	notevaluesgui.message('set', selected.obj.notevalues.getvalueof());
 	notetypegui.message('set', selected.obj.notetype.getvalueof());
@@ -4117,6 +4088,677 @@ function hideerror()
 		pns[Encoders[i]].message('text', ' ');
 	}
 }
+
+
+part_defaults = {'n': 'part', 'num':i, 'nudge':0, 'offset':0, 'channel':0, 'len':16, 'start':0, 
+					'jitter':0, 'active':1, 'swing':.5, 'lock':1, 'ticks':480, 'notevalues':3, 'notetype':0, 
+					'pushed':0, 'direction':0, 'noteoffset':i, 'root':i, 'octave':0, 'add':0, 'quantize':1, 'repeat':6, 'clutch':1,
+					'random':0, 'note':i, 'steps':15, 'mode':0, 'polyenable':0, 'polyoffset':36, 'mode':0,
+					'hold':0, 'held':[], 'triggered':[], 'recdirty':0, 'timedivisor':16, 'basetime':1, 'behavior_enable':1};
+					//'speed':480,'notevalue':'4n'
+
+Part = function(name, index, args)
+{
+	var self = this;
+	var poly_num = index;
+	storage.message('priorty', 'poly.'+(poly_num+1), 'tickspattr', 10);
+	storage.message('priorty', 'poly.'+(poly_num+1),  'notetypepattr', 11);
+	storage.message('priorty', 'poly.'+(poly_num+1),  'notevaluepattr', 12);
+	for(var i in part_defaults)
+	{
+		this[i] = part_defaults[i];
+	}
+	this.num = parseInt(i);
+	this.pattern = default_pattern.slice();
+	this.edit_buffer = default_pattern.slice();
+	this.edit_velocity = default_velocity.slice();
+	this.step_pattern = default_step_pattern.slice();
+	this.duration = default_duration.slice();
+	this.velocity = default_velocity.slice();
+	this.behavior = default_pattern.slice();
+	this.rulebends = default_pattern.slice();
+	this.note = default_pattern.slice();
+	this.obj = [];
+	this.obj.set = [];
+	this.obj.get = [];
+	for(var j in Objs)
+	{
+		//debug(Objs[j].Name, '\n');
+		this.obj[Objs[j].Name] = patcher.getnamed('poly').subpatcher(poly_num).getnamed(Objs[j].Name);
+		this.obj.set[Objs[j].Name] = make_obj_setter(this, Objs[j]);
+		this.obj.get[Objs[j].Name] = make_obj_getter(this, Objs[j]);
+	}
+	this.funcs = make_funcs(this);
+	this.add_bound_properties('init');
+	Part.super_.call(this, name, args);
+}
+
+inherits(Part, Bindable);
+
+Part.prototype.init = function()
+{
+		this.obj.quantize.message('int', this.quantize);
+		this.obj.active.message('int', this.active);
+		this.obj.swing.message('float', this.swing);
+		this.obj.ticks.message(this.ticks);
+		//this.obj.phasor.lock = 1;
+		this.obj.polyenable.message('int', this.polyenable);
+		//this.obj.phasor.message('float', 0);
+		this.obj.noteoffset.message('int', (this.octave *12) + this.root);
+		this.obj.pattern.message('list', this.pattern);
+		this.obj.note.message('list', this.note);
+		this.obj.velocity.message('list', this.velocity);
+		this.obj.duration.message('list', this.duration);
+		this.obj.notetype.message('int', this.notetype);
+		this.obj.notevalues.message('int', this.notevalues);
+		this.obj.channel.message('int', this.channel);
+		this.obj.behavior_enable.message('int', this.behavior_enable);
+}
+
+
+HexScalesClass = function(parameters, name, args)
+{
+	var self = this;
+	this.colors = {OFF : 0, WHITE : 1, CYAN : 5, MAGENTA : 9, RED : 17, BLUE : 33, YELLOW : 65, GREEN : 127};
+	this._current_scale = 'Major';
+	this._grid = undefined;
+	this._grid_function = function(){}
+	this.width = function(){return  !this._grid ? 0 : this._grid.width();}
+	this.height = function(){return !this._grid ? 0 : this._grid.height();}
+	this._NOTENAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+	this.NOTENAMES = [];
+	for(var i=0;i<128;i++)
+	{
+		this.NOTENAMES[i]=(this._NOTENAMES[i%12] + ' ' + (Math.floor(i/12)-2) );
+	}
+	this.WHITEKEYS = {0:0, 2:2, 4:4, 5:5, 7:7, 9:9, 11:11, 12:12};
+	this.NOTES = [24, 25, 26, 27, 28, 29, 30, 31, 16, 17, 18, 19, 20, 21, 22, 23, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7];
+	this.DRUMNOTES = [12, 13, 14, 15, 28, 29, 30, 31, 8, 9, 10, 11, 24, 25, 26, 27, 4, 5, 6, 7, 20, 21, 22, 23, 0, 1, 2, 3, 16, 17, 18, 19];
+	this.SCALENOTES = [36, 38, 40, 41, 43, 45, 47, 48, 24, 26, 28, 29, 31, 33, 35, 36, 12, 14, 16, 17, 19, 21, 23, 24, 0, 2, 4, 5, 7, 9, 11, 12];
+	this.KEYCOLORS = [this.colors.BLUE, this.colors.CYAN, this.colors.MAGENTA, this.colors.RED, this.colors.GREEN, this.colors.GREEN, this.colors.GREEN, this.colors.GREEN];
+	this.SCALES = 	{'Chromatic':[0,1,2,3,4,5,6,7,8,9,10,11],
+				'Major':[0,2,4,5,7,9,11],
+				'Minor':[0,2,3,5,7,8,10],
+				'Dorian':[0,2,3,5,7,9,10],
+				'Mixolydian':[0,2,4,5,7,9,10],
+				'Lydian':[0,2,4,6,7,9,11],
+				'Phrygian':[0,1,3,5,7,8,10],
+				'Locrian':[0,1,3,4,7,8,10],
+				'Diminished':[0,1,3,4,6,7,9,10],
+				'Whole-half':[0,2,3,5,6,8,9,11],
+				'Whole Tone':[0,2,4,6,8,10],
+				'Minor Blues':[0,3,5,6,7,10],
+				'Minor Pentatonic':[0,3,5,7,10],
+				'Major Pentatonic':[0,2,4,7,9],
+				'Harmonic Minor':[0,2,3,5,7,8,11],
+				'Melodic Minor':[0,2,3,5,7,9,11],
+				'Dominant Sus':[0,2,5,7,9,10],
+				'Super Locrian':[0,1,3,4,6,8,10],
+				'Neopolitan Minor':[0,1,3,5,7,8,11],
+				'Neopolitan Major':[0,1,3,5,7,9,11],
+				'Enigmatic Minor':[0,1,3,6,7,10,11],
+				'Enigmatic':[0,1,4,6,8,10,11],
+				'Composite':[0,1,4,6,7,8,11],
+				'Bebop Locrian':[0,2,3,5,6,8,10,11],
+				'Bebop Dominant':[0,2,4,5,7,9,10,11],
+				'Bebop Major':[0,2,4,5,7,8,9,11],
+				'Bhairav':[0,1,4,5,7,8,11],
+				'Hungarian Minor':[0,2,3,6,7,8,11],
+				'Minor Gypsy':[0,1,4,5,7,8,10],
+				'Persian':[0,1,4,5,6,8,11],
+				'Hirojoshi':[0,2,3,7,8],
+				'In-Sen':[0,1,5,7,10],
+				'Iwato':[0,1,5,6,10],
+				'Kumoi':[0,2,3,7,9],
+				'Pelog':[0,1,3,4,7,8],
+				'Spanish':[0,1,3,4,5,6,8,10]};
+	this.SCALENAMES = [];
+	var i = 0;
+	for (var name in this.SCALES){this.SCALENAMES[i] = name;i++};
+	this._noteMap = new Array(256);
+	for(var i=0;i<256;i++)
+	{
+		this._noteMap[i] = [];
+	}
+	this.DEFAULT_SCALE = 'Major';
+	this.SPLIT_SCALES = {}; //{'DrumPad':1, 'Major':1};
+	for(var param in parameters)
+	{
+		self[param] = parameters[param];
+	}
+	this._vertOffset = new OffsetComponent(this._name + '_Vertical_Offset', 0, 119, 4, self._update, colors.MAGENTA);
+	this._scaleOffset = new OffsetComponent(this._name + '_Scale_Offset', 0, self.SCALES.length, 3, self._update, colors.BLUE);
+	this._noteOffset = new OffsetComponent(this._name + '_Note_Offset', 0, 119, 36, self._update, colors.CYAN);
+	this._octaveOffset = new OffsetComponent(this._name + '_Note_Offset', 0, 119, 36, self._update, colors.YELLOW, colors.OFF, 12);
+	HexScalesClass.super_.call(this, name, args);
+}
+
+inherits(HexScalesClass, Bindable)
+
+HexScalesClass.prototype._button_press = function(button)
+{
+	if(button.pressed())
+	{
+		debug('button_press:', button._name);
+		button.send(127);
+	}
+	else
+	{
+		debug('button_unpress:', button._name);
+		button.send(button.scale_color);
+	}
+}
+
+HexScalesClass.prototype._update = function()
+{
+	this._update_request = false;
+	this._noteMap = [];
+	for(var i=0;i<128;i++)
+	{
+		this._noteMap[i] = [];
+	}
+	if(this._grid instanceof GridClass)
+	{
+		var width = this.width();
+		var height = this.height();
+		var offset = this._noteOffset._value;
+		var vertoffset = this._vertOffset._value;
+		var scale = this.SCALENAMES[this._scaleOffset._value];
+		this._current_scale = scale;
+		var scale_len = this.SCALES[scale].length;
+		for(var column=0;column<width;column++)
+		{
+			for(var row=0;row<height;row++)
+			{
+				var note_pos = column + (Math.abs((height-1)-row))*parseInt(vertoffset);
+				var note = offset + this.SCALES[scale][note_pos%scale_len] + (12*Math.floor(note_pos/scale_len));
+				var button = this._grid.get_button(column, row);
+				if(button)
+				{
+					button.set_translation(note%127);
+					this._noteMap[note%127].push(button);
+					button.scale_color = this.KEYCOLORS[((note%12) in this.WHITEKEYS) + (((note_pos%scale_len)==0)*2)];
+					button.send(button.scale_color);
+				}
+			}
+		}
+	}
+}
+
+HexScalesClass.prototype.set_grid_function = function(func){this.grid_function = func;}
+
+HexScalesClass.prototype.assign_grid = function(grid)
+{
+	post('HexScalesClass assign grid', grid);
+	if(this._grid instanceof GridClass)
+	{
+		this._grid.clear_translations();
+		this._grid.remove_listener(this._button_press);
+	}
+	this._grid = grid;
+	if(this._grid instanceof GridClass)
+	{
+		this._grid.add_listener(this._button_press);
+		if(!(this._last_pressed_button instanceof Button))
+		{
+			this._last_pressed_button = this._grid.get_button(0, this._grid.height()-1);
+		}
+	}
+	this._update();
+}
+
+
+
+RadioGUIMixin = {_gui_onValue:1,
+			_gui_offValue:5,
+			_GUICallback:function(obj)
+			{
+				if(obj._value)
+				{
+					var val = this._gui_controls.indexOf(obj);
+					this.set_value(val);
+				}
+			},
+			update_controls:function()
+			{
+				this.Super_().prototype.update_controls.call(this);
+				this.update_gui_controls.call(this);
+			},
+			update_gui_controls:function()
+			{
+				//debug('update_gui_controls', this._gui_controls.length, this._gui_onValue, this._gui_offValue);
+				for(var i in this._gui_controls)
+				{
+					if(this._gui_controls[i])
+					{
+						//debug('sending out:', this._name, this._gui_onValue, this._gui_offValue, this._gui_controls.indexOf(this._gui_controls[i])==this._value ? this._gui_onValue : this._gui_offValue);
+						this._gui_controls[i].send(this._gui_controls.indexOf(this._gui_controls[i])==this._value ? this._gui_onValue : this._gui_offValue);
+					}
+				}
+			},
+			set_gui_controls:function(control)
+			{
+				control = (control instanceof Array)||(control instanceof GridClass) ? control : [];
+				for(var i in this._gui_controls)
+				{
+					this._gui_controls[i].remove_target(this._GUICallback);
+				}
+				this._gui_controls = control instanceof GridClass ? control.controls() : control instanceof Control ? [control] : [];
+				if(this._gui_controls)
+				{
+					//debug('set_gui_controls:', control, control instanceof GridClass);
+					for(var i in this._gui_controls)
+					{
+						if(this._gui_controls[i])
+						{
+							//debug('assigning radio:', this._gui_controls[i]._name);
+							this._gui_controls[i].set_target(this._GUICallback);
+						}
+					}
+				}
+				this.update_gui_controls();
+			},
+			_gui_controls:[],
+			_mixin_bound_properties:['update_gui_controls', 'set_gui_controls', '_GUICallback']
+}
+HexRadioComponent = clone_with_extension(RadioComponent, RadioGUIMixin);
+
+DoubleSliderGUIMixin = {_gui_onValue:3,
+			_gui_offValue:4,
+			_GUICallback:function(obj)
+			{
+				if(obj._value)
+				{
+					var button_pressed = false;
+					for(var i in this._gui_controls)
+					{
+						if(this._gui_controls[i].pressed()&&(!(this._gui_controls[i]==obj)))
+						{
+							button_pressed = this._gui_controls[i];
+							break;
+						}
+					}
+					var val = this._gui_controls.indexOf(obj);
+					var ref_index = button_pressed ? this._gui_controls.indexOf(button_pressed) : val>this._start_value ? this._start_value : this._end_value;
+					var set_func = val > ref_index ? this.set_end_value : this.set_start_value;
+					set_func(val);
+				}
+			},
+			update_controls:function()
+			{
+				this.Super_().prototype.update_controls.call(this);
+				this.update_gui_controls.call(this);
+			},
+			update_gui_controls:function()
+			{
+				//debug('update_gui_controls', this._gui_controls.length, this._gui_onValue, this._gui_offValue);
+				for(var i in this._gui_controls)
+				{
+					if(this._gui_controls[i])
+					{
+						var index = this._buttons.indexOf(this._buttons[i]);
+						this._gui_controls[i].send(index<this._start_value ? this._gui_offValue : index>this._end_value ? this._gui_offValue : this._gui_onValue);
+					}
+				}
+			},
+			set_gui_controls:function(control)
+			{
+				control = (control instanceof Array)||(control instanceof GridClass) ? control : [];
+				for(var i in this._gui_controls)
+				{
+					this._gui_controls[i].remove_target(this._GUICallback);
+				}
+				this._gui_controls = control instanceof GridClass ? control.controls() : control instanceof GUIControl ? [control] : [];
+				if(this._gui_controls)
+				{
+					//debug('set_gui_controls:', control, control instanceof GridClass);
+					for(var i in this._gui_controls)
+					{
+						if(this._gui_controls[i])
+						{
+							//debug('assigning radio:', this._gui_controls[i]._name);
+							this._gui_controls[i].set_target(this._GUICallback);
+						}
+					}
+				}
+				this.update_gui_controls();
+			},
+			_gui_controls:[],
+			_mixin_bound_properties:['update_gui_controls', 'set_gui_controls', '_GUICallback']
+}
+HexDoubleSliderComponent = clone_with_extension(DoubleSliderComponent, DoubleSliderGUIMixin);
+
+RangedButtonGUIMixin = {gui_colors:colors,
+			_GUICallback:function(obj)
+			{
+				if(obj._value)
+				{
+					if(this._javaObj)
+					{
+						//debug('Callback', this._name, obj._value);
+						this._javaObj.set(obj._value, this._range);
+					}
+					else
+					{
+						debug('Callback', this._name, obj._value, (this._value+1)%this._range);
+						this.receive(this._value+1%this._range);
+					}
+				}
+			},
+			update_control:function()
+			{
+				this.Super_().prototype.update_control.call(this);
+				this.update_gui_control.call(this);
+			},
+			update_gui_control:function()
+			{
+				if(this._gui_control)
+				{
+					for(var c in this.gui_colors)
+					{
+						debug(c, 'color:', this.gui_colors[c]);
+					}
+					debug('update_gui_control:', this._name, this._value, this.gui_colors.length, this.gui_colors[this._value%(this.gui_colors.length)]);
+					this._gui_control.send(this.gui_colors[this._value%(this.gui_colors.length)]);
+				}
+			},
+			set_gui_control:function(control)
+			{
+				if (control instanceof(NotifierClass) || !control)
+				{
+					if(this._gui_control)
+					{
+						this._gui_control.remove_target(this._GUICallback);
+					}
+					this._gui_control = control;
+					if(this._gui_control)
+					{
+						this._gui_control.set_target(this._GUICallback);
+						//self.receive(self._value);
+						this.update_gui_control();
+					}
+				}
+			},
+			_gui_control:undefined,
+			_mixin_bound_properties:['update_gui_control', 'set_gui_control', '_GUICallback']
+}
+HexRangedButtonParameter = clone_with_extension(RangedButtonParameter, RangedButtonGUIMixin);
+
+ToggledParameterGUIMixin = {_gui_onValue:1,
+			_gui_offValue:0,
+			_GUICallback:function(obj)
+			{
+				if(obj._value)
+				{
+					if(this._javaObj)
+					{
+						//debug('Callback', this._name, obj._value);
+						this._javaObj.set(obj._value, this._range);
+					}
+					else
+					{
+						debug('Callback', this._name, obj._value, (this._value+1)%this._range);
+						this.receive(this._value+1%this._range);
+					}
+				}
+			},
+			update_control:function()
+			{
+				this.Super_().prototype.update_control.call(this);
+				this.update_gui_control.call(this);
+			},
+			update_gui_control:function()
+			{
+				if(this._gui_control){this._gui_control.send(this._value ? this._gui_onValue : this._gui_offValue);}
+			},
+			set_gui_control:function(control)
+			{
+				if (control instanceof(NotifierClass) || !control)
+				{
+					if(this._gui_control)
+					{
+						this._gui_control.remove_target(this._GUICallback);
+					}
+					this._gui_control = control;
+					if(this._gui_control)
+					{
+						this._gui_control.set_target(this._GUICallback);
+						//self.receive(self._value);
+						this.update_gui_control();
+					}
+				}
+			},
+			_gui_control:undefined,
+			_mixin_bound_properties:['update_gui_control', 'set_gui_control', '_GUICallback']
+}
+HexToggledParameter = clone_with_extension(ToggledParameter, ToggledParameterGUIMixin);
+
+
+HexModule = function()
+{
+	var self = this;
+	this.add_bound_properties(this, ['update', 'assign_grid', 'assign_gui_pad', 'assign_gui_keys']);
+	HexModule.super_.call(this, 'HexModule');
+	this._top_sub = new GridClass(8, 2, this._name+('_top_sub'));
+	this._mid_sub = new GridClass(8, 2, this._name+('_mid_sub'));
+	this._bottom_sub = new GridClass(8, 2, this._name+('_bottom_sub'));
+	this._buttons_sub = new GridClass(8, 1, this._name+('_button_sub'));
+	this._mode_sub = new GridClass(8, 1, this._name+('_mode_sub'));
+
+	this._sub_grids = [this._top_sub, this._mid_sub, this._bottom_sub, this._buttons_sub, this._mode_sub];
+	this._gui_pads = undefined;
+	this._gui_keys = undefined;
+	this._on_part_number_changed = function(obj)
+	{
+		//debug('_on_seqnumber_changed:', obj._value);
+		select_pattern(obj._value);
+	}
+	this.selectedPart = new HexRadioComponent(this._name + '_Selected_Part', 0, 15, 0, self._on_part_number_changed, colors.RED, colors.WHITE, {'gui_onValue':colors.RED, 'gui_offValue':colors.WHITE});
+
+	this._on_selected_preset_changed = function(obj){}
+	this.selectedPreset = new HexRadioComponent(this._name + '_Selected_Preset', 0, 15, 0, self._on_selected_preset_changed, colors.WHITE, colors.CYAN, {'gui_onValue':colors.WHITE, 'gui_offValue':colors.CYAN});
+
+	this._on_global_preset_changed = function(obj){}
+	this.globalPreset = new HexRadioComponent(this._name + '_Global_Preset', 0, 15, 0, self._on_global_preset_changed, colors.WHITE, colors.GREEN, {'gui_onValue':colors.WHITE, 'gui_offValue':colors.GREEN});
+
+	this._on_loop_selector_changed = function(obj)
+	{
+		debug('NOT IMPLEMENTED _on_loop_region_changed:', obj._start_value, obj._end_value);
+	}
+	this.loopSelector = new HexDoubleSliderComponent(this._name + '_Loop_Region', 0, 15, 0, 15, self._on_loop_selector_changed, colors.RED, colors.MAGENTA, {'gui_onValue':colors.RED, 'gui_offValue':colors.MAGENTA})
+
+	this.mute = [];
+	this.behaviour = [];
+	this.accent = [];
+	this.step = [];
+	for(var i=0;i<16;i++)
+	{
+		this.behaviour[i] = new HexRangedButtonParameter(this._name + '_Behaviour_' + i, {'_range':8, 'colors':[colors.OFF, colors.WHITE, colors.YELLOW, colors.CYAN, colors.MAGENTA, colors.RED, colors.GREEN, colors.BLUE]});
+		this.accent[i] = new HexRangedButtonParameter(this._name + '_Accent_' + i, {'_range':8, 'colors':[colors.OFF, colors.WHITE, colors.YELLOW, colors.CYAN]});
+		this.mute[i] = new HexToggledParameter(this._name + '_Mute_' + i, {'_onValue':colors.YELLOW, '_offValue':colors.OFF, '_gui_onValue':colors.YELLOW, '_gui_offValue':colors.OFF});
+		this.step[i] = new HexToggledParameter(this._name + '_Mute_' + i, {'_onValue':colors.BLUE, '_offValue':colors.OFF, '_gui_onValue':colors.BLUE, '_gui_offValue':colors.OFF});
+	}
+	this.behaviour_group = new ParameterGroup('BehaviourGroup', this.behaviour);
+	this.accent_group = new ParameterGroup('AccentGroup', this.accent);
+	this.mute_group = new ParameterGroup('MuteGroup', this.mute);
+	this.step_group = new ParameterGroup('StepGroup', this.step);
+
+	var pad_select_Page = new Page('Select');
+	pad_select_Page.enter_mode = function()
+	{
+		self.selectedPart.set_controls(self._top_sub);
+		self.selectedPart.set_gui_controls(self._gui_pads);
+	}
+	pad_select_Page.exit_mode = function()
+	{
+		self.selectedPart.set_controls();
+		self.selectedPart.set_gui_controls();
+	}
+
+	var pad_mute_Page = new Page('Mute');
+	pad_mute_Page.enter_mode = function()
+	{
+		self.mute_group.set_controls(self._top_sub);
+		self.mute_group.set_gui_controls(self._gui_pads);
+	}
+	pad_mute_Page.exit_mode = function()
+	{
+		self.mute_group.set_controls();
+		self.mute_group.set_gui_controls();
+	}
+
+	var pad_preset_Page = new Page('Preset');
+	pad_preset_Page.enter_mode = function()
+	{
+		self.selectedPreset.set_controls(self._top_sub);
+		self.selectedPreset.set_gui_controls(self._gui_pads);
+	}
+	pad_preset_Page.exit_mode = function()
+	{
+		self.selectedPreset.set_controls();
+		self.selectedPreset.set_gui_controls();
+	}
+
+	var pad_global_Page = new Page('Global');
+	pad_global_Page.enter_mode = function()
+	{
+		self.globalPreset.set_controls(self._top_sub);
+		self.globalPreset.set_gui_controls(self._gui_pads);
+	}
+	pad_global_Page.exit_mode = function()
+	{
+		self.globalPreset.set_controls();
+		self.globalPreset.set_gui_controls();
+	}
+
+	this.pad_modes = new PageStack(8, 'PadModes');
+	this.pad_modes.add_mode(0, pad_select_Page);
+	this.pad_modes.add_mode(1, pad_mute_Page);
+	this.pad_modes.add_mode(2, pad_preset_Page);
+	this.pad_modes.add_mode(3, pad_global_Page);
+	this.pad_modes.change_mode(0);
+
+	var key_select_Page = new Page('Select');
+	key_select_Page.enter_mode = function()
+	{
+		self.selectedPart.set_controls(self._mid_sub);
+		self.selectedPart.set_gui_controls(self._gui_keys);
+	}
+	key_select_Page.exit_mode = function()
+	{
+		self.selectedPart.set_controls();
+		self.selectedPart.set_gui_controls();
+	}
+
+	var key_mute_Page = new Page('Mute');
+	key_mute_Page.enter_mode = function()
+	{
+		self.mute_group.set_controls(self._mid_sub);
+		self.mute_group.set_gui_controls(self._gui_keys);
+	}
+	key_mute_Page.exit_mode = function()
+	{
+		self.mute_group.set_controls();
+		self.mute_group.set_gui_controls();
+	}
+
+	var key_preset_Page = new Page('Preset');
+	key_preset_Page.enter_mode = function()
+	{
+		self.selectedPreset.set_controls(self._mid_sub);
+		self.selectedPreset.set_gui_controls(self._gui_keys);
+	}
+	key_preset_Page.exit_mode = function()
+	{
+		self.selectedPreset.set_controls();
+		self.selectedPreset.set_gui_controls();
+	}
+
+	var key_global_Page = new Page('Global');
+	key_global_Page.enter_mode = function()
+	{
+		self.globalPreset.set_controls(self._mid_sub);
+		self.globalPreset.set_gui_controls(self._gui_keys);
+	}
+	key_global_Page.exit_mode = function()
+	{
+		self.globalPreset.set_controls();
+		self.globalPreset.set_gui_controls();
+	}
+
+	var key_behaviour_Page = new Page('Behaviour');
+	key_behaviour_Page.enter_mode = function()
+	{
+		self.behaviour_group.set_controls(self._mid_sub);
+		self.behaviour_group.set_gui_controls(self._gui_keys);
+	}
+	key_behaviour_Page.exit_mode = function()
+	{
+		self.globalPreset.set_controls();
+		self.globalPreset.set_gui_controls();
+	}
+
+	var key_accent_Page = new Page('Accent')
+	key_accent_Page.enter_mode = function()
+	{
+		self.accent_group.set_controls(self._mid_sub);
+		self.accent_group.set_gui_controls(self._gui_keys);
+	}
+	key_accent_Page.exit_mode = function()
+	{
+		self.accent_group.set_controls();
+		self.accent_group.set_gui_controls();
+	}
+
+
+	this.key_modes = new PageStack(8, 'KeyModes');
+	this.key_modes.add_mode(0, key_select_Page);
+	this.key_modes.add_mode(1, key_mute_Page);
+	this.key_modes.add_mode(2, key_preset_Page);
+	this.key_modes.add_mode(3, key_global_Page);
+	this.key_modes.add_mode(4, key_behaviour_Page);
+	this.key_modes.add_mode(5, key_accent_Page);
+	this.key_modes.change_mode(0);
+}
+
+inherits(HexModule, Bindable);
+
+HexModule.prototype.assign_grid = function(grid)
+{
+	for(var sub in this._sub_grids){this._sub_grids[sub].clear_buttons();}
+	this._grid = grid;
+	if(this._grid)
+	{
+		this._top_sub.sub_grid(this._grid, 0, 8, 0, 2);
+		this._mid_sub.sub_grid(this._grid, 0, 8, 2, 4);
+		this._bottom_sub.sub_grid(this._grid, 0, 8, 4, 6);
+		this._buttons_sub.sub_grid(this._grid, 0, 8, 6, 7);
+		this._mode_sub.sub_grid(this._grid, 0, 8, 7, 8);
+	}
+	this.update();
+}
+
+HexModule.prototype.assign_gui_pads = function(grid)
+{
+	this._gui_pads = grid;
+	this.update();
+}
+
+HexModule.prototype.assign_gui_keys = function(grid)
+{
+	this._gui_keys = grid;
+	this.update();
+}
+
+HexModule.prototype.update = function()
+{
+	//debug('setting mode buttons', this._mode_sub.controls());
+	this.pad_modes.set_mode_buttons(this._mode_sub.controls());
+	this.key_modes.set_mode_buttons(this._buttons_sub.controls());
+	this.pad_modes.restore_mode();
+	this.key_modes.restore_mode();
+}
+
 
 forceload(this);
 

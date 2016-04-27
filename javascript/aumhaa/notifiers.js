@@ -1,111 +1,15 @@
 autowatch = 1;
 
+var util = require('util');
 
-Function.prototype.clone = function() {
-	var that = this;
-	var temp = function temporary() { return that.apply(this, arguments); };
-	for(var key in this) {
-		if (this.hasOwnProperty(key)) {
-			temp[key] = this[key];
-		}
-	}
-	return temp;
-};
-
-function inherits(ctor, superCtor)
+for(var i in util)
 {
-	ctor.super_ = superCtor;
-	ctor.prototype = Object.create(superCtor.prototype, {constructor:{value: ctor, enumerable: false, writable: true, configurable: true}});
-	ctor.prototype.Super_ = function(){return superCtor;}
+	this[i] = util[i];
 }
 
-function extend(destination, source)
-{
-	for (var k in source) 
-	{
-		if (source.hasOwnProperty(k))
-		{
-			destination[k] = source[k];
-		}
-	}
-	return destination; 
-}
 
-function clone_with_extension(source, mixins)
-{
-	//var destination = function () {}
-	var destination = source.clone();
-	//inherits(destination, source);
-	//destination.prototype = Object.create(source.prototype, mixins);
-	//destination.prototype.constructor = source;
-	for (var k in source)
-	{
-		//debug('in source:', k);
-		if (source.hasOwnProperty(k))
-		{
-			//debug('copying to dest:', k, source[k]);
-			destination.prototype[k] = source[k];
-		}
-	}
-	inherits(destination, source);
-	for (var k in mixins)
-	{
-		//debug('in mixins:', k);
-		if (mixins.hasOwnProperty(k))
-		{
-			//debug('copying to dest:', k, mixins[k]);
-			destination.prototype[k] = mixins[k];
-		}
-	}
-	return destination;
-}
-
-/*
-function concat_properties(instance, new_properties)
-{
-	var old_props = instance._bound_properties ? instance._bound_properties : [];
-	return old_props.concat(new_properties);
-}
-*/
-/*
-function _extend(destination, source)
-{
-	for (var k in source) 
-	{
-		if (source.hasOwnProperty(k))
-		{
-			debug('copying to dest:', k, source[k]);
-			destination[k] = source[k];
-		}
-	}
-	return destination; 
-}
-*/
-/*
-function bind_properties(obj, prop_list)
-{
-	debug('binding properties for:', obj._name, prop_list);
-	for(var index in prop_list)
-	{
-		var prop = prop_list[index];
-		if(obj.constructor.prototype[prop])
-		{
-			debug('has prop:', prop);
-			obj[prop] = obj.constructor.prototype[prop].bind(obj);
-		}
-	}
-}
-*/
-/*
-function clone (obj)
-{
-	function CloneFactory () {}
-	CloneFactory.prototype = obj;
-
-	return new CloneFactory();
-}
-*/
-//MyClass.prototype = clone(AnotherClass.prototype);
+DEBUG = true;
+debug = DEBUG && Debug ? Debug : function(){}
 
 NOTE_TYPE = 'NOTE_TYPE';
 CC_TYPE = 'CC_TYPE';
@@ -113,9 +17,11 @@ NONE_TYPE = 'NONE_TYPE';
 CHANNEL = 0;
 NONE = 'NONE';
 colors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
-//LividColors = {OFF : 0, WHITE : 1, CYAN : 5, MAGENTA : 9, RED : 17, BLUE : 33, YELLOW : 65, GREEN : 127};
+LividColors = {OFF : 0, WHITE : 1, CYAN : 5, MAGENTA : 9, RED : 17, BLUE : 33, YELLOW : 65, GREEN : 127};
 //PushColors = {OFF : 0, WHITE : 120, CYAN : 30, MAGENTA : 12, RED : 20, BLUE : 65, YELLOW : 11, GREEN : 125};
 PushColors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
+
+exports.consts = {NOTE_TYPE:NOTE_TYPE, CC_TYPE:CC_TYPE, NONE_TYPE:NONE_TYPE, CHANNEL:CHANNEL, NONE:NONE, colors:colors, PushColors:PushColors, LividColors:LividColors}
 
 Scales = function(parameters)
 {
@@ -228,9 +134,6 @@ Scales = function(parameters)
 
 Scales.prototype.set_grid_function = function(func){self.grid_function = func;}
 
-GUBED = true;
-
-gubed = GUBED && Debug ? Debug : function(){}
 
 /////////////////////////////////////////////////////////////////////////
 //Base Class that allows automatic binding of prototypal properties based on
@@ -280,6 +183,8 @@ Bindable.prototype.bind_properties = function(instance)
 	}
 }
 
+exports.Bindable = Bindable;
+
 
 /////////////////////////////////////////////////////////////////////////
 //This is the root object to be used for all controls, or objects that 
@@ -287,7 +192,7 @@ Bindable.prototype.bind_properties = function(instance)
 //"target_stack" that can be used to push/pop targets to be notified when its value changes 
 //(only the first target in the stack is notified).  Notifier is "subclassed" by many other prototypes.
 
-Notifier = function(name, args)
+NotifierClass = function(name, args)
 {
 	this.add_bound_properties(this, ['add_listener', 'remove_listener', 'set_target', 'get_target', 'clear_targets', 'remove_target', 'notify', 'set_enabled']);
 	//debug('making notifier:', name, this._bound_properties);
@@ -297,14 +202,14 @@ Notifier = function(name, args)
 	this._enabled = true;
 	this._display_value = false;
 	this._is_setting = false;
-	Notifier.super_.call(this, name, args);
+	NotifierClass.super_.call(this, name, args);
 }
 
-inherits(Notifier, Bindable);
+inherits(NotifierClass, Bindable);
 
-Notifier.prototype.get_target = function(){return this._target_heap[0];}
+NotifierClass.prototype.get_target = function(){return this._target_heap[0];}
 
-Notifier.prototype.set_target = function(target)
+NotifierClass.prototype.set_target = function(target)
 {
 	if (target)
 	{
@@ -325,7 +230,7 @@ Notifier.prototype.set_target = function(target)
 	}
 }
 
-Notifier.prototype.remove_target = function(target)
+NotifierClass.prototype.remove_target = function(target)
 {
 	if (target)
 	{
@@ -344,12 +249,12 @@ Notifier.prototype.remove_target = function(target)
 	}
 }
 
-Notifier.prototype.clear_targets = function()
+NotifierClass.prototype.clear_targets = function()
 {
 	this._target_heap = [];
 }
 
-Notifier.prototype.add_listener = function(callback)
+NotifierClass.prototype.add_listener = function(callback)
 {
 	//if(!(callback in this._listeners))
 	//{
@@ -374,7 +279,7 @@ Notifier.prototype.add_listener = function(callback)
 	}
 }
 
-Notifier.prototype.remove_listener = function(callback)
+NotifierClass.prototype.remove_listener = function(callback)
 {
 	//if(callback in this._listeners){this._listeners.slice(this._listeners.indexOf(callback), 1);}
 	if (callback)
@@ -389,7 +294,7 @@ Notifier.prototype.remove_listener = function(callback)
 	}
 }
 
-Notifier.prototype.notify = function(obj)
+NotifierClass.prototype.notify = function(obj)
 {
 	if(!obj)
 	{
@@ -435,21 +340,22 @@ Notifier.prototype.notify = function(obj)
 	}
 }
 
-Notifier.prototype.set_enabled = function(val)
+NotifierClass.prototype.set_enabled = function(val)
 {
 	this._enabled = (val>0);
 }
 
+exports.NotifierClass = NotifierClass;
 
 
 GUI_Element = function(name)
 {
 	this._grid = {};
 	this.add_bound_properties(this, ['receive', 'receive_notifier', '_x', '_y']);
-	Control.super_.call(this, name, args);
+	ControlClass.super_.call(this, name, args);
 }
 
-inherits(GUI_Element, Notifier);
+inherits(GUI_Element, NotifierClass);
 
 GUI_Element.prototype.receive = function(value)
 {
@@ -484,11 +390,13 @@ GUI_Element.prototype.reset = function()
 	this.send(0);
 }
 
+exports.GUI_Element = GUI_Element;
+
 
 //////////////////////////////////////////////////////////////////////////
 //A Notifier representing a physical control that can send and receive MIDI 
 
-Control = function(identifier, name, args)
+ControlClass = function(identifier, name, args)
 {
 	this.add_bound_properties(this, ['receive', 'receive_notifier', '_x', '_y', '_send', 'send']);
 	//debug('making control:', name, this._bound_properties);
@@ -497,12 +405,12 @@ Control = function(identifier, name, args)
 	this._channel = CHANNEL;
 	this._grid = {};
 	this._last_sent_value = 0;
-	Control.super_.call(this, name, args);
+	ControlClass.super_.call(this, name, args);
 }
 
-inherits(Control, Notifier);
+inherits(ControlClass, NotifierClass);
 
-Control.prototype.receive = function(value)
+ControlClass.prototype.receive = function(value)
 {
 	//debug('receive:', self._name, value);
 	if(this._enabled)
@@ -512,32 +420,34 @@ Control.prototype.receive = function(value)
 	}
 }
 
-Control.prototype.receive_notifier = function(notification)
+ControlClass.prototype.receive_notifier = function(notification)
 {
 	if(this._enabled){this.send(notification._value);}
 }
 
-Control.prototype._x = function(grid){if(this._grid[grid._name]!=undefined){return(this._grid[grid._name].x)}}
+ControlClass.prototype._x = function(grid){if(this._grid[grid._name]!=undefined){return(this._grid[grid._name].x)}}
 
-Control.prototype._y = function(grid){if(this._grid[grid._name]!=undefined){return(this._grid[grid._name].y)}}
+ControlClass.prototype._y = function(grid){if(this._grid[grid._name]!=undefined){return(this._grid[grid._name].y)}}
 
-Control.prototype.identifier = function(){return this._id;}
+ControlClass.prototype.identifier = function(){return this._id;}
 
-Control.prototype._send = function(value){}//this should be overridden by subclass
+ControlClass.prototype._send = function(value){}//this should be overridden by subclass
 
-Control.prototype.send = function(value)
+ControlClass.prototype.send = function(value)
 {
 	this._last_sent_value = value;
 	this._send(value);
 }
 
-Control.prototype.reset = function()
+ControlClass.prototype.reset = function()
 {
 	this.send(0);
 }
 
+exports.ControlClass = ControlClass;
 
-Button = function(identifier, name, _send, args)
+
+ButtonClass = function(identifier, name, _send, args)
 {
 	//debug('making buton:', name, this._bound_properties);
 	this._type = NOTE_TYPE;
@@ -546,24 +456,24 @@ Button = function(identifier, name, _send, args)
 	this._translation = -1;
 	this._flash = false;
 	this._grid = [];
-	Button.super_.call(this, identifier, name, args);
+	ButtonClass.super_.call(this, identifier, name, args);
 	this._send = !_send ? function(){debug('No _send function assigned for:', self._name);} : _send;
 	//register_control(this);
 }
 
-inherits(Button, Control);
+inherits(ButtonClass, ControlClass);
 
-Button.prototype.set_send_function = function(func)
+ButtonClass.prototype.set_send_function = function(func)
 {
 	this._send = func;
 }
 
-Button.prototype.pressed = function()
+ButtonClass.prototype.pressed = function()
 {
 	return this._value > 0;
 }
 
-Button.prototype.send = function(value, flash)
+ButtonClass.prototype.send = function(value, flash)
 {
 	//midiBuffer[this._type][this._id] = [this, value];
 	this.flash(flash);
@@ -571,23 +481,23 @@ Button.prototype.send = function(value, flash)
 	this._send(value);
 }
 
-Button.prototype.turn_on = function()
+ButtonClass.prototype.turn_on = function()
 {
 	this.send(this._onValue);
 }
 
-Button.prototype.turn_off = function()
+ButtonClass.prototype.turn_off = function()
 {
 	this.send(this._offValue);
 }
 
-Button.prototype.set_on_off_values = function(onValue, offValue)
+ButtonClass.prototype.set_on_off_values = function(onValue, offValue)
 {
 	this._onValue = onValue||127;
 	this._offValue = offValue||0;
 }
 
-Button.prototype.set_translation = function(newID)
+ButtonClass.prototype.set_translation = function(newID)
 {
 	//debug(this._name, 'set translation', this._id, newID);
 	this._translation = newID;
@@ -595,7 +505,7 @@ Button.prototype.set_translation = function(newID)
 	//recalculate_translation_map = true;
 }
 
-Button.prototype.flash = function(val)
+ButtonClass.prototype.flash = function(val)
 {
 	if(val!=this._flash)
 	{
@@ -611,7 +521,7 @@ Button.prototype.flash = function(val)
 	}
 }
 
-Button.prototype.get_coords= function(grid)
+ButtonClass.prototype.get_coords= function(grid)
 {
 	if(grid instanceof Grid && this._grid[grid._name])
 	{
@@ -619,6 +529,7 @@ Button.prototype.get_coords= function(grid)
 	}
 }
 
+exports.ButtonClass = ButtonClass;
 
 
 GUIButton = function(name, args)
@@ -633,7 +544,7 @@ GUIButton = function(name, args)
 
 }
 
-inherits(GUIButton, Control);
+inherits(GUIButton, ControlClass);
 
 GUIButton.prototype.set_send_function = function(func)
 {
@@ -701,6 +612,8 @@ GUIButton.prototype.get_coords= function(grid)
 	}
 }
 
+exports.GUIButton = GUIButton;
+
 
 /////////////////////////////////////////////////////////////////////////////
 //A notifier that collects a grid of buttons
@@ -726,7 +639,7 @@ GridClass = function(width, height, name, args)
 	GridClass.super_.call(this, name, args);
 }
 
-inherits(GridClass, Notifier);
+inherits(GridClass, NotifierClass);
 
 GridClass.prototype.receive = function(button){this.notify(button);}
 
@@ -737,7 +650,7 @@ GridClass.prototype.controls = function()
 	{
 		for(var x=0;x<this.width();x++)
 		{
-			if(this._grid[x][y] instanceof Notifier)
+			if(this._grid[x][y] instanceof NotifierClass)
 			{
 				buttons.push(this._grid[x][y]);
 			}
@@ -752,7 +665,7 @@ GridClass.prototype.add_control = function(x, y, button)
 	{
 		if(y < this.height())
 		{
-			if(button instanceof Notifier)
+			if(button instanceof NotifierClass)
 			{
 				this._grid[x][y] = button;
 				button._grid[this._name] = {x:x, y:y, obj:this};
@@ -785,7 +698,7 @@ GridClass.prototype.reset = function()
 	var buttons = this.controls();
 	for (index in buttons)
 	{
-		if(buttons[index] instanceof Notifier)
+		if(buttons[index] instanceof NotifierClass)
 		{
 			buttons[index].reset();
 		}
@@ -797,7 +710,7 @@ GridClass.prototype.clear_buttons = function()
 	var buttons = this.controls();
 	for (var i in buttons)
 	{
-		if(buttons[i] instanceof Notifier)
+		if(buttons[i] instanceof NotifierClass)
 		{
 			buttons[i].remove_listener(this.receive);
 			delete buttons[i]._grid[this._name];
@@ -841,6 +754,8 @@ GridClass.prototype.clear_translations = function()
 	}
 }
 
+exports.GridClass = GridClass;
+
 
 /////////////////////////////////////////////////////////////////////////////
 //Mode is a notifier that automatically updates buttons when its state changes
@@ -857,7 +772,7 @@ ModeClass = function(number_of_modes, name, args)
 	this.mode_toggle.add_listener(this.toggle_value);
 }
 
-inherits(ModeClass, Notifier);
+inherits(ModeClass, NotifierClass);
 
 ModeClass.prototype.mode_cycle_value = function(button)
 {
@@ -973,6 +888,8 @@ ModeClass.prototype.current_mode = function()
 	return(this._value)
 }
 
+exports.ModeClass = ModeClass;
+
 
 /////////////////////////////////////////////////////////////////////////////
 //PageStack is a Mode subclass that handles entering/leaving pages automatically
@@ -1027,12 +944,14 @@ PageStack.prototype.restore_mode = function()
 	this.change_mode(this._value, true);
 }
 
+exports.PageStack = PageStack;
+
 
 /////////////////////////////////////////////////////////////////////////////
 //Parameter is a notifier that automatically updates its listeners when its state changes
 //It can either reflect an internal state or a JavaObject's value, and can be assigned a control
 
-Parameter = function(name, args)
+ParameterClass = function(name, args)
 {
 	this.add_bound_properties(this, ['receive', 'set_value', 'update_control', '_Callback', 'set_control']);
 	this._parameter = undefined;
@@ -1042,30 +961,30 @@ Parameter = function(name, args)
 	this._offValue = 0;
 	this._text_length = 10;
 	this._unassigned = 'None';
-	Parameter.super_.call(this, name, args);
+	ParameterClass.super_.call(this, name, args);
 }
 
-inherits(Parameter, Notifier);
+inherits(ParameterClass, NotifierClass);
 
-Parameter.prototype.receive = function(value)
+ParameterClass.prototype.receive = function(value)
 {
 	this._value = value;
 	this.update_control();
 	this.notify();
 }
 
-Parameter.prototype.set_value = function(value)
+ParameterClass.prototype.set_value = function(value)
 {
 	this.receive(value);
 }
 
-Parameter.prototype.update_control = function(){if(this._control){this._control.send(Math.floor(this._value));}}
+ParameterClass.prototype.update_control = function(){if(this._control){this._control.send(Math.floor(this._value));}}
 
-Parameter.prototype._Callback = function(obj){if(obj){this.receive(obj._value);}}
+ParameterClass.prototype._Callback = function(obj){if(obj){this.receive(obj._value);}}
 
-Parameter.prototype.set_control = function(control)
+ParameterClass.prototype.set_control = function(control)
 {
-	if (control instanceof(Notifier) || !control)
+	if (control instanceof(NotifierClass) || !control)
 	{
 		if(this._control)
 		{
@@ -1081,11 +1000,13 @@ Parameter.prototype.set_control = function(control)
 	}
 }
 
-Parameter.prototype.set_on_off_values = function(onValue, offValue)
+ParameterClass.prototype.set_on_off_values = function(onValue, offValue)
 {
 	this._onValue = onValue||127;
 	this._offValue = offValue||0;
 }
+
+exports.ParameterClass = ParameterClass;
 
 
 ArrayParameter = function(name, args)
@@ -1093,7 +1014,7 @@ ArrayParameter = function(name, args)
 	ArrayParameter.super_.call(this, name);
 }
 
-inherits(ArrayParameter, Parameter);
+inherits(ArrayParameter, ParameterClass);
 
 ArrayParameter.prototype.receive = function(value)
 {
@@ -1110,13 +1031,15 @@ ArrayParameter.prototype.receive = function(value)
 	this.notify();
 }
 
+exports.ArrayParameter = ArrayParameter;
+
 
 ToggledParameter = function(name, args)
 {
 	ToggledParameter.super_.call(this, name, args);
 }
 
-inherits(ToggledParameter, Parameter);
+inherits(ToggledParameter, ParameterClass);
 
 ToggledParameter.prototype._Callback = function(obj)
 {
@@ -1138,6 +1061,8 @@ ToggledParameter.prototype.update_control = function(value)
 	if(this._control){this._control.send(this._value ? this._onValue : this._offValue);}
 }
 
+exports.ToggledParameter = ToggledParameter;
+
 
 RangedParameter = function(name, args)
 {
@@ -1145,7 +1070,7 @@ RangedParameter = function(name, args)
 	RangedParameter.super_.call(this, name, args);
 }
 
-inherits(RangedParameter, Parameter);
+inherits(RangedParameter, ParameterClass);
 
 RangedParameter.prototype._Callback = function(obj)
 {
@@ -1165,6 +1090,8 @@ RangedParameter.prototype._Callback = function(obj)
 
 RangedParameter.prototype.update_control = function(){if(this._control){this._control.send(Math.floor((this._value/this._range)*127));}}
 
+exports.RangedParameter = RangedParameter;
+
 
 RangedButtonParameter = function(name, args)
 {
@@ -1173,7 +1100,7 @@ RangedButtonParameter = function(name, args)
 	RangedButtonParameter.super_.call(this, name, args);
 }
 
-inherits(RangedButtonParameter, Parameter)
+inherits(RangedButtonParameter, ParameterClass)
 
 RangedButtonParameter.prototype._Callback = function(obj)
 {
@@ -1206,6 +1133,9 @@ RangedButtonParameter.prototype.update_control = function()
 }
 
 
+exports.RangedButtonParameter = RangedButtonParameter;
+
+
 DelayedRangedParameter = function(name, args)
 {
 	this._delay = 1;
@@ -1229,6 +1159,8 @@ DelayedRangedParameter.prototype.delayed_receive = function(value)
 	}
 }
 
+exports.DelayedRangedParameter = DelayedRangedParameter;
+
 
 ParameterGroup= function(name, notifiers, args)
 {
@@ -1242,7 +1174,7 @@ inherits(ParameterGroup, Bindable);
 
 ParameterGroup.prototype.set_controls = function(controls)
 {
-	var controls = controls instanceof GridClass ? controls.controls() : control instanceof Array ? controls : controls instanceof Notifier ? [controls] : [];
+	var controls = controls instanceof GridClass ? controls.controls() : control instanceof Array ? controls : controls instanceof NotifierClass ? [controls] : [];
 	for(var i=0;i<this._notifiers.length;i++)
 	{
 		var control = controls[i]?controls[i]:undefined;
@@ -1252,13 +1184,15 @@ ParameterGroup.prototype.set_controls = function(controls)
 
 ParameterGroup.prototype.set_gui_controls = function(controls)
 {
-	var controls = controls instanceof GridClass ? controls.controls() : control instanceof Array ? controls : controls instanceof Notifier ? [controls] : [];
+	var controls = controls instanceof GridClass ? controls.controls() : control instanceof Array ? controls : controls instanceof NotifierClass ? [controls] : [];
 	for(var i=0;i<this._notifiers.length;i++)
 	{
 		var control = controls[i]?controls[i]:undefined;
 		this._notifiers[i].set_gui_control(control);
 	}
 }
+
+exports.ParameterGroup = ParameterGroup;
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1284,7 +1218,7 @@ OffsetComponent = function(name, minimum, maximum, initial, callback, onValue, o
 	}
 }
 
-inherits(OffsetComponent, Notifier);
+inherits(OffsetComponent, NotifierClass);
 
 OffsetComponent.prototype.incCallback = function(obj)
 {
@@ -1349,7 +1283,7 @@ OffsetComponent.prototype._update_buttons = function()
 
 OffsetComponent.prototype.set_inc_dec_buttons = function(incButton, decButton)
 {
-	if (incButton instanceof(Notifier) || !incButton)
+	if (incButton instanceof(NotifierClass) || !incButton)
 	{
 		if(this._incButton)
 		{
@@ -1361,7 +1295,7 @@ OffsetComponent.prototype.set_inc_dec_buttons = function(incButton, decButton)
 			this._incButton.set_target(this.incCallback)
 		}
 	}
-	if (decButton instanceof(Notifier) || !decButton)
+	if (decButton instanceof(NotifierClass) || !decButton)
 	{
 		if(this._decButton)
 		{
@@ -1382,6 +1316,7 @@ OffsetComponent.prototype.set_enabled = function(val)
 	this._update_buttons();
 }
 
+exports.OffsetComponent = OffsetComponent;
 
 /////////////////////////////////////////////////////////////////////////////
 //Notifier that uses multiple buttons to change an offset value, displaying the current value
@@ -1403,7 +1338,7 @@ RadioComponent = function(name, minimum, maximum, initial, callback, onValue, of
 	}
 }
 
-inherits(RadioComponent, Notifier);
+inherits(RadioComponent, NotifierClass);
 
 RadioComponent.prototype._Callback = function(obj)
 {
@@ -1466,6 +1401,8 @@ RadioComponent.prototype.set_enabled = function(val)
 	this._update_controls();
 }
 
+exports.RadioComponent = RadioComponent;
+
 
 /////////////////////////////////////////////////////////////////////////////
 //Notifier that uses two buttons to change an offset value
@@ -1488,7 +1425,7 @@ DoubleSliderComponent = function(name, minimum, maximum, initial_start, initial_
 	}
 }
 
-inherits(DoubleSliderComponent, Notifier);
+inherits(DoubleSliderComponent, NotifierClass);
 
 DoubleSliderComponent.prototype._Callback = function(obj)
 {
@@ -1576,6 +1513,8 @@ DoubleSliderComponent.prototype.set_enabled = function(val)
 	this._update_controls();
 }
 
+exports.DoubleSliderComponent = DoubleSliderComponent;
+
 
 /////////////////////////////////////////////////////////////////////////////
 //Page holds a controls dict that can hash a control to an internal function
@@ -1630,7 +1569,7 @@ Page.prototype.refresh_mode = function()
 
 Page.prototype.set_shift_button = function(button)
 {
-	if ((button != this._shift_button)&&(button instanceof(Notifier) || !button))
+	if ((button != this._shift_button)&&(button instanceof(NotifierClass) || !button))
 	{
 		if(this._shift_button)
 		{
@@ -1675,12 +1614,14 @@ Page.prototype.register_control = function(control, target)
 		}
 		debug('faderbank added to ', this._name, 's control dict');
 	}
-	else if(control instanceof Control)
+	else if(control instanceof ControlClass)
 	{
 		this._controls[control] = target;
 		debug('control: ', control._name, ' added to ', this._name, 's control dict');
 	}
 }
+
+exports.Page = Page;
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -1750,6 +1691,8 @@ TaskServer.prototype.removeTask = function(callback, arguments, name)
 	}
 }
 
+exports.TaskServer = TaskServer;
+
 
 ControlRegistry = function(name)
 {
@@ -1770,585 +1713,5 @@ ControlRegistry = function(name)
 	return this;
 }
 
-
-HexScalesClass = function(parameters)
-{
-	var self = this;
-	this.colors = {OFF : 0, WHITE : 1, CYAN : 5, MAGENTA : 9, RED : 17, BLUE : 33, YELLOW : 65, GREEN : 127};
-	this._current_scale = 'Major';
-	this._grid = undefined;
-	this._grid_function = function(){}
-	this.width = function(){return  !this._grid ? 0 : this._grid.width();}
-	this.height = function(){return !this._grid ? 0 : this._grid.height();}
-	this._NOTENAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
-	this.NOTENAMES = [];
-	for(var i=0;i<128;i++)
-	{
-		this.NOTENAMES[i]=(this._NOTENAMES[i%12] + ' ' + (Math.floor(i/12)-2) );
-	}
-	this.WHITEKEYS = {0:0, 2:2, 4:4, 5:5, 7:7, 9:9, 11:11, 12:12};
-	this.NOTES = [24, 25, 26, 27, 28, 29, 30, 31, 16, 17, 18, 19, 20, 21, 22, 23, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7];
-	this.DRUMNOTES = [12, 13, 14, 15, 28, 29, 30, 31, 8, 9, 10, 11, 24, 25, 26, 27, 4, 5, 6, 7, 20, 21, 22, 23, 0, 1, 2, 3, 16, 17, 18, 19];
-	this.SCALENOTES = [36, 38, 40, 41, 43, 45, 47, 48, 24, 26, 28, 29, 31, 33, 35, 36, 12, 14, 16, 17, 19, 21, 23, 24, 0, 2, 4, 5, 7, 9, 11, 12];
-	this.KEYCOLORS = [this.colors.BLUE, this.colors.CYAN, this.colors.MAGENTA, this.colors.RED, this.colors.GREEN, this.colors.GREEN, this.colors.GREEN, this.colors.GREEN];
-	this.SCALES = 	{'Chromatic':[0,1,2,3,4,5,6,7,8,9,10,11],
-				'Major':[0,2,4,5,7,9,11],
-				'Minor':[0,2,3,5,7,8,10],
-				'Dorian':[0,2,3,5,7,9,10],
-				'Mixolydian':[0,2,4,5,7,9,10],
-				'Lydian':[0,2,4,6,7,9,11],
-				'Phrygian':[0,1,3,5,7,8,10],
-				'Locrian':[0,1,3,4,7,8,10],
-				'Diminished':[0,1,3,4,6,7,9,10],
-				'Whole-half':[0,2,3,5,6,8,9,11],
-				'Whole Tone':[0,2,4,6,8,10],
-				'Minor Blues':[0,3,5,6,7,10],
-				'Minor Pentatonic':[0,3,5,7,10],
-				'Major Pentatonic':[0,2,4,7,9],
-				'Harmonic Minor':[0,2,3,5,7,8,11],
-				'Melodic Minor':[0,2,3,5,7,9,11],
-				'Dominant Sus':[0,2,5,7,9,10],
-				'Super Locrian':[0,1,3,4,6,8,10],
-				'Neopolitan Minor':[0,1,3,5,7,8,11],
-				'Neopolitan Major':[0,1,3,5,7,9,11],
-				'Enigmatic Minor':[0,1,3,6,7,10,11],
-				'Enigmatic':[0,1,4,6,8,10,11],
-				'Composite':[0,1,4,6,7,8,11],
-				'Bebop Locrian':[0,2,3,5,6,8,10,11],
-				'Bebop Dominant':[0,2,4,5,7,9,10,11],
-				'Bebop Major':[0,2,4,5,7,8,9,11],
-				'Bhairav':[0,1,4,5,7,8,11],
-				'Hungarian Minor':[0,2,3,6,7,8,11],
-				'Minor Gypsy':[0,1,4,5,7,8,10],
-				'Persian':[0,1,4,5,6,8,11],
-				'Hirojoshi':[0,2,3,7,8],
-				'In-Sen':[0,1,5,7,10],
-				'Iwato':[0,1,5,6,10],
-				'Kumoi':[0,2,3,7,9],
-				'Pelog':[0,1,3,4,7,8],
-				'Spanish':[0,1,3,4,5,6,8,10]};
-	this.SCALENAMES = [];
-	var i = 0;
-	for (var name in this.SCALES){this.SCALENAMES[i] = name;i++};
-	this._noteMap = new Array(256);
-	for(var i=0;i<256;i++)
-	{
-		this._noteMap[i] = [];
-	}
-	this.DEFAULT_SCALE = 'Major';
-	this.SPLIT_SCALES = {}; //{'DrumPad':1, 'Major':1};
-	for(var param in parameters)
-	{
-		self[param] = parameters[param];
-	}
-	this._vertOffset = new OffsetComponent(this._name + '_Vertical_Offset', 0, 119, 4, self._update, colors.MAGENTA);
-	this._scaleOffset = new OffsetComponent(this._name + '_Scale_Offset', 0, self.SCALES.length, 3, self._update, colors.BLUE);
-	this._noteOffset = new OffsetComponent(this._name + '_Note_Offset', 0, 119, 36, self._update, colors.CYAN);
-	this._octaveOffset = new OffsetComponent(this._name + '_Note_Offset', 0, 119, 36, self._update, colors.YELLOW, colors.OFF, 12);
-
-	this._button_press = function(button)
-	{
-		if(button.pressed())
-		{
-			debug('button_press:', button._name);
-			button.send(127);
-		}
-		else
-		{
-			debug('button_unpress:', button._name);
-			button.send(button.scale_color);
-		}
-	}
-
-	this._update = function()
-	{
-		self._update_request = false;
-		self._noteMap = [];
-		for(var i=0;i<128;i++)
-		{
-			self._noteMap[i] = [];
-		}
-		if(self._grid instanceof GridClass)
-		{
-			var width = self.width();
-			var height = self.height();
-			var offset = self._noteOffset._value;
-			var vertoffset = self._vertOffset._value;
-			var scale = self.SCALENAMES[self._scaleOffset._value];
-			self._current_scale = scale;
-			var scale_len = self.SCALES[scale].length;
-			for(var column=0;column<width;column++)
-			{
-				for(var row=0;row<height;row++)
-				{
-					var note_pos = column + (Math.abs((height-1)-row))*parseInt(vertoffset);
-					var note = offset + self.SCALES[scale][note_pos%scale_len] + (12*Math.floor(note_pos/scale_len));
-					var button = self._grid.get_button(column, row);
-					if(button)
-					{
-						button.set_translation(note%127);
-						self._noteMap[note%127].push(button);
-						button.scale_color = self.KEYCOLORS[((note%12) in self.WHITEKEYS) + (((note_pos%scale_len)==0)*2)];
-						button.send(button.scale_color);
-					}
-				}
-			}
-		}
-	}
-}
-
-HexScalesClass.prototype.set_grid_function = function(func){self.grid_function = func;}
-
-HexScalesClass.prototype.assign_grid = function(grid)
-{
-	post('HexScalesClass assign grid', grid);
-	if(this._grid instanceof GridClass)
-	{
-		this._grid.clear_translations();
-		this._grid.remove_listener(this._button_press);
-	}
-	this._grid = grid;
-	if(this._grid instanceof GridClass)
-	{
-		this._grid.add_listener(this._button_press);
-		if(!(this._last_pressed_button instanceof Button))
-		{
-			this._last_pressed_button = this._grid.get_button(0, this._grid.height()-1);
-		}
-	}
-	this._update();
-}
-
-
-RadioGUIMixin = {_gui_onValue:1,
-			_gui_offValue:5,
-			_GUICallback:function(obj)
-			{
-				if(obj._value)
-				{
-					var val = this._gui_controls.indexOf(obj);
-					this.set_value(val);
-				}
-			},
-			update_controls:function()
-			{
-				this.Super_().prototype.update_controls.call(this);
-				this.update_gui_controls.call(this);
-			},
-			update_gui_controls:function()
-			{
-				//debug('update_gui_controls', this._gui_controls.length, this._gui_onValue, this._gui_offValue);
-				for(var i in this._gui_controls)
-				{
-					if(this._gui_controls[i])
-					{
-						//debug('sending out:', this._name, this._gui_onValue, this._gui_offValue, this._gui_controls.indexOf(this._gui_controls[i])==this._value ? this._gui_onValue : this._gui_offValue);
-						this._gui_controls[i].send(this._gui_controls.indexOf(this._gui_controls[i])==this._value ? this._gui_onValue : this._gui_offValue);
-					}
-				}
-			},
-			set_gui_controls:function(control)
-			{
-				control = (control instanceof Array)||(control instanceof GridClass) ? control : [];
-				for(var i in this._gui_controls)
-				{
-					this._gui_controls[i].remove_target(this._GUICallback);
-				}
-				this._gui_controls = control instanceof GridClass ? control.controls() : control instanceof Control ? [control] : [];
-				if(this._gui_controls)
-				{
-					//debug('set_gui_controls:', control, control instanceof GridClass);
-					for(var i in this._gui_controls)
-					{
-						if(this._gui_controls[i])
-						{
-							//debug('assigning radio:', this._gui_controls[i]._name);
-							this._gui_controls[i].set_target(this._GUICallback);
-						}
-					}
-				}
-				this.update_gui_controls();
-			},
-			_gui_controls:[],
-			_mixin_bound_properties:['update_gui_controls', 'set_gui_controls', '_GUICallback']
-}
-
-DoubleSliderGUIMixin = {_gui_onValue:3,
-			_gui_offValue:4,
-			_GUICallback:function(obj)
-			{
-				if(obj._value)
-				{
-					var button_pressed = false;
-					for(var i in this._gui_controls)
-					{
-						if(this._gui_controls[i].pressed()&&(!(this._gui_controls[i]==obj)))
-						{
-							button_pressed = this._gui_controls[i];
-							break;
-						}
-					}
-					var val = this._gui_controls.indexOf(obj);
-					var ref_index = button_pressed ? this._gui_controls.indexOf(button_pressed) : val>this._start_value ? this._start_value : this._end_value;
-					var set_func = val > ref_index ? this.set_end_value : this.set_start_value;
-					set_func(val);
-				}
-			},
-			update_controls:function()
-			{
-				this.Super_().prototype.update_controls.call(this);
-				this.update_gui_controls.call(this);
-			},
-			update_gui_controls:function()
-			{
-				//debug('update_gui_controls', this._gui_controls.length, this._gui_onValue, this._gui_offValue);
-				for(var i in this._gui_controls)
-				{
-					if(this._gui_controls[i])
-					{
-						var index = this._buttons.indexOf(this._buttons[i]);
-						this._gui_controls[i].send(index<this._start_value ? this._gui_offValue : index>this._end_value ? this._gui_offValue : this._gui_onValue);
-					}
-				}
-			},
-			set_gui_controls:function(control)
-			{
-				control = (control instanceof Array)||(control instanceof GridClass) ? control : [];
-				for(var i in this._gui_controls)
-				{
-					this._gui_controls[i].remove_target(this._GUICallback);
-				}
-				this._gui_controls = control instanceof GridClass ? control.controls() : control instanceof GUIControl ? [control] : [];
-				if(this._gui_controls)
-				{
-					//debug('set_gui_controls:', control, control instanceof GridClass);
-					for(var i in this._gui_controls)
-					{
-						if(this._gui_controls[i])
-						{
-							//debug('assigning radio:', this._gui_controls[i]._name);
-							this._gui_controls[i].set_target(this._GUICallback);
-						}
-					}
-				}
-				this.update_gui_controls();
-			},
-			_gui_controls:[],
-			_mixin_bound_properties:['update_gui_controls', 'set_gui_controls', '_GUICallback']
-}
-
-RangedButtonGUIMixin = {gui_colors:colors,
-			_GUICallback:function(obj)
-			{
-				if(obj._value)
-				{
-					if(this._javaObj)
-					{
-						//debug('Callback', this._name, obj._value);
-						this._javaObj.set(obj._value, this._range);
-					}
-					else
-					{
-						debug('Callback', this._name, obj._value, (this._value+1)%this._range);
-						this.receive(this._value+1%this._range);
-					}
-				}
-			},
-			update_control:function()
-			{
-				this.Super_().prototype.update_control.call(this);
-				this.update_gui_control.call(this);
-			},
-			update_gui_control:function()
-			{
-				if(this._gui_control)
-				{
-					for(var c in this.gui_colors)
-					{
-						debug(c, 'color:', this.gui_colors[c]);
-					}
-					debug('update_gui_control:', this._name, this._value, this.gui_colors.length, this.gui_colors[this._value%(this.gui_colors.length)]);
-					this._gui_control.send(this.gui_colors[this._value%(this.gui_colors.length)]);
-				}
-			},
-			set_gui_control:function(control)
-			{
-				if (control instanceof(Notifier) || !control)
-				{
-					if(this._gui_control)
-					{
-						this._gui_control.remove_target(this._GUICallback);
-					}
-					this._gui_control = control;
-					if(this._gui_control)
-					{
-						this._gui_control.set_target(this._GUICallback);
-						//self.receive(self._value);
-						this.update_gui_control();
-					}
-				}
-			},
-			_gui_control:undefined,
-			_mixin_bound_properties:['update_gui_control', 'set_gui_control', '_GUICallback']
-}
-
-ToggledParameterGUIMixin = {_gui_onValue:1,
-			_gui_offValue:0,
-			_GUICallback:function(obj)
-			{
-				if(obj._value)
-				{
-					if(this._javaObj)
-					{
-						//debug('Callback', this._name, obj._value);
-						this._javaObj.set(obj._value, this._range);
-					}
-					else
-					{
-						debug('Callback', this._name, obj._value, (this._value+1)%this._range);
-						this.receive(this._value+1%this._range);
-					}
-				}
-			},
-			update_control:function()
-			{
-				this.Super_().prototype.update_control.call(this);
-				this.update_gui_control.call(this);
-			},
-			update_gui_control:function()
-			{
-				if(this._gui_control){this._gui_control.send(this._value ? this._gui_onValue : this._gui_offValue);}
-			},
-			set_gui_control:function(control)
-			{
-				if (control instanceof(Notifier) || !control)
-				{
-					if(this._gui_control)
-					{
-						this._gui_control.remove_target(this._GUICallback);
-					}
-					this._gui_control = control;
-					if(this._gui_control)
-					{
-						this._gui_control.set_target(this._GUICallback);
-						//self.receive(self._value);
-						this.update_gui_control();
-					}
-				}
-			},
-			_gui_control:undefined,
-			_mixin_bound_properties:['update_gui_control', 'set_gui_control', '_GUICallback']
-}
-
-HexRadioComponent = clone_with_extension(RadioComponent, RadioGUIMixin);
-HexDoubleSliderComponent = clone_with_extension(DoubleSliderComponent, DoubleSliderGUIMixin);
-HexRangedButtonParameter = clone_with_extension(RangedButtonParameter, RangedButtonGUIMixin);
-HexToggledParameter = clone_with_extension(ToggledParameter, ToggledParameterGUIMixin);
-
-
-HexModule = function()
-{
-	var self = this;
-	this.add_bound_properties(this, ['update', 'assign_grid', 'assign_gui_pad', 'assign_gui_keys']);
-	HexModule.super_.call(this, 'HexModule');
-	this._top_sub = new GridClass(8, 2, this._name+('_top_sub'));
-	this._mid_sub = new GridClass(8, 2, this._name+('_mid_sub'));
-	this._bottom_sub = new GridClass(8, 2, this._name+('_bottom_sub'));
-	this._buttons_sub = new GridClass(8, 1, this._name+('_button_sub'));
-	this._mode_sub = new GridClass(8, 1, this._name+('_mode_sub'));
-
-	this._sub_grids = [this._top_sub, this._mid_sub, this._bottom_sub, this._buttons_sub, this._mode_sub];
-	this._gui_pads = undefined;
-	this._gui_keys = undefined;
-	this._on_part_number_changed = function(obj)
-	{
-		//debug('_on_seqnumber_changed:', obj._value);
-		select_pattern(obj._value);
-	}
-	this.selectedPart = new HexRadioComponent(this._name + '_Selected_Part', 0, 15, 0, self._on_part_number_changed, colors.RED, colors.WHITE, {'gui_onValue':colors.RED, 'gui_offValue':colors.WHITE});
-
-	this._on_selected_preset_changed = function(obj){}
-	this.selectedPreset = new HexRadioComponent(this._name + '_Selected_Preset', 0, 15, 0, self._on_selected_preset_changed, colors.WHITE, colors.CYAN, {'gui_onValue':colors.WHITE, 'gui_offValue':colors.CYAN});
-
-	this._on_global_preset_changed = function(obj){}
-	this.globalPreset = new HexRadioComponent(this._name + '_Global_Preset', 0, 15, 0, self._on_global_preset_changed, colors.WHITE, colors.GREEN, {'gui_onValue':colors.WHITE, 'gui_offValue':colors.GREEN});
-
-	this._on_loop_selector_changed = function(obj)
-	{
-		debug('NOT IMPLEMENTED _on_loop_region_changed:', obj._start_value, obj._end_value);
-	}
-	this.loopSelector = new HexDoubleSliderComponent(this._name + '_Loop_Region', 0, 15, 0, 15, self._on_loop_selector_changed, colors.RED, colors.MAGENTA, {'gui_onValue':colors.RED, 'gui_offValue':colors.MAGENTA})
-
-	this.mute = [];
-	this.behaviour = [];
-	this.accent = [];
-	this.step = [];
-	for(var i=0;i<16;i++)
-	{
-		this.behaviour[i] = new HexRangedButtonParameter(this._name + '_Behaviour_' + i, {'_range':8, 'colors':[colors.OFF, colors.WHITE, colors.YELLOW, colors.CYAN, colors.MAGENTA, colors.RED, colors.GREEN, colors.BLUE]});
-		this.accent[i] = new HexRangedButtonParameter(this._name + '_Accent_' + i, {'_range':8, 'colors':[colors.OFF, colors.WHITE, colors.YELLOW, colors.CYAN]});
-		this.mute[i] = new HexToggledParameter(this._name + '_Mute_' + i, {'_onValue':colors.YELLOW, '_offValue':colors.OFF, '_gui_onValue':colors.YELLOW, '_gui_offValue':colors.OFF});
-		this.step[i] = new HexToggledParameter(this._name + '_Mute_' + i, {'_onValue':colors.BLUE, '_offValue':colors.OFF, '_gui_onValue':colors.BLUE, '_gui_offValue':colors.OFF});
-	}
-	this.behaviour_group = new ParameterGroup('BehaviourGroup', this.behaviour);
-	this.accent_group = new ParameterGroup('AccentGroup', this.accent);
-	this.mute_group = new ParameterGroup('MuteGroup', this.mute);
-	this.step_group = new ParameterGroup('StepGroup', this.step);
-
-	var pad_select_Page = new Page('Select');
-	pad_select_Page.enter_mode = function()
-	{
-		self.selectedPart.set_controls(self._top_sub);
-		self.selectedPart.set_gui_controls(self._gui_pads);
-	}
-	pad_select_Page.exit_mode = function()
-	{
-		self.selectedPart.set_controls();
-		self.selectedPart.set_gui_controls();
-	}
-
-	var pad_mute_Page = new Page('Mute');
-	pad_mute_Page.enter_mode = function()
-	{
-		self.mute_group.set_controls(self._top_sub);
-		self.mute_group.set_gui_controls(self._gui_pads);
-	}
-	pad_mute_Page.exit_mode = function()
-	{
-		self.mute_group.set_controls();
-		self.mute_group.set_gui_controls();
-	}
-
-	var pad_preset_Page = new Page('Preset');
-	pad_preset_Page.enter_mode = function()
-	{
-		self.selectedPreset.set_controls(self._top_sub);
-		self.selectedPreset.set_gui_controls(self._gui_pads);
-	}
-	pad_preset_Page.exit_mode = function()
-	{
-		self.selectedPreset.set_controls();
-		self.selectedPreset.set_gui_controls();
-	}
-
-	var pad_global_Page = new Page('Global');
-	pad_global_Page.enter_mode = function()
-	{
-		self.globalPreset.set_controls(self._top_sub);
-		self.globalPreset.set_gui_controls(self._gui_pads);
-	}
-	pad_global_Page.exit_mode = function()
-	{
-		self.globalPreset.set_controls();
-		self.globalPreset.set_gui_controls();
-	}
-
-	this.pad_modes = new PageStack(8, 'PadModes');
-	this.pad_modes.add_mode(0, pad_select_Page);
-	this.pad_modes.add_mode(1, pad_mute_Page);
-	this.pad_modes.add_mode(2, pad_preset_Page);
-	this.pad_modes.add_mode(3, pad_global_Page);
-	this.pad_modes.change_mode(0);
-
-	var key_select_Page = new Page('Select');
-	key_select_Page.enter_mode = function()
-	{
-		self.selectedPart.set_controls(self._mid_sub);
-		self.selectedPart.set_gui_controls(self._gui_keys);
-	}
-	key_select_Page.exit_mode = function()
-	{
-		self.selectedPart.set_controls();
-		self.selectedPart.set_gui_controls();
-	}
-
-	var key_mute_Page = new Page('Mute');
-	key_mute_Page.enter_mode = function()
-	{
-		self.mute_group.set_controls(self._mid_sub);
-		self.mute_group.set_gui_controls(self._gui_keys);
-	}
-	key_mute_Page.exit_mode = function()
-	{
-		self.mute_group.set_controls();
-		self.mute_group.set_gui_controls();
-	}
-
-	var key_preset_Page = new Page('Preset');
-	key_preset_Page.enter_mode = function()
-	{
-		self.selectedPreset.set_controls(self._mid_sub);
-		self.selectedPreset.set_gui_controls(self._gui_keys);
-	}
-	key_preset_Page.exit_mode = function()
-	{
-		self.selectedPreset.set_controls();
-		self.selectedPreset.set_gui_controls();
-	}
-
-	var key_global_Page = new Page('Global');
-	key_global_Page.enter_mode = function()
-	{
-		self.globalPreset.set_controls(self._mid_sub);
-		self.globalPreset.set_gui_controls(self._gui_keys);
-	}
-	key_global_Page.exit_mode = function()
-	{
-		self.globalPreset.set_controls();
-		self.globalPreset.set_gui_controls();
-	}
-
-	this.key_modes = new PageStack(8, 'KeyModes');
-	this.key_modes.add_mode(0, key_select_Page);
-	this.key_modes.add_mode(1, key_mute_Page);
-	this.key_modes.add_mode(2, key_preset_Page);
-	this.key_modes.add_mode(3, key_global_Page);
-	this.key_modes.change_mode(0);
-}
-
-inherits(HexModule, Bindable);
-
-HexModule.prototype.assign_grid = function(grid)
-{
-	for(var sub in this._sub_grids){this._sub_grids[sub].clear_buttons();}
-	this._grid = grid;
-	if(this._grid)
-	{
-		this._top_sub.sub_grid(this._grid, 0, 8, 0, 2);
-		this._mid_sub.sub_grid(this._grid, 0, 8, 2, 4);
-		this._bottom_sub.sub_grid(this._grid, 0, 8, 4, 6);
-		this._buttons_sub.sub_grid(this._grid, 0, 8, 6, 7);
-		this._mode_sub.sub_grid(this._grid, 0, 8, 7, 8);
-	}
-	this.update();
-}
-
-HexModule.prototype.assign_gui_pads = function(grid)
-{
-	this._gui_pads = grid;
-	this.update();
-}
-
-HexModule.prototype.assign_gui_keys = function(grid)
-{
-	this._gui_keys = grid;
-	this.update();
-}
-
-HexModule.prototype.update = function()
-{
-	//debug('setting mode buttons', this._mode_sub.controls());
-	this.pad_modes.set_mode_buttons(this._mode_sub.controls());
-	this.key_modes.set_mode_buttons(this._buttons_sub.controls());
-	this.pad_modes.restore_mode();
-}
-
-
-
 exports.ControlRegistry = ControlRegistry;
-exports.Button = Button;
-exports.Grid = GridClass;
-exports.HexModule = HexModule;
-exports.HexScalesClass = HexScalesClass;
-exports.RangedButtonParameter = RangedButtonParameter;
-exports.GUIButton = GUIButton;
+
