@@ -113,7 +113,7 @@ class ChannelStripStaticDeviceProvider(Subject, SlotManager):
 	
 
 
-class ChaanelStripDeviceComponent(DeviceComponent):
+class ChannelStripDeviceComponent(DeviceComponent):
 
 
 	def show_message(self, *a, **k):
@@ -146,7 +146,7 @@ class MonoChannelStripComponent(ChannelStripComponentBase):
 	def __init__(self, *a, **k):
 		super(MonoChannelStripComponent, self).__init__(*a, **k)
 		self._device_provider = ChannelStripStaticDeviceProvider()
-		self._device_component = ChaanelStripDeviceComponent(device_provider = self._device_provider, device_bank_registry = DeviceBankRegistry(), *a, **k)
+		self._device_component = ChannelStripDeviceComponent(device_provider = self._device_provider, device_bank_registry = DeviceBankRegistry(), *a, **k)
 		self._device_component._show_msg_callback = lambda message: None
 		self._track_state = self.register_disconnectable(TrackArmState())
 		self._fold_task = self._tasks.add(Task.sequence(Task.wait(TRACK_FOLD_DELAY), Task.run(self._do_fold_track))).kill()

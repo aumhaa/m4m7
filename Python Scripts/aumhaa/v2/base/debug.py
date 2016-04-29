@@ -286,8 +286,8 @@ class Debug(ControlSurface):
 
 	def __init__(self, *a, **k):
 		super(Debug, self).__init__(*a, **k)
-		self.mtimes = {}
-		self.changed_files = []
+		#self.mtimes = {}
+		#self.changed_files = []
 		#self.reloader = Reloader()
 		#self.reloader.enable()
 		#self._log_version_data()
@@ -296,7 +296,7 @@ class Debug(ControlSurface):
 		#self._log_dirs()
 		#self._log_C_modules()
 		#self.log_filenames()
-		self.load_script()
+		#self.load_script()
 		self.log_message('_^_^_^_^_^_^_^_^_^_^_^_^_^_^_^_^_ DEBUG ON _^_^_^_^_^_^_^_^_^_^_^_^_^_^_^_^_')
 		self._scripts = []
 		#self._scan()

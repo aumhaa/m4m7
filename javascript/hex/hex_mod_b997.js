@@ -19,7 +19,7 @@ autowatch = 1;
 outlets = 4;
 inlets = 5;
 
-var FORCELOAD = true;
+var FORCELOAD = false;
 var NEW_DEBUG = false;
 var DEBUG = true;
 var DEBUG_LCD = false;

@@ -1337,7 +1337,7 @@ class ModDeviceProxy(ControlManager, Subject):
 
 	@listenable_property
 	def parameters(self):
-		#debug('delivering parameters:', self._parameters if not self._alted else [self._parameters[0]] + self._parameters[8:])
+		debug('notifying parameters:', self._parameters if not self._alted else [self._parameters[0]] + self._parameters[8:])
 		return self._parameters if (not self._alted or len(self._parameters) < 9) else [self._parameters[0]] + self._parameters[9:]
 	
 
@@ -1364,6 +1364,11 @@ class ModDeviceProxy(ControlManager, Subject):
 	@property
 	def canonical_parent(self):
 		return self._mod_device.canonical_parent
+	
+
+	@property
+	def can_have_chains(self):
+		return self._mod_device.can_have_chains
 	
 
 	def test_dict(self):

@@ -55,7 +55,7 @@ aumhaaInit = function(script)
 	return destination; 
 }*/
 
-/*
+
 function override(object, methodName, callback)
 {
 	object[methodName] = callback(object[methodName])
@@ -435,9 +435,9 @@ ModComponent.prototype.wiki = function()
 	this.max.launchbrowser(this.wiki_addy);
 }
 
-*/
 
-/*
+
+
 function Grid(name, call, width, height)
 {
 	var self = this;
@@ -571,9 +571,9 @@ function Key(name, call, x, parent)
 	}	
 
 }
-*/
 
-/*
+
+
 function deprivatize_script_functions(script)
 {
 	for(var i in script)
@@ -586,7 +586,7 @@ function deprivatize_script_functions(script)
 	}
 }
 
-*/
+
 
 
 
