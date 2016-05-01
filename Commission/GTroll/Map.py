@@ -344,6 +344,8 @@ class CntrlrColors:
 		VerticalOffsetOffValue = LividRGB.OFF 
 		ShiftOn = LividRGB.BlinkFast.YELLOW
 		ShiftOff = LividRGB.YELLOW
+		SessionOn = LividRGB.BlinkFast.MAGENTA
+		SessionOff = LividRGB.MAGENTA
 
 		class Keys:
 			SelectedNote = LividRGB.GREEN

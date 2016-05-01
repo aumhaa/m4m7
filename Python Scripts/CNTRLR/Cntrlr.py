@@ -159,7 +159,7 @@ class CntrlrMonoInstrumentComponent(MonoInstrumentComponent):
 		self._drumpad._step_sequencer._playhead_component._triplet_notes=tuple(range(16, 28))
 		self._drumpad._step_sequencer._note_editor._visible_steps_model = lambda indices: filter(lambda k: k % 16 not in (13, 14, 15, 16), indices)
 		self._matrix_modes.add_mode('disabled', [DelayMode(self.update, delay = .1, parent_task_group = self._parent_task_group)])
-		self._matrix_modes.add_mode('enabled', [DelayMode(self.update, delay = .1, parent_task_group = self._parent_task_group)], behaviour = DefaultedBehaviour())
+		self._matrix_modes.add_mode('enabled', [DelayMode(self.update, delay = .1, parent_task_group = self._parent_task_group)], behaviour = DefaultedBehaviour(color = 'MonoInstrument.SessionOn', off_color = 'MonoInstrument.SessionOff',))
 		self._matrix_modes._last_selected_mode = 'enabled'
 		self._matrix_modes.selected_mode = 'disabled'
 		

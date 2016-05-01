@@ -103,10 +103,10 @@ class BicoloredMomentaryBehaviour(MomentaryBehaviour):
 		selected_groups = component.get_mode_groups(selected_mode)
 		if mode == selected_mode:
 			#button.set_light(self._color)
-			button.color = self._color
+			button.mode_selected_color = self._color
 		else:
 			#button.set_light(self._off_color)
-			button.color = self._off_color
+			button.mode_unselected_color = self._off_color
 	
 
 

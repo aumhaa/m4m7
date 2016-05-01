@@ -49,6 +49,19 @@ from .Map import *
 from CNTRLR import Cntrlr as BaseCntrlr
 from CNTRLR.Cntrlr import CntrlrMonoInstrumentComponent
 
+class GTrollMonoInstrumentComponent(CntrlrMonoInstrumentComponent):
+
+
+	def _setup_shift_mode(self):
+		super(GTrollMonoInstrumentComponent, self)._setup_shift_mode()
+		#self._shifted = False
+		#self._shift_mode = self.register_component(ModesComponent())
+		#self._shift_mode.add_mode('disabled', [])
+		#self._shift_mode.add_mode('shift', tuple([lambda a: self._on_shift_value(True), lambda a: self._on_shift_value(False)]), behaviour = ShiftCancellableBehaviourWithRelease())
+		self._shift_mode.shift_button.color = 'MonoInstrument.ShiftOn'
+		self._shift_mode.shift_button.disabled_color = 'MonoInstrument.ShiftOff'
+	
+
 class Cntrlr(BaseCntrlr):
 
 
@@ -66,9 +79,10 @@ class Cntrlr(BaseCntrlr):
 
 	def _setup_transport_control(self):
 		super(Cntrlr, self)._setup_transport_control()
+		self._transport._overdub_toggle.view_transform = lambda value: 'Transport.OverdubOn' if value else 'Transport.OverdubOff'
 		self._transport.layer = Layer(priority = 4,
 									play_button = self._button[24],
-									record_button = self._button[25])
+									overdub_button = self._button[25])
 	
 
 	def _setup_session_control(self):
@@ -154,9 +168,7 @@ class Cntrlr(BaseCntrlr):
 									offset_up_button = self._button[11], 
 									offset_down_button = self._button[10],
 									vertical_offset_up_button = self._button[9],
-									vertical_offset_down_button = self._button[8],
-									split_button = self._button[14],
-									sequencer_button = self._button[15]))
+									vertical_offset_down_button = self._button[8],))
 
 		self._instrument.drumpad_shift_layer = AddLayerMode(self._instrument, Layer(priority = 5, 
 									scale_up_button = self._button[31],
@@ -164,9 +176,7 @@ class Cntrlr(BaseCntrlr):
 									drum_offset_up_button = self._button[11], 
 									drum_offset_down_button = self._button[10],
 									drumpad_mute_button = self._button[9],
-									drumpad_solo_button = self._button[8],
-									split_button = self._button[14],
-									sequencer_button = self._button[15]))
+									drumpad_solo_button = self._button[8],))
 
 		self._instrument._keypad.sequencer_layer = LayerMode(self._instrument._keypad, Layer(priority = 5, 
 																										playhead = self._playhead_element,
