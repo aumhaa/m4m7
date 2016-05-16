@@ -56,11 +56,25 @@ NORMALENCODER = (240, 0, 1, 97, 8, 30, 00, 00, 247)
 FASTENCODER = (240, 0, 1, 97, 8, 30, 04, 00, 247)
 
 
+"""
+class SpecialMonoMixerComponent(MonoMixerComponent):
+
+	_channel_strip_class = SpecialMonoChannelStripComponent
+
+	def test(self, *a, **k):
+		pass
+	
+
+class SpecialMonoChannelStripComponent(MonoChannelStripComponent):
 
 
+	def _on_select_button_double_clicked(self, button):
+		pass
+	
+
+"""
 
 """We need to override the update notification call in AutoArmComponent"""
-
 class CntrlrAutoArmComponent(AutoArmComponent):
 
 
@@ -103,14 +117,14 @@ class Cntrlr(LividControlSurface):
 			self._define_sysex()
 			self._setup_background()
 			#self._setup_autoarm()
+			self._setup_viewcontrol()
 			self._setup_session_control()
 			self._setup_mixer_control()
 			self._setup_transport_control()
 			#self._setup_device_control()
 			#self._setup_device_selector()
 			#self._setup_session_recording_component()
-			#self._setup_viewcontrol()
-			#self._setup_modes() 
+			#self._setup_modes()
 			self._setup_m4l_interface()
 	
 
@@ -234,8 +248,19 @@ class Cntrlr(LividControlSurface):
 											solo_buttons = self._key_matrix.submatrix[8:11, 0],
 											stop_clip_buttons = self._key_matrix.submatrix[:3, 0],
 											track_select_buttons = self._key_matrix.submatrix[4:8, 0],)
+		for strip in self._mixer._channel_strips:
+			strip._on_select_button_double_clicked = self._toggle_view
 		self._mixer.set_enabled(True)
 	
+
+	def _toggle_view(self, *a):
+		debug('toggle_view')
+		debug('Clip is visible:', self.application().view.is_view_visible('Detail/Clip'))
+		debug('Device is visible:', self.application().view.is_view_visible('Detail/DeviceChain'))
+		if self.application().view.is_view_visible('Detail/Clip'):
+			self._view_control.show_view('Detail/DeviceChain')
+		else:
+			self._view_control.show_view('Detail/Clip')
 
 	def _setup_device_control(self):
 		self._device_selection_follows_track_selection = FOLLOW
@@ -271,14 +296,14 @@ class Cntrlr(LividControlSurface):
 
 	def _setup_viewcontrol(self):
 		self._view_control = ViewControlComponent(name='View_Control')
-		self._view_control.main_layer = AddLayerMode(self._view_control, Layer(priority = 5, 
-																				scene_select_dial = self._encoder[2],
-																				track_select_dial = self._encoder[3],))
+		#self._view_control.main_layer = AddLayerMode(self._view_control, Layer(priority = 5, 
+		#																		scene_select_dial = self._encoder[2],
+		#																		track_select_dial = self._encoder[3],))
 		#self._view_control.main_layer = AddLayerMode(self._view_control, Layer(prev_track_button=self._button[24], 
 		#											next_track_button= self._button[25], 
 		#											next_scene_button=self._button[27], 
 		#											prev_scene_button = self._button[26]))
-		self._view_control.set_enabled(False)
+		self._view_control.set_enabled(True)
 	
 
 	def _setup_modes(self):
