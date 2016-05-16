@@ -729,7 +729,7 @@ function setup_colors()
 
 function refresh_pads()
 {
-	debug('refresh_pads\n');
+	debug('refresh_pads:', pad_mode, ',', PADMODES[pad_mode]);
 	switch(PADMODES[pad_mode])
 	{
 		case 'select':
@@ -777,21 +777,21 @@ function refresh_pads()
 				padgui.message(i%4, Math.floor(i/4), v);
 			}while(i--);
 			break;
-		case 'freewheel':
+		case 'play':
 			var i=15;do{
 				var v=(selected.triggered.indexOf(i)>-1) + 7;
 				if(grid_mode == 0){ mod.Send( 'receive_translation', 'pads_'+i, 'value', v);}
 				padgui.message(i%4, Math.floor(i/4), v);
 			}while(i--);
 			break;
-		case 'play':
+		case 'extra':
 			var i=15;do{
 				var v=(selected.triggered.indexOf(i)>-1) + 7;
 				if(grid_mode == 0){ mod.Send( 'receive_tranlsation', 'pads_'+i, 'value', v);}
 				padgui.message(i%4, Math.floor(i/4), v);
 			}while(i--);
 			break;
-		default:
+		case 'freewheel':
 			if(selected.num<8)
 			{
 				var i=3;do{
