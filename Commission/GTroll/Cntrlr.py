@@ -81,8 +81,9 @@ class Cntrlr(BaseCntrlr):
 		super(Cntrlr, self)._setup_transport_control()
 		self._transport._overdub_toggle.view_transform = lambda value: 'Transport.OverdubOn' if value else 'Transport.OverdubOff'
 		self._transport.layer = Layer(priority = 4,
-									play_button = self._button[24],
-									overdub_button = self._button[25])
+									play_button = self._button[24])
+		self._transport.overdub_layer = AddLayerMode(self._transport, Layer(priority = 4,
+									overdub_button = self._button[25]))
 	
 
 	def _setup_session_control(self):
@@ -228,6 +229,7 @@ class Cntrlr(BaseCntrlr):
 									self._session_navigation,
 									self._session_navigation.nav_layer,
 									self._transport,
+									self._transport.overdub_layer,
 									self._recorder,
 									self._recorder.main_layer, 
 									self._device)
@@ -237,6 +239,7 @@ class Cntrlr(BaseCntrlr):
 									self._session,
 									self._session.scene_launch_layer,
 									self._session.stop_clips_layer,
+									self._transport,
 									self._device)
 		main_faders=CompoundMode(self._G_mixer.main_faders_layer, 
 									self._G_mixer.master_fader_layer)
