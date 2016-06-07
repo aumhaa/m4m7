@@ -21,6 +21,7 @@ var chosen_synth = 4;
 var synth_track_names = ['Synth1', 'Synth2', 'Synth3', 'Synth4'];
 var synth_tracks = [];
 var chain_selectors = [];
+var alive = false;
 
 function init()
 {
@@ -78,6 +79,8 @@ function init()
 		ksliders[i] = this.patcher.getnamed('s'+(i+1)+'_kslider');
 		//lines[i] = this.patcher.getnamed('s'+(i+1)+'_line');
 	}
+	deprivatize_script_functions(this);
+	alive = true;
 	update();
 }
 
@@ -90,14 +93,14 @@ function callback()
 function track_callback(){}
 
 
-function synth(val)
+function _synth(val)
 {
 	debug('synth:', val);
 	chosen_synth = val;
 	update();
 }
 
-function change(track, synth, lo, hi, atouch, program)
+function _change(track, synth, lo, hi, atouch, program)
 {
 	presets[track] = {'synth':synth, 'lo':lo, 'hi':hi, 'atouch':atouch, 'program':program};
 	debug('selector is:', chain_selectors[track]);
@@ -126,6 +129,7 @@ function update()
 	}
 }
 
+function anything(){}
 
 
 
