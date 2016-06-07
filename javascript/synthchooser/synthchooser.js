@@ -63,6 +63,14 @@ function init()
 			}
 		}
 	}
+	for(var i=0;i<4;i++)
+	{
+		presets[i].synth = this.patcher.getnamed('synth'+(i+1)).getvalueof();
+		presets[i].lo = this.patcher.getnamed('lo'+(i+1)).getvalueof();
+		presets[i].hi = this.patcher.getnamed('hi'+(i+1)).getvalueof();
+		presets[i].atouch = this.patcher.getnamed('touch'+(i+1)).getvalueof();
+		presets[i].program = this.patcher.getnamed('prog'+(i+1)).getvalueof();
+	}
 	storage = this.patcher.getnamed('synthchooser_storage');
 	kslider = this.patcher.getnamed('kslider');
 	for(var i=0;i<4;i++)
@@ -70,6 +78,7 @@ function init()
 		ksliders[i] = this.patcher.getnamed('s'+(i+1)+'_kslider');
 		//lines[i] = this.patcher.getnamed('s'+(i+1)+'_line');
 	}
+	update();
 }
 
 function callback()
