@@ -269,7 +269,9 @@ class Twister(LividControlSurface):
 			self._setup_m4l_interface()
 			self._setup_mod()
 			self._setup_device_control()
-			#self._setup_modes()
+			self._setup_modes()
+		self._on_device_changed.subject = self.song
+		self._on_selected_track_changed.subject = self.song.view
 	
 
 	def _initialize_script(self):
@@ -327,7 +329,10 @@ class Twister(LividControlSurface):
 	def _setup_device_control(self):
 		self._device = SpecialDeviceComponent(name = 'Device_Component', device_provider = self._device_provider, device_bank_registry = DeviceBankRegistry(), script = self)
 		self._device.layer = Layer(priority = 4, parameter_controls = self._dial_matrix.submatrix[:,:],)
-		self._device.set_enabled(True)
+		self._device.bank_layer = AddLayerMode(self._device, Layer(priority = 4, 
+												bank_prev_button = self._encoder_button[12],
+												bank_next_button = self._encoder_button[13]))
+		self._device.set_enabled(False)
 	
 
 	def _setup_mod(self):
@@ -338,7 +343,45 @@ class Twister(LividControlSurface):
 		self.modhandler.layer = Layer(priority = 8,
 										twister_encoder_button_grid = self._dial_button_matrix.submatrix[:,:],)
 										#twister_encoder_grid = self._dial_matrix.submatrix[:,:],)
-		self.modhandler.set_enabled(True)
+		self.modhandler.set_enabled(False)
+	
+
+	def _setup_modes(self):
+		self._modswitcher = ModesComponent(name = 'ModSwitcher')
+		self._modswitcher.add_mode('mod', [self.modhandler, self._device])
+		self._modswitcher.add_mode('device', [self._device, self._device.bank_layer])
+		self._modswitcher.selected_mode = 'device'
+		self._modswitcher.set_enabled(True)
+	
+
+	def _update_modswitcher(self):
+		debug('update modswitcher', self.modhandler.active_mod())
+		if self.modhandler.active_mod():
+			self._modswitcher.selected_mode = 'mod'
+		else:
+			self._modswitcher.selected_mode = 'device'
+	
+
+	@listens('appointed_device')
+	def _on_device_changed(self):
+		debug('appointed device changed, script')
+		self._update_modswitcher()
+	
+
+	@listens('selected_track')
+	def _on_selected_track_changed(self):
+		debug('_on_selected_track_changed')
+		#super(Cntrlr, self)._on_selected_track_changed()
+		#self._drum_group_finder.device_parent = self.song.veiw.selected_track
+		if not len(self.song.view.selected_track.devices):
+			self._update_modswitcher()
+	
+
+	def restart_monomodular(self):
+		#debug('restart monomodular')
+		self.modhandler.disconnect()
+		with self.component_guard():
+			self._setup_mod()
 	
 
 
