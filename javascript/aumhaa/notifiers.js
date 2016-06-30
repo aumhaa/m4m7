@@ -315,7 +315,7 @@ NotifierClass.prototype.notify = function(obj)
 			//{
 			//	debug('err:', i);
 			//}
-			debug('-> for', this._name,' : ',cb);
+			debug('-> for', this._name,' : callback->', cb.toString());
 		}
 	}
 	for (var i in this._listeners)
@@ -328,7 +328,7 @@ NotifierClass.prototype.notify = function(obj)
 		catch(err)
 		{
 			debug('listener callback exception:', err);
-			debug('-> for', this._name,' : ',cb);
+			debug('-> for', this._name,' : callback ->', cb.toString());
 		}
 	}
 	if(this._display_value>0)
@@ -849,12 +849,13 @@ ModeClass.prototype.add_mode = function(mode, callback)
 
 ModeClass.prototype.set_mode_buttons = function(buttons)
 {
-	debug('set_mode_buttons:', buttons.length, this._mode_callbacks.length);
+	debug('set_mode_buttons:', buttons ? 'buttons length:' + buttons.length : 'incoming buttons undefined', this._mode_callbacks.length); 
 	if (((buttons == undefined)||(buttons.length == this._mode_callbacks.length))&&(buttons != this.mode_buttons))
 	{
 		for (var i in this.mode_buttons)
 		{
 			this.mode_buttons[i].remove_target(this.mode_value);
+			this.mode_buttons[i].reset()
 		}
 		if(!buttons)
 		{
@@ -865,6 +866,7 @@ ModeClass.prototype.set_mode_buttons = function(buttons)
 		{
 			this.mode_buttons.push(buttons[i]);
 			buttons[i].set_target(this.mode_value);
+			i == this._value ? buttons[i].turn_on() : buttons[i].turn_off();
 		}
 		debug('mode buttons length: ' + this._name + ' ' + this.mode_buttons.length)
 	}
@@ -989,6 +991,7 @@ ParameterClass.prototype.set_control = function(control)
 		if(this._control)
 		{
 			this._control.remove_target(this._Callback);
+			this._control.reset();
 		}
 		this._control = control;
 		if(this._control)
@@ -1201,17 +1204,17 @@ exports.ParameterGroup = ParameterGroup;
 OffsetComponent = function(name, minimum, maximum, initial, callback, onValue, offValue, increment, args)
 {
 	this.add_bound_properties(this, ['receive', 'set_value', 'update_control', '_Callback', 'set_control', 'incCallback', 'decCallback']);
-	this._min = minimum||0;
-	this._max = maximum||127;
-	this._value = initial||0;
-	this._increment = increment||1;
+	this._min = minimum!=undefined?minimum:0;
+	this._max = maximum!=undefined?maximum:127;
+	this._increment = increment!=undefined?increment:1;
 	this._incButton;
 	this._decButton;
-	this._onValue = onValue||127;
-	this._offValue = offValue||0;
+	this._onValue = onValue!=undefined?onValue:127;
+	this._offValue = offValue!=undefined?offValue:0;
 	this._displayValues = [this._onValue, this._offValue];
 	this._scroll_hold = true;
 	OffsetComponent.super_.call(this, name);
+	this._value = initial!=undefined?initial:0;
 	if(callback!=undefined)
 	{
 		this.set_target(callback);
@@ -1287,24 +1290,26 @@ OffsetComponent.prototype.set_inc_dec_buttons = function(incButton, decButton)
 	{
 		if(this._incButton)
 		{
-			this._incButton.remove_target(this.incCallback)
+			this._incButton.remove_target(this.incCallback);
+			this._incButton.reset();
 		}
 		this._incButton = incButton;
 		if(this._incButton)
 		{
-			this._incButton.set_target(this.incCallback)
+			this._incButton.set_target(this.incCallback);
 		}
 	}
 	if (decButton instanceof(NotifierClass) || !decButton)
 	{
 		if(this._decButton)
 		{
-			this._decButton.remove_target(this.decCallback)
+			this._decButton.remove_target(this.decCallback);
+			this._decButton.reset();
 		}
 		this._decButton = decButton;
 		if(this._decButton)
 		{
-			this._decButton.set_target(this.decCallback)
+			this._decButton.set_target(this.decCallback);
 		}
 	}
 	this._update_buttons();
@@ -1324,14 +1329,14 @@ exports.OffsetComponent = OffsetComponent;
 RadioComponent = function(name, minimum, maximum, initial, callback, onValue, offValue, args)
 {
 	this.add_bound_properties(this, ['receive', 'set_value', 'update_controls', '_Callback', 'set_controls']);
-	this._min = minimum||0;
-	this._max = maximum||1;
-	this._value = initial||0;
+	this._min = minimum!=undefined?minimum:0;
+	this._max = maximum!=undefined?maximum:1;
 	this._buttons = [];
-	this._onValue = onValue||127;
-	this._offValue = offValue||0;
+	this._onValue = onValue!=undefined?onValue:127;
+	this._offValue = offValue!=undefined?offValue:0;
 	this._displayValues = [this._onValue, this._offValue];
 	RadioComponent.super_.call(this, name, args);
+	this._value = initial!=undefined?initial:0;
 	if(callback!=undefined)
 	{
 		this.set_target(callback);
@@ -1360,6 +1365,7 @@ RadioComponent.prototype.set_controls = function(control)
 	for(var i in this._buttons)
 	{
 		this._buttons[i].remove_target(this._Callback);
+		this._buttons[i].reset();
 	}
 	this._buttons = control instanceof GridClass ? control.controls() : control;
 	if(this._buttons)
@@ -1525,6 +1531,7 @@ Page = function(name, args)
 	this._controls = {};
 	this.active = false;
 	this._shifted = false;
+	this._shift_button = undefined;
 	Page.super_.call(this, name, args);
 }
 
@@ -1534,6 +1541,7 @@ Page.prototype.controlInput = function(control){this.control_input(control);}
 
 Page.prototype._shiftValue = function(obj)
 {
+	debug('old shiftValue');
 	var new_shift = false;
 	if(obj)
 	{
@@ -1574,6 +1582,7 @@ Page.prototype.set_shift_button = function(button)
 		if(this._shift_button)
 		{
 			this._shift_button.remove_target(this._shiftValue);
+			this._shift_button.reset();
 			this._shifted = false;
 		}
 		this._shift_button = button;
@@ -1652,9 +1661,12 @@ TaskServer = function(script, interval)
 				task.ticks += 1;
 			}
 		}
-		host.scheduleTask(self._run, null, self._interval);
+		//host.scheduleTask(self._run, null, self._interval);
 	}
-	this._run();
+	this._tsk = new Task(this._run, this, undefined);
+	this._tsk.interval = interval;
+	this._tsk.initialdelay = 10000;
+	this._tsk.repeat();
 }
 
 TaskServer.prototype.addTask = function(callback, arguments, interval, repeat, name)

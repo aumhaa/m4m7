@@ -26,6 +26,11 @@ exports.init = function(script)
 		return temp;
 	};
 
+	Function.prototype.getName = function()
+	{
+		return /function ([^(]*)/.exec( this+"" )[1];
+	}
+
 	var loadProtos = function(dict)
 	{
 		for(var i in dict)
