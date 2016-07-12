@@ -15,7 +15,7 @@ from ableton.v2.control_surface.components import ChannelStripComponent, MixerCo
 from ableton.v2.control_surface import ControlSurface, ControlElement, Component, CompoundComponent, PrioritizedResource, Skin, DeviceBankRegistry, Layer
 from ableton.v2.control_surface.input_control_element import *
 from ableton.v2.control_surface.mode import AddLayerMode, LayerMode, ModesComponent, ModeButtonBehaviour, DelayMode
-from ableton.v2.base.slot import *
+from ableton.v2.base.event import *
 from ableton.v2.base.task import *
 
 from Push.mode_behaviours import CancellableBehaviour
@@ -176,7 +176,7 @@ class ShiftCancellableBehaviourWithRelease(CancellableBehaviour):
 	
 
 
-class CodecStaticDeviceProvider(Subject, SlotManager):
+class CodecStaticDeviceProvider(EventObject):
 
 
 	device_selection_follows_track_selection = False

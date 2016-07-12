@@ -35,7 +35,7 @@ from aumhaa.v2.control_surface.components.fixed_length_recorder import FixedLeng
 from pushbase.auto_arm_component import AutoArmComponent
 from pushbase.grid_resolution import GridResolution
 from pushbase.playhead_element import PlayheadElement
-from pushbase.percussion_instrument_finder_component import PercussionInstrumentFinderComponent, find_drum_group_device
+from pushbase.percussion_instrument_finder import PercussionInstrumentFinder, find_drum_group_device
 from pushbase.drum_group_component import DrumGroupComponent
 
 debug = initialize_debug()
@@ -157,7 +157,7 @@ class Cntrlr(BaseCntrlr):
 		self._c_instance.playhead.enabled = True
 		self._playhead_element = PlayheadElement(self._c_instance.playhead)
 
-		self._drum_group_finder = PercussionInstrumentFinderComponent(device_parent=self.song.view.selected_track)
+		self._drum_group_finder = PercussionInstrumentFinder(device_parent=self.song.view.selected_track)
 
 		self._instrument = CntrlrMonoInstrumentComponent(name = 'InstrumentComponent', is_enabled = True, script = self, skin = self._skin, grid_resolution = self._grid_resolution, drum_group_finder = self._drum_group_finder, parent_task_group = self._task_group, settings = DEFAULT_INSTRUMENT_SETTINGS, device_provider = self._device_provider)
 		self._instrument.shift_button_layer = AddLayerMode(self._instrument, Layer(priority = 5, session_mode_button = self._button[26], shift_mode_button = self._button[27]))

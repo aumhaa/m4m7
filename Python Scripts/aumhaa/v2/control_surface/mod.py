@@ -10,13 +10,13 @@ import contextlib
 from re import *
 from itertools import chain, imap, izip_longest, izip
 
-from ableton.v2.base import clamp, flatten, depends, listenable_property, listens, listens_group, liveobj_changed, liveobj_valid, SlotManager, Subject
+from ableton.v2.base import clamp, flatten, depends, listenable_property, listens, listens_group, liveobj_changed, liveobj_valid, EventObject
 from ableton.v2.control_surface import ControlSurface, Component, CompoundComponent, ControlElement, NotifyingControlElement, InputSignal
 from ableton.v2.control_surface.components.device import DeviceProvider
 from ableton.v2.control_surface.elements import ButtonMatrixElement
 from ableton.v2.control_surface.control import ControlManager
 from ableton.v2.base.task import *
-from ableton.v2.base import Event, listens, listens_group, Signal, in_range, Disconnectable, listenable_property, Subject
+from ableton.v2.base import Event, listens, listens_group, Signal, in_range, Disconnectable, listenable_property
 
 from aumhaa.v2.control_surface.components import DeviceSelectorComponent, MonoParamComponent, MonoDeviceComponent
 from aumhaa.v2.control_surface.mod_devices import *
@@ -1186,7 +1186,7 @@ class NavigationBox(Component):
 	
 
 
-class ParamHolder(ControlManager, Subject):
+class ParamHolder(ControlManager, EventObject):
 	
 	__doc__ = ' Simple class to hold the owner of a Device.parameter and forward its value when receiving updates from Live, or update its value from a mod '
 
@@ -1283,7 +1283,7 @@ class NoDevice(object):
 	
 
 
-class ModParameterProxy(ControlManager, Subject):
+class ModParameterProxy(ControlManager, EventObject):
 
 
 	_name = 'ModParameterProxy'
@@ -1295,7 +1295,7 @@ class ModParameterProxy(ControlManager, Subject):
 
 
 
-class ModDeviceProxy(ControlManager, Subject):
+class ModDeviceProxy(ControlManager, EventObject):
 
 
 	class_name = 'ModDeviceProxy'
@@ -1629,13 +1629,13 @@ class LegacyModDeviceProxy(ModDeviceProxy):
 		self._custom_parameter = [None for index in range(number)]
 	
 
-	def set_custom_parameter(self, number, parameter, *a):
+	def set_custom_parameter(self, number, parameter, rebuild = True, *a):
 		if number < len(self._custom_parameter):
 			debug('custom=', parameter)
 			if isinstance(parameter, Live.DeviceParameter.DeviceParameter) or parameter is None:
 				debug('custom is device:', parameter)
 				self._custom_parameter[number] = parameter
-				self.rebuild_parameters()
+				rebuild and self.rebuild_parameters()
 	
 
 	def set_custom_parameter_value(self, num, value, *a):
@@ -2159,7 +2159,7 @@ def livedevice(device):
 	return device._mod_device if hasattr(device, '_mod_device') else device
 
 
-class ModDeviceProvider(Subject, SlotManager):
+class ModDeviceProvider(EventObject):
 
 
 	device_selection_follows_track_selection = True

@@ -6,7 +6,7 @@ from re import *
 from _Generic.Devices import *
 
 from aumhaa.v2.control_surface.components.live8_device import Live8DeviceComponent as DeviceComponent
-from ableton.v2.base import depends, listenable_property, listens, listens_group, liveobj_changed, liveobj_valid, SlotManager, Subject
+from ableton.v2.base import depends, listenable_property, listens, listens_group, liveobj_changed, liveobj_valid, EventObject
 #from ableton.v2.control_surface.components.device import DeviceProvider, select_and_appoint_device, device_to_appoint
 #from ableton.v2.control_surface.components import Devicecomponent
 

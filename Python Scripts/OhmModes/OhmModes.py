@@ -335,7 +335,7 @@ class OhmModes(LividControlSurface):
 		self._session_navigation._horizontal_paginator.scroll_down_button.color = 'Session.PageNavigationButtonOn'
 		self._session_navigation.set_enabled(False)
 
-		self._session = OhmSessionComponent(name = 'Session', session_ring = self._session_ring, enable_skinning = True, auto_name = True)
+		self._session = OhmSessionComponent(name = 'Session', session_ring = self._session_ring)
 		self._session.set_enabled(False)
 		self._session.clip_launch_layer = AddLayerMode(self._session, Layer(priority = 5,  clip_launch_buttons = self._matrix.submatrix[:7,:5]))
 		self._session.scene_launch_layer = AddLayerMode(self._session, Layer(priority = 5,  scene_launch_buttons = self._matrix.submatrix[7,:5]))

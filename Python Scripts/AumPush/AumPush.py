@@ -644,8 +644,10 @@ class AumPush(Push):
 	@listens('failure')
 	def _on_handshake_failure(self, bootloader_mode):
 		debug('Handshake failed.')
+		self._on_handshake_success()
 	
 
+	"""
 	@listens('success')
 	def _on_handshake_success(self):
 		debug('Handshake succeded with firmware version %.2f!' % self._handshake.firmware_version)
@@ -659,6 +661,7 @@ class AumPush(Push):
 				settings = copy(self._settings)
 				del settings['aftertouch_threshold']
 				self._user.settings = settings
+	"""
 	
 
 	def _get_current_instrument_channel(self):

@@ -4,7 +4,7 @@
 from __future__ import absolute_import, print_function
 import Live
 from ableton.v2.control_surface.component import Component
-from ableton.v2.base.slot import listens, listens_group
+from ableton.v2.base.event import listens, listens_group
 
 #from aumhaa.v2.control_surface.mod import ModDeviceProxy
 

@@ -4,7 +4,7 @@
 from __future__ import absolute_import, print_function
 import Live
 from itertools import izip, izip_longest, product
-from ableton.v2.base import listens, listens_group, Subject, SlotManager, liveobj_valid, nop, clamp, listenable_property, liveobj_changed
+from ableton.v2.base import listens, listens_group, EventObject, liveobj_valid, nop, clamp, listenable_property, liveobj_changed
 import ableton.v2.base.task as Task
 from ableton.v2.control_surface import DeviceBankRegistry
 from ableton.v2.control_surface.components import ChannelStripComponent as ChannelStripComponentBase, MixerComponent as MixerComponentBase
@@ -29,7 +29,7 @@ def release_control(control):
 		control.release_parameter()
 
 
-class TrackArmState(Subject, SlotManager):
+class TrackArmState(EventObject):
 	__events__ = ('arm',)
 
 
@@ -88,7 +88,7 @@ def turn_button_on_off(button, on = True):
 
 
 
-class ChannelStripStaticDeviceProvider(Subject, SlotManager):
+class ChannelStripStaticDeviceProvider(EventObject):
 
 
 	device_selection_follows_track_selection = False

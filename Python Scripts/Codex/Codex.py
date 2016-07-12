@@ -48,7 +48,7 @@ def release_control(control):
 
 
 
-class CodexDeviceProvider(Subject, SlotManager):
+class CodexDeviceProvider(EventObject):
 
 	device_selection_follows_track_selection = False
 

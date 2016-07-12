@@ -5,7 +5,7 @@ from __future__ import absolute_import, print_function
 import Live 
 
 from ableton.v2.control_surface.component import Component
-from ableton.v2.base.slot import listens
+from ableton.v2.base.event import listens
 
 from aumhaa.v2.base.debug import initialize_debug
 

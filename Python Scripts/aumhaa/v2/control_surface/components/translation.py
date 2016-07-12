@@ -1,7 +1,7 @@
 # by amounra 0216 : http://www.aumhaa.com
 from ableton.v2.control_surface.elements.button_matrix import ButtonMatrixElement
 from ableton.v2.control_surface.compound_component import CompoundComponent
-from ableton.v2.base.slot import Event, listens, listens_group
+from ableton.v2.base.event import Event, listens, listens_group
 
 from aumhaa.v2.base.debug import initialize_debug
 
