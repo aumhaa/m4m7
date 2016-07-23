@@ -21,7 +21,7 @@ inlets = 5;
 
 var FORCELOAD = false;
 var NEW_DEBUG = false;
-var DEBUG = true;
+var DEBUG = false;
 var DEBUG_LCD = false;
 var DEBUG_PTR = false;
 var DEBUG_STEP = false;
@@ -169,7 +169,7 @@ var part =[];
 var KEYMODES = ['mute', 'length', 'behaviour', 'single preset', 'global preset', 'polyrec', 'polyplay', 'accent'];
 var PADMODES = ['select', 'add', 'mute', 'preset', 'global', 'freewheel', 'play'];
 var STEPMODES = ['active', 'velocity', 'duration', 'rulebends', 'pitch'];
-var GRIDMODES = ['hex', 'tr256', 'polygome', 'cafe', 'none', 'none', 'none', 'behaviour'];
+var GRIDMODES = ['hex', 'tr256', 'polygome', 'cafe', 'boinngg', 'none', 'none', 'behaviour'];
 var CODECMODES = ['velocity', 'duration', 'behaviour', 'pitch'];
 
 var Alive=0;
@@ -1825,6 +1825,7 @@ function _grid(x, y, val)
 		//boinngg mode
 		case 'boinngg':
 			//Boiingg_Play_mode
+			debug('boiingg input:', x, y, val, altVal);
 			if(val>0)
 			{
 				if(altVal>0)

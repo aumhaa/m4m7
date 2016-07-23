@@ -12,7 +12,7 @@ var unique = jsarguments[1];
 var script = this;
 
 var FORCELOAD = false;
-var DEBUG = true;
+var DEBUG = false;
 var DEBUGLCD = false;
 var SHOW_STORAGE = 0;
 

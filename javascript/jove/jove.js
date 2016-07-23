@@ -167,6 +167,8 @@ function init()
 	looper.quantizemenu.message('int', looper.quantizemenu.getvalueof());
 	looper.quantizerecord.message('int', looper.quantizerecord.getvalueof());
 	looper.offset.message('int', looper.offset.getvalueof());
+	//debug('---------------offset is:', looper.offset.getvalueof());
+	_set_offset(looper.offset.getvalueof());
 	looper.feedback.message('float', looper.feedback.getvalueof());
 	looper.input.message('float', looper.input.getvalueof());
 	looper.speed.message('float', looper.speed.getvalueof());

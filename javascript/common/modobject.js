@@ -10,6 +10,8 @@ var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
 var DEBUG = false;
 var debug = (DEBUG&&Debug) ? Debug : function(){};
 
+debug = function(){};
+
 var script = this;
 var finder;
 var mod;
@@ -30,9 +32,10 @@ var Mod = ModComponent.bind(script);
 
 function init()
 {
-	debug('modobject init');
+	debug('modobject init b997');
+	debug = function(){};          ////////something has debug turned on globally (probably new imports have mucked with it);
 	mod = new Mod(script, type, unique, false);
-	mod.debug = debug;
+	mod.debug = function(){}
 	mod_finder = new LiveAPI(mod_callback, 'this_device');
 	mod.assign_api(mod_finder);
 }
@@ -44,7 +47,7 @@ function mod_callback(args)
 		debug('mod callback:', args);
 		if(args[1] in script)
 		{
-			debug('args[1] is in script', script[args[1]]);
+			//debug('args[1] is in script', script[args[1]]);
 			script[args[1]].apply(script, args.slice(2));
 		}
 		if(args[1]=='disconnect')
