@@ -57,7 +57,7 @@ class OhmMixerComponent(MonoMixerComponent):
 		self._send_controls = controls
 		if controls:
 			for index in range(min(len(self._channel_strips), controls.width())):
-				send_controls = [controls.get_button(index, row) for row in range(controls.height())]
+				send_controls = [controls.get_button(row, index) for row in range(controls.height())]
 				if self.send_index > controls.height():
 					send_controls = send_controls + [None for _ in range(self.send_index - controls.height)]
 				self._channel_strips[index].set_send_controls(send_controls)
@@ -86,7 +86,7 @@ class OhmMixerComponent(MonoMixerComponent):
 		self._eq_controls = controls
 		if controls:
 			for index in range(min(len(self._channel_strips), controls.width())):
-				eq_controls = [controls.get_button(index, row) for row in range(controls.height())]
+				eq_controls = [controls.get_button(row, index) for row in range(controls.height())]
 				self._channel_strips[index].set_eq_gain_controls(eq_controls)
 		else:
 			for strip in self._channel_strips:
@@ -152,6 +152,7 @@ class OhmDeviceComponent(DeviceComponent):
 		super(OhmDeviceComponent, self).__init__(*a, **k)
 	
 
+	"""
 	def _current_bank_details(self):
 		#debug('current bank deets...')
 		if not self._script.modhandler.active_mod() is None:
@@ -166,7 +167,7 @@ class OhmDeviceComponent(DeviceComponent):
 		else:
 			return DeviceComponent._current_bank_details(self)
 	
-
+	"""
 
 class OhmTransportComponent(TransportComponent):
 
@@ -212,6 +213,7 @@ class OhmModes(LividControlSurface):
 	_model_name = 'Ohm'
 	_version_check = 'b996'
 	_host_name = 'Ohm'
+	device_provider_class = ModDeviceProvider
 
 	def __init__(self, c_instance):
 		super(OhmModes, self).__init__(c_instance)
@@ -447,7 +449,7 @@ class OhmModes(LividControlSurface):
 	def _setup_mod(self):
 		self.monomodular = get_monomodular(self)
 		self.monomodular.name = 'monomodular_switcher'
-		self.modhandler = OhmModHandler(self)
+		self.modhandler = OhmModHandler(script = self, device_provider = self._device_provider)
 		self.modhandler.name = 'ModHandler' 
 		self.modhandler.layer = Layer(priority = 5, 
 									grid = self._matrix.submatrix[:,:],
@@ -456,8 +458,8 @@ class OhmModes(LividControlSurface):
 									nav_left_button = self._menu[3],
 									nav_right_button =  self._menu[4],
 									shift_button = self._menu[1],
-									alt_button = self._menu[0],
-									parameter_controls = self._dial_matrix)
+									alt_button = self._menu[0],)
+									#parameter_controls = self._dial_matrix)
 		self.modhandler.legacy_shift_mode = AddLayerMode(self.modhandler, Layer(priority = 6,
 									channel_buttons = self._matrix.submatrix[:, 1],
 									nav_matrix = self._matrix.submatrix[4:8, 2:6]))
@@ -472,7 +474,7 @@ class OhmModes(LividControlSurface):
 
 	def _setup_modswitcher(self):
 		self._modswitcher = ModesComponent(name = 'ModSwitcher')
-		self._modswitcher.add_mode('mod', [self.modhandler, DelayMode(self.modhandler.update, delay = .5)])
+		self._modswitcher.add_mode('mod', [self.modhandler, self._device, DelayMode(self.modhandler.update, delay = .5)])
 		self._modswitcher.add_mode('translations', [self._translations])
 		self._modswitcher.selected_mode = 'translations'
 		self._modswitcher.set_enabled(False)
@@ -669,7 +671,6 @@ class OhmModHandler(ModHandler):
 	def set_device_selector_matrix(self, matrix):
 		self._device_selector.set_matrix(matrix)
 	
-
 
 	@listens('value')
 	def _grid_value(self, value, x, y, *a, **k):
