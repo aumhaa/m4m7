@@ -233,7 +233,7 @@ class MonolooperComponent(CompoundComponent):
 	def _on_select_value(self, value, x, y, is_momentary):
 		#self._script.log_message('select: %(x)s %(y)s %(value)s %(is_momentary)s' % {'x':x, 'y':y, 'value':value, 'is_momentary':is_momentary})
 		buttons = self._on_select_value.subject
-		button = self._on_select_value.subject.get_button(x, y)
+		button = self._on_select_value.subject.get_button(y, x)
 		if value:
 			self._select_buttons_pressed.append(button)
 			if buttons[1] in self._select_buttons_pressed and buttons[2] in self._select_buttons_pressed:
@@ -270,8 +270,8 @@ class MonolooperComponent(CompoundComponent):
 	@listens('value')
 	def _on_mute_value(self, value):
 		loops = self._loopers if self._all_loops_selected else [self._selected_loop]
-		if self._on_select_value.subject and self._on_select_value.subject.get_button(3, 0) in self._select_buttons_pressed:
-			self._select_buttons_pressed.remove(self._on_select_value.subject.get_button(3, 0))
+		if self._on_select_value.subject and self._on_select_value.subject.get_button(0, 3) in self._select_buttons_pressed:
+			self._select_buttons_pressed.remove(self._on_select_value.subject.get_button(0, 3))
 			if value:
 				for loop in loops:
 					loop.hit_reverse()
@@ -661,7 +661,7 @@ class LauncherComponent(CompoundComponent):
 	def _on_select_value(self, value, x, y, is_momentary):
 		#self._script.log_message('launcher select: %(x)s %(y)s %(value)s %(is_momentary)s' % {'x':x, 'y':y, 'value':value, 'is_momentary':is_momentary})
 		buttons = self._on_select_value.subject
-		button = self._on_select_value.subject.get_button(x, y)
+		button = self._on_select_value.subject.get_button(y, x)
 		if value:
 			self._select_buttons_pressed.append(button)
 			if buttons[1] in self._select_buttons_pressed and buttons[2] in self._select_buttons_pressed:
@@ -866,7 +866,7 @@ class DeviceControlComponent(CompoundComponent):
 	def _on_select_value(self, value, x, y, is_momentary):
 		#self._script.log_message('launcher select: %(x)s %(y)s %(value)s %(is_momentary)s' % {'x':x, 'y':y, 'value':value, 'is_momentary':is_momentary})
 		buttons = self._on_select_value.subject
-		button = self._on_select_value.subject.get_button(x, y)
+		button = self._on_select_value.subject.get_button(y, x)
 		if value:
 			self._select_buttons_pressed.append(button)
 			if buttons[1] in self._select_buttons_pressed and buttons[2] in self._select_buttons_pressed:

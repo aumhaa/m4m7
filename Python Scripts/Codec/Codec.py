@@ -490,7 +490,7 @@ class CodecMixerComponent(MixerComponent):
 		self._send_controls = controls
 		if controls:
 			for index in range(len(self._channel_strips)):
-				send_controls = [controls.get_button(index, row) for row in range(controls.height())]
+				send_controls = [controls.get_button(row, index) for row in range(controls.height())]
 				if self.send_index > controls.height:
 					send_controls = send_controls + [None for _ in range(self.send_index - controls.height)]
 				self._channel_strips[index].set_send_controls(send_controls)
@@ -919,13 +919,13 @@ class CodecModHandler(ModHandler):
 				if self._local:
 					self._code_encoder_grid.send_value(x, y, k['value'], True)
 				else:
-					self._code_encoder_grid.get_button(x, y)._ring_value = k['value']
+					self._code_encoder_grid.get_button(y, x)._ring_value = k['value']
 			if 'mode' in keys:
-				self._code_encoder_grid.get_button(x, y).set_mode(k['mode'])
+				self._code_encoder_grid.get_button(y, x).set_mode(k['mode'])
 			if 'green' in keys:
-				self._code_encoder_grid.get_button(x, y).set_green(k['green'])
+				self._code_encoder_grid.get_button(y, x).set_green(k['green'])
 			if 'custom' in keys:
-				self._code_encoder_grid.get_button(x, y).set_custom(k['custom'])
+				self._code_encoder_grid.get_button(y, x).set_custom(k['custom'])
 			if 'local' in keys:
 				self._receive_code_encoder_grid_local(k['local'])
 			if 'relative' in keys:
@@ -1070,7 +1070,7 @@ class CodecModHandler(ModHandler):
 				leds = [240, 0, 1, 97, 4, 31]
 				def xiterbuttons(matrix):
 					for i, j in product(xrange(matrix.width()), xrange(matrix.height())):
-						button = matrix.get_button(i, j)
+						button = matrix.get_button(j, i)
 						yield (button, (i, j))
 				
 				for encoder, coords in xiterbuttons(grid):

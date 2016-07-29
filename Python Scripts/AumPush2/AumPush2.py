@@ -690,7 +690,7 @@ class PushModHandler(ModHandler):
 				y = y-self.y_offset
 			if x in range(8) and y in range(8):
 				value > -1 and self._grid_value.subject.send_value(x, y, self._push_colors[self._colors[value]], True)
-				button = self._grid_value.subject.get_button(x, y)
+				button = self._grid_value.subject.get_button(y, x)
 				if button:
 					new_identifier = identifier if identifier > -1 else button._original_identifier
 					new_channel = channel if channel > -1 else button._original_channel

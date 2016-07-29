@@ -722,7 +722,7 @@ class MonoScaleComponent(CompoundComponent):
 					scale_len = len(SCALES[scale])
 					for row in range(8):
 						for column in range(4):
-							button = matrix.get_button(column, row)
+							button = matrix.get_button(row, column)
 							if scale is 'DrumPad':
 								button.set_identifier((DRUMNOTES[column + (row*8)] + (self._offsets[cur_chan]['drumoffset']*4))%127)
 								button.scale_color = DRUMCOLORS[row<4]
@@ -739,9 +739,9 @@ class MonoScaleComponent(CompoundComponent):
 							button.set_channel(cur_chan)
 							#self._selected_session.deassign_all()
 							matrix = self._matrix_value.subject
-							matrix.get_button(column + 4, row).use_default_message()
-							matrix.get_button(column + 4, row).set_enabled(True)
-							self._selected_scene[column+(row*4)].clip_slot(0).set_launch_button(matrix.get_button(column + 4, row))
+							matrix.get_button(row, column + 4).use_default_message()
+							matrix.get_button(row, column + 4).set_enabled(True)
+							self._selected_scene[column+(row*4)].clip_slot(0).set_launch_button(matrix.get_button(row, column + 4))
 					#self._selected_session.set_scene_bank_buttons(self._button[5], self._button[4])
 					self._script.set_highlighting_session_component(self._selected_session)
 					self._selected_session._do_show_highlight()
@@ -750,7 +750,7 @@ class MonoScaleComponent(CompoundComponent):
 					scale_len = len(SCALES[scale])
 					for row in range(8):
 						for column in range(8):
-							button = matrix.get_button(column, row)
+							button = matrix.get_button(row, column)
 							if scale is 'DrumPad':
 								button.set_identifier((DRUMNOTES[column + (row*8)] + (self._offsets[cur_chan]['drumoffset']*4))%127)
 								button.scale_color = DRUMCOLORS[(column<4)+((row<4)*2)]

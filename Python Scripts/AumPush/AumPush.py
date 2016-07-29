@@ -644,10 +644,8 @@ class AumPush(Push):
 	@listens('failure')
 	def _on_handshake_failure(self, bootloader_mode):
 		debug('Handshake failed.')
-		self._on_handshake_success()
 	
 
-	"""
 	@listens('success')
 	def _on_handshake_success(self):
 		debug('Handshake succeded with firmware version %.2f!' % self._handshake.firmware_version)
@@ -661,7 +659,6 @@ class AumPush(Push):
 				settings = copy(self._settings)
 				del settings['aftertouch_threshold']
 				self._user.settings = settings
-	"""
 	
 
 	def _get_current_instrument_channel(self):
@@ -1045,7 +1042,7 @@ class PushModHandler(ModHandler):
 				y = y-self.y_offset
 			if x in range(8) and y in range(8):
 				value > -1 and self._grid_value.subject.send_value(x, y, self._push_colors[self._colors[value]], True)
-				button = self._grid_value.subject.get_button(x, y)
+				button = self._grid_value.subject.get_button(y, x)
 				if button:
 					new_identifier = identifier if identifier > -1 else button._original_identifier
 					new_channel = channel if channel > -1 else button._original_channel

@@ -438,7 +438,7 @@ class MonoMixerComponent(MixerComponentBase):
 		self._send_controls = controls
 		if controls:
 			for index in range(len(self._channel_strips)):
-				send_controls = [controls.get_button(index, row) for row in range(controls.height())]
+				send_controls = [controls.get_button(row, index) for row in range(controls.height())]
 				if self.send_index > controls.height:
 					send_controls = send_controls + [None for _ in range(self.send_index - controls.height)]
 				self._channel_strips[index].set_send_controls(send_controls)
@@ -477,7 +477,7 @@ class MonoMixerComponent(MixerComponentBase):
 		self._eq_controls = controls
 		if controls:
 			for index in range(len(self._channel_strips)):
-				eq_controls = [controls.get_button(index, row) for row in range(controls.height())]
+				eq_controls = [controls.get_button(row, index) for row in range(controls.height())]
 				self._channel_strips[index].set_eq_gain_controls(eq_controls)
 		else:
 			for strip in self._channel_strips:
@@ -488,7 +488,7 @@ class MonoMixerComponent(MixerComponentBase):
 		self._parameter_controls = controls
 		if controls:
 			for index in range(len(self._channel_strips)):
-				parameter_controls = [controls.get_button(index, row) for row in range(controls.height())]
+				parameter_controls = [controls.get_button(row, index) for row in range(controls.height())]
 				self._channel_strips[index].set_parameter_controls(parameter_controls)
 		else:
 			for strip in self._channel_strips:
