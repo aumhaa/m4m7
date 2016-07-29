@@ -272,6 +272,7 @@ class BaseDeviceComponent(DeviceComponent):
 			self._update_device_bank_nav_buttons()
 	
 
+	"""
 	def _current_bank_details(self):
 		debug('current bank deets...')
 		if not self._script.modhandler.active_mod() is None:
@@ -286,7 +287,7 @@ class BaseDeviceComponent(DeviceComponent):
 		else:
 			return DeviceComponent._current_bank_details(self)
 	
-
+	"""
 
 class BlockingMonoButtonElement(MonoButtonElement):
 
@@ -446,7 +447,7 @@ class BaseModHandler(ModHandler):
 		mod = self.active_mod()
 		if mod and not mod.legacy and self._base_grid_value.subject:
 			value > -1 and self._base_grid_value.subject.send_value(x, y, value, True)
-			button = self._base_grid_value.subject.get_button(x, y)
+			button = self._base_grid_value.subject.get_button(y, x)
 			if button:
 				new_identifier = identifier if identifier > -1 else button._original_identifier
 				new_channel = channel if channel > -1 else button._original_channel
@@ -484,7 +485,7 @@ class BaseModHandler(ModHandler):
 			if x in range(8) and y in range(4):
 				value > -1 and self._base_grid_value.subject.send_value(x, y, value, True)
 				if identifier or channel:
-					button = self._base_grid_value.subject.get_button(x, y)
+					button = self._base_grid_value.subject.get_button(y, x)
 					if button:
 						identifier and button.set_identifier(identifier if identifier > -1 else button._original_identifier)
 						channel and button.set_channel(channel if channel > -1 else button._original_channel)
@@ -656,7 +657,8 @@ class Base(LividControlSurface):
 	_host_name = 'Base'
 	_version_check = 'b996'
 	monomodular = None
-	
+	device_provider_class = ModDeviceProvider
+
 	def __init__(self, *a, **k):
 		super(Base, self).__init__(*a, **k)
 		self._current_nav_buttons = []
@@ -881,7 +883,6 @@ class Base(LividControlSurface):
 		self.modhandler.name = 'ModHandler'
 		self.modhandler.layer = Layer(priority = 7, base_grid = self._base_grid, 
 													base_grid_CC = self._base_grid_CC,
-													parameter_controls = self._fader_matrix,
 													alt_button = self._button[6],
 													lock_button = self._button[7],
 													key_buttons = self._runner_matrix,)
@@ -977,7 +978,7 @@ class Base(LividControlSurface):
 
 	def _setup_modswitcher(self):
 		self._modswitcher = BaseDisplayingModesComponent(name = 'ModSwitcher')
-		self._modswitcher.add_mode('mod', [self.modhandler, DelayMode(self.modhandler.update, delay = .5), self.user_mode_sysex], display_string = MODE_DATA['Mod'])
+		self._modswitcher.add_mode('mod', [self.modhandler, self._device, self._device.parameters_layer, DelayMode(self.modhandler.update, delay = .5), self.user_mode_sysex], display_string = MODE_DATA['Mod'])
 		self._modswitcher.add_mode('instrument', [self._instrument, self.device_layer_sysex])
 		self._modswitcher.selected_mode = 'instrument'
 		self._modswitcher.set_enabled(False)
@@ -1041,7 +1042,7 @@ class Base(LividControlSurface):
 
 	@listens('value')
 	def _on_nav_button_value(self, value, x, y, is_momentary):
-		button = self._nav_buttons.get_button(x, y)
+		button = self._nav_buttons.get_button(y, x)
 		if button in self._current_nav_buttons:
 			if value > 0:
 				self._send_midi((176, 35, DIRS[self._current_nav_buttons.index(button)]))
