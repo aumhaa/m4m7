@@ -2133,10 +2133,17 @@ class ModRouter(CompoundComponent):
 	
 
 
-def device_to_appoint(device):
+def original_device_to_appoint(device):
 	appointed_device = device
 	if liveobj_valid(device) and device.can_have_drum_pads and not device.has_macro_mappings and len(device.chains) > 0 and liveobj_valid(device.view.selected_chain) and len(device.view.selected_chain.devices) > 0:
 		appointed_device = device_to_appoint(device.view.selected_chain.devices[0])
+	return appointed_device
+
+
+def device_to_appoint(device):
+	appointed_device = device
+	#if liveobj_valid(device) and device.can_have_drum_pads and not device.has_macro_mappings and len(device.chains) > 0 and liveobj_valid(device.view.selected_chain) and len(device.view.selected_chain.devices) > 0:
+	#	appointed_device = device_to_appoint(device.view.selected_chain.devices[0])
 	return appointed_device
 
 
