@@ -19,6 +19,11 @@ function inherits(ctor, superCtor)
 	ctor.prototype.Super_ = function(){return superCtor;}
 }
 
+function startsWith(str, search)
+{
+	return str.lastIndexOf(search, 0) === 0;
+}
+
 function extend(destination, source)
 {
 	for (var k in source) 
