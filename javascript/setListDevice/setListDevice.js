@@ -140,7 +140,7 @@ function fire_scene(data)
 				next_deck.group.call('stop_all_clips');
 				finder.id = Math.floor(next_deck.decks[data.bpm-1].id);
 				finder.goto('clip_slots', Math.floor(data.s-1));
-
+				finder.call('stop')
 
 				//cues
 				finder.goto('clip');
@@ -176,6 +176,7 @@ function fire_scene(data)
 				{
 					finder.id = Math.floor(acappella.id);
 					finder.goto('clip_slots', Math.floor(data.a-1));
+					finder.call('stop');
 					finder.goto('clip');
 					if(data.aq)
 					{

@@ -2132,6 +2132,39 @@ class ModRouter(CompoundComponent):
 		return mod_device
 	
 
+	def is_mod(self, device):
+		debug('is mod(', device, ')')
+		mod_device = None
+		if isinstance(device, Live.Device.Device):
+			try:
+				if device.can_have_chains and not device.can_have_drum_pads and len(device.view.selected_chain.devices)>0:
+					device = device.view.selected_chain.devices[0]
+			except:
+				pass
+			debug('---------------device name is:', device.name)
+			debug('---------------device startswith @modAlias:', device.name.startswith('@modAlias'))
+			if device.name.startswith('@modAlias:'):
+				alias_name = device.name.split('@modAlias:')[1]
+				debug('---------------alias name is:', alias_name)
+				for mod in self._mods:
+					name = mod.device.name if mod.device else None
+					debug('mod device name is:', name)
+					debug('name == alias_name:', str(name) == str(alias_name))
+					if str(name) == str(alias_name):
+						device = mod.device
+						break
+		#debug('pass device: ' + str(device))
+		if not device is None:
+			for mod in self._mods:
+				#debug('mod in mods: ' + str(mod.device))
+				#if mod.device == device or mod._device_proxy == device:
+				if mod.device == device or device in mod.proxied_devices:
+					mod_device = mod
+					break
+		#debug('modrouter is_mod() returned device: ' + str(mod_device))
+		return mod_device
+	
+
 
 def original_device_to_appoint(device):
 	appointed_device = device
