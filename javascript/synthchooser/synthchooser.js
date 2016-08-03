@@ -1,7 +1,7 @@
 autowatch = 1;
 
 aumhaa = require('_base');
-var FORCELOAD = false;
+var FORCELOAD = true;
 var DEBUG = true;
 aumhaa.init(this);
 var script = this;
@@ -11,6 +11,10 @@ var mod;
 var mod_finder;
 
 var Mod = ModComponent.bind(script);
+
+var pset_id = 0;
+var name_listener;
+var device_name = '';
 
 var unique = jsarguments[1];
 var synths_track;
@@ -51,6 +55,11 @@ var SYNTHCHOOSER_BANKS = {'NoDevice':[['ModDevice_s1_mod', 'ModDevice_s2_mod', '
 						'Other':[['ModDevice_s1_mod', 'ModDevice_s2_mod', 'ModDevice_s3_mod', 'ModDevice_s4_mod', 'CustomParameter_32', 'CustomParameter_33', 'CustomParameter_34', 'CustomParameter_35', 'CustomParameter_36', 'CustomParameter_37', 'CustomParameter_38', 'CustomParameter_39', 'CustomParameter_40', 'CustomParameter_41', 'CustomParameter_42', 'CustomParameter_43'],
 										['CustomParameter_0', 'CustomParameter_1', 'CustomParameter_2', 'CustomParameter_3', 'CustomParameter_4', 'CustomParameter_5', 'CustomParameter_6', 'CustomParameter_7', 'CustomParameter_8', 'CustomParameter_9', 'CustomParameter_10', 'CustomParameter_11', 'CustomParameter_12', 'CustomParameter_13', 'CustomParameter_14', 'CustomParameter_15'],
 										['CustomParameter_16', 'CustomParameter_17', 'CustomParameter_18', 'CustomParameter_19', 'CustomParameter_20', 'CustomParameter_21', 'CustomParameter_22', 'CustomParameter_23', 'CustomParameter_24', 'CustomParameter_25', 'CustomParameter_26', 'CustomParameter_27', 'CustomParameter_28', 'CustomParameter_29', 'CustomParameter_30', 'CustomParameter_31']]}
+
+function startsWith(str, search)
+{
+	return str.lastIndexOf(search, 0) === 0;
+}
 
 
 function init()
@@ -106,6 +115,7 @@ function initialize(val)
 		setup_device();
 		setup_notifiers();
 		setup_modes();
+		setup_pset_id();
 	}
 }
 
@@ -400,6 +410,35 @@ function setup_modes()
 	main_modes.add_mode(1, multi_Page);
 	main_modes.add_mode(2, super_Page);
 	main_modes.change_mode(0);
+}
+
+function setup_pset_id()
+{
+	if((!name_listener)||(!name_listener.id))
+	{
+		name_listener = new LiveAPI(name_callback, 'live_set', 'this_device');
+		debug('this set id is', name_listener.id);
+		name_listener.property = 'name';
+	}
+	device_name = name_listener.get('name').toString().split(' ');
+	for(var i in device_name)
+	{
+		if(startsWith(device_name[i], '@id:'))
+		{
+			pset_id = device_name[i].split('@id:')[1];
+			debug('________pset_id is:', pset_id);
+			break;
+		}
+	}
+}
+
+function name_callback(args)
+{
+	debug('name_listener cb:', args[0], args[1]);
+	if((args[0]=='name')&&(args[1]!=device_name))
+	{
+		setup_pset_id();
+	}
 }
 
 function callback(){}
@@ -713,5 +752,15 @@ function octave_component()
 	HexModule.super_.call(this, 'HexModule');
 }
 
+function sc_pset(num, val)
+{
+	debug('receive sc_pset', num, val);
+	if(num==pset_id)
+	{
+		debug('updating preset to:', val);
+		script.patcher.getnamed('preset_number').message(Math.floor(val));
+	}
+
+}
 
 forceload(this);

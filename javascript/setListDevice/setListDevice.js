@@ -1,7 +1,9 @@
 autowatch = 1;
 
+outlets = 2;
+
 aumhaa = require('_base');
-var FORCELOAD = false;
+var FORCELOAD = true;
 var DEBUG = true;
 aumhaa.init(this);
 var script = this;
@@ -15,6 +17,8 @@ var last_deck = -1;
 var Alive = false;
 var defer;
 var scene_data = {};
+var next_scPset = [0, 0];
+
 
 function startsWith(str, search)
 {
@@ -207,6 +211,15 @@ function fire_scene(data)
 
 					finder.call('fire');
 				}
+				if(data.sc1)
+				{
+					next_scPset[0] = data.sc1;
+				}
+				if(data.sc2)
+				{
+					next_scPset[1] = data.sc2;
+				}
+				debug('scPsets:', next_scPset);
 			}
 		}
 	}
@@ -218,5 +231,13 @@ function set_start_marker(id, val)
 	finder.id = id;
 	finder.set('start_marker', val);
 }
+
+function sc_pset(num, val)
+{
+	debug('sc_pset', num, val);
+	//messnamed('sc_pset', num, next_scPset[num]);
+	outlet(0, 'sc_pset', num+1, next_scPset[num]);
+}
+
 
 forceload(this);
