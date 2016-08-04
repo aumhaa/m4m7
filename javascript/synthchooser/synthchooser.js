@@ -1,7 +1,7 @@
 autowatch = 1;
 
 aumhaa = require('_base');
-var FORCELOAD = true;
+var FORCELOAD = false;
 var DEBUG = true;
 aumhaa.init(this);
 var script = this;
