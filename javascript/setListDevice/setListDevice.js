@@ -234,7 +234,7 @@ function set_start_marker(id, val)
 
 function sc_pset(num, val)
 {
-	debug('sc_pset', num, val);
+	debug('send sc_pset, button', num, val?'pressed':'not pressed');
 	//messnamed('sc_pset', num, next_scPset[num]);
 	outlet(0, 'sc_pset', num+1, next_scPset[num]);
 }
