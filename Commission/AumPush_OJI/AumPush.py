@@ -127,7 +127,14 @@ class AumPush(Push):
 		with inject(register_component = const(self._register_component), song = const(self.song)).everywhere():
 			self.modhandler = PushModHandler(self) ## song = self.song, register_component = self._register_component)
 		self.modhandler.name = 'ModHandler'
-		self.modhandler.layer = Layer( priority = 10, lock_button = self.elements.note_mode_button, grid = self.elements.matrix, shift_button = self.elements.shift_button, alt_button = self.elements.select_button, key2_buttons = self.elements.track_state_buttons, key_buttons = self.elements.select_buttons)
+		self.modhandler.layer = Layer( priority = 10, lock_button = self.elements.note_mode_button, 
+																			grid = self.elements.matrix, 
+																			shift_button = self.elements.shift_button,
+																			alt_button = self.elements.select_button,
+																			key_buttons = self.elements.select_buttons, 
+																			key2_buttons = self.elements.track_state_buttons,
+																			name_display_line = self.elements.display_line3,
+																			value_display_line = self.elements.display_line4 )
 		self.modhandler.legacy_shift_layer = AddLayerMode( self.modhandler, Layer(priority = 6, 
 																			nav_up_button = self.elements.nav_up_button, 
 																			nav_down_button = self.elements.nav_down_button, 
@@ -137,9 +144,7 @@ class AumPush(Push):
 																			nav_matrix = self.elements.matrix.submatrix[4:8, 2:6] ))
 		self.modhandler.shift_layer = AddLayerMode( self.modhandler, Layer( priority = 6, 
 																			device_selector_matrix = self.elements.matrix.submatrix[:, :1],
-																			lock_button = self.elements.master_select_button, 
-																			name_display_line = self.elements.display_line3, 
-																			value_display_line = self.elements.display_line4 ))
+																			lock_button = self.elements.master_select_button, ))
 		self.modhandler.alt_layer = AddLayerMode( self.modhandler, Layer( priority = 6, 
 																			alt_name_display_line = self.elements.display_line3, 
 																			alt_value_display_line = self.elements.display_line4 )) 
