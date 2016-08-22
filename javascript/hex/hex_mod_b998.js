@@ -408,7 +408,7 @@ function setup_controls()
 	}
 	for(var id=0;id<8;id++)
 	{
-		KeyButtons[id] = new ButtonClass(id, 'Key_'+id, make_send_func('key', 'value', x));
+		KeyButtons[id] = new ButtonClass(id, 'Key_'+id, make_send_func('key', 'value', id));
 		KeysControlRegistry.register_control(id, KeyButtons[id]);
 		Keys.add_control(id, 0, KeyButtons[id]);
 	}

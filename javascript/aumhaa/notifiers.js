@@ -450,6 +450,7 @@ exports.ControlClass = ControlClass;
 ButtonClass = function(identifier, name, _send, args)
 {
 	//debug('making buton:', name, this._bound_properties);
+	this.add_bound_properties(this, ['set_send_function', 'pressed', 'turn_on', 'turn_off', 'set_on_off_values', 'set_translation', 'flash', 'get_coords']);
 	this._type = NOTE_TYPE;
 	this._onValue = 127;
 	this._offValue = 0;
@@ -620,7 +621,7 @@ exports.GUIButton = GUIButton;
 
 GridClass = function(width, height, name, args)
 {
-	this.add_bound_properties(this, ['add_control', 'controls', 'receive', 'get_button', 'reset', 'clear_buttons', 'sub_grid', 'clear_translations']);
+	this.add_bound_properties(this, ['add_control', 'controls', 'receive', 'get_button', 'reset', 'clear_buttons', 'sub_grid', 'clear_translations', 'button_coords']);
 	//debug('making GridClass:', width, height, name, args, this._bound_properties);
 	//this._bound_properties = ['receive'];
 	var contents = [];
@@ -752,6 +753,21 @@ GridClass.prototype.clear_translations = function()
 			buttons[index].set_translation(-1);
 		}
 	}
+}
+
+GridClass.prototype.button_coords = function(button)
+{
+	for(var y=0;y<this.height();y++)
+	{
+		for(var x=0;x<this.width();x++)
+		{
+			if(this._grid[x][y] == button)
+			{
+				return [x, y];
+			}
+		}
+	}
+	return false;
 }
 
 exports.GridClass = GridClass;
@@ -903,6 +919,7 @@ PageStack = function(number_of_modes, name, args)
 	debug('making pagestack', number_of_modes, name, args);
 	this._pages = new Array(number_of_modes);
 	PageStack.super_.call(this, number_of_modes, name, args);
+	this._value = -1;
 }
 
 inherits(PageStack, ModeClass);
@@ -922,12 +939,12 @@ PageStack.prototype.add_mode = function(mode, page)
 
 PageStack.prototype.change_mode = function(value, force)
 {
-	debug('change_mode:', value);
-	if (-1 < value < this._mode_callbacks.length)
+	debug('change_mode:', value, '#callbacks:', this._mode_callbacks.length);
+	if((-1 < value)&&(value < this._mode_callbacks.length))
 	{
 		if((this._value != value)||(force))
 		{
-			debug('changing mode:', this._value, value);
+			debug('changing mode, old mode:', this._value, 'new mode:', value);
 			this._pages[this._value]&&this._pages[this._value].exit_mode();
 			this._value = value;
 			this._pages[this._value]&&this._pages[this._value].enter_mode();
@@ -955,7 +972,7 @@ exports.PageStack = PageStack;
 
 ParameterClass = function(name, args)
 {
-	this.add_bound_properties(this, ['receive', 'set_value', 'update_control', '_Callback', 'set_control']);
+	this.add_bound_properties(this, ['receive', 'set_value', 'update_control', '_apiCallback', '_Callback', 'set_control', 'set_on_off_values']);
 	this._parameter = undefined;
 	this._num = 0;
 	this._value = 0;
@@ -967,6 +984,14 @@ ParameterClass = function(name, args)
 }
 
 inherits(ParameterClass, NotifierClass);
+
+ParameterClass.prototype._apiCallback = function(args)
+{
+	if(args[0]=='value')
+	{
+		self.receive(args[1]);
+	}
+}
 
 ParameterClass.prototype.receive = function(value)
 {
@@ -1012,6 +1037,18 @@ ParameterClass.prototype.set_on_off_values = function(onValue, offValue)
 exports.ParameterClass = ParameterClass;
 
 
+MomentaryParameter = function(name, args)
+{
+	MomentaryParameter.super_.call(this, name, args);
+}
+
+inherits(MomentaryParameter, ParameterClass);
+
+MomentaryParameter.prototype.update_control = function(){if(this._control){this._control.send(this._value ? this._onValue : this._offValue);}}
+
+exports.MomentaryParameter = MomentaryParameter;
+
+
 ArrayParameter = function(name, args)
 {
 	ArrayParameter.super_.call(this, name);
@@ -1048,9 +1085,9 @@ ToggledParameter.prototype._Callback = function(obj)
 {
 	if(obj._value)
 	{
-		if(this._javaObj)
+		if(this._apiObj)
 		{
-			this._javaObj[self._action]();
+			this._apiObj.set(this._apiAction, Math.abs(this._value -1));
 		}
 		else
 		{
@@ -1203,7 +1240,7 @@ exports.ParameterGroup = ParameterGroup;
 
 OffsetComponent = function(name, minimum, maximum, initial, callback, onValue, offValue, increment, args)
 {
-	this.add_bound_properties(this, ['receive', 'set_value', 'update_control', '_Callback', 'set_control', 'incCallback', 'decCallback']);
+	this.add_bound_properties(this, ['receive', 'set_value', 'update_control', '_apiCallback', '_Callback', 'set_control', 'incCallback', 'decCallback']);
 	this._min = minimum!=undefined?minimum:0;
 	this._max = maximum!=undefined?maximum:127;
 	this._increment = increment!=undefined?increment:1;
@@ -1222,6 +1259,14 @@ OffsetComponent = function(name, minimum, maximum, initial, callback, onValue, o
 }
 
 inherits(OffsetComponent, NotifierClass);
+
+OffsetComponent.prototype._apiCallback = function(args)
+{
+	if(args[0]=='value')
+	{
+		self.receive(args[1]);
+	}
+}
 
 OffsetComponent.prototype.incCallback = function(obj)
 {
@@ -1328,7 +1373,7 @@ exports.OffsetComponent = OffsetComponent;
 
 RadioComponent = function(name, minimum, maximum, initial, callback, onValue, offValue, args)
 {
-	this.add_bound_properties(this, ['receive', 'set_value', 'update_controls', '_Callback', 'set_controls']);
+	this.add_bound_properties(this, ['receive', 'set_value', 'update_controls', '_apiCallback', '_Callback', 'set_controls', 'set_enabled']);
 	this._min = minimum!=undefined?minimum:0;
 	this._max = maximum!=undefined?maximum:1;
 	this._buttons = [];
@@ -1344,6 +1389,14 @@ RadioComponent = function(name, minimum, maximum, initial, callback, onValue, of
 }
 
 inherits(RadioComponent, NotifierClass);
+
+RadioComponent.prototype._apiCallback = function(args)
+{
+	if(args[0]=='value')
+	{
+		self.receive(args[1]);
+	}
+}
 
 RadioComponent.prototype._Callback = function(obj)
 {
@@ -1391,7 +1444,6 @@ RadioComponent.prototype.set_value = function(value)
 
 RadioComponent.prototype.update_controls = function()
 {
-	//debug('original update controls...');
 	for(var i in this._buttons)
 	{
 		if(this._buttons[i])
