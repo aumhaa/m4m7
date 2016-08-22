@@ -302,9 +302,9 @@ function DrumMatrix(drumrack_id, drumpads, args)
 	this._apiDrumRack = new LiveAPI(this._apiDrumRackCallback.bind(this), 'live_set');
 	this._apiDrumRack.id = Math.floor(drumrack_id);
 	this._apiDrumRack.goto('view');
-	this._audition = new ToggledParameter(this._name+'_AuditionButton', {'onValue':4, 'offValue':5, 'value':0});
+	this._audition = new ToggledParameter(this._name+'_AuditionButton', {'onValue':5, 'offValue':6, 'value':0});
 	this._audition.set_target(this.update);
-	this._mute = new ToggledParameter(this._name+'_MuteButton', {'onValue':2, 'offValue':3, 'value':0});
+	this._mute = new ToggledParameter(this._name+'_MuteButton', {'onValue':10, 'offValue':11, 'value':0});
 	this._mute.set_target(this.update);
 	this._solo_button = undefined;
 	this.select_pad(this._selected_pad);
@@ -356,7 +356,14 @@ DrumMatrix.prototype.update = function()
 		this._layergrid.add_control(1, 0, this._layer_buttons[1]);
 		this._layergrid.add_control(2, 0, this._layer_buttons[2]);
 		this._layergrid.add_control(3, 0, this._layer_buttons[3]);
-		this._selected_pad._selectedLayer.set_controls(this._layergrid);
+		if(!this._mute._value)
+		{
+			this._selected_pad._selectedLayer.set_controls(this._layergrid);
+		}
+		else
+		{
+			this._selected_pad.set_layer_mute_buttons(this._layer_buttons);
+		}
 	}
 	else
 	{
@@ -480,13 +487,13 @@ function DrumPad(num, root_id, args)
 
 	this._selectedLayer = new RadioComponent(this._name+'_SelectedLayer', 0, 3, 0, this.update.bind(this), 1, 127);
 	
-	this._solo = new ToggledParameter(this._name+'_SoloButton', {'onValue':70, 'offValue':75, 'value':0});
+	this._solo = new ToggledParameter(this._name+'_SoloButton', {'onValue':7, 'offValue':3, 'value':0});
 	this._solo.set_target(this.update_solo.bind(this));
 
 	this._selectors = [];
 	for(var i=0;i<4;i++)
 	{
-		this._selectors[i] = new PagedRadioComponent(this._name+'_Layer'+i+'_SampleSelector', 0, 127, 0, undefined, 35, 40, {'onValue2':45, 'offValue2':50, 'play_callback':this.audition_selected_sample.bind(this)});
+		this._selectors[i] = new PagedRadioComponent(this._name+'_Layer'+i+'_SampleSelector', 0, 127, 0, undefined, 35, 40, {'onValue2':4, 'offValue2':50, 'play_callback':this.audition_selected_sample.bind(this)});
 		//this._selectors[i].set_target(this.audition_selected_sample.bind(this));
 		this._selectors[i]._apiObj = new LiveAPI(function(args){if(args[0] == 'value'){this.set_value(args[1]);}}.bind(this._selectors[i]), 'live_set');
 		this._selectors[i]._apiObj.id = Math.floor(this._apiDrumpad.id);
@@ -632,7 +639,7 @@ DrumPad.prototype.update_solo = function()
 	{
 		if(this._selected)
 		{
-			debug(this._name, 'is selected:', Boolean(this._selected));
+			//debug(this._name, 'is selected:', Boolean(this._selected));
 			for(var i in this._solos)
 			{
 				this._solos[i]._apiObj.set('solo', Math.floor(i==this._selectedLayer._value));
@@ -648,7 +655,7 @@ DrumPad.prototype.update_solo = function()
 	}
 	else
 	{
-		debug(this._name, 'is selected:', Boolean(this._selected));
+		//debug(this._name, 'is selected:', Boolean(this._selected));
 		{
 			for(var i in this._solos)
 			{
@@ -669,7 +676,7 @@ DrumPad.prototype.set_solo_button = function(button)
 function PagedRadioComponent(name, minimum, maximum, initial, callback, onValue, offValue, args)
 {
 	this.add_bound_properties(this, ['_Callback', 'update_controls', '_page_offset_callback']);
-	this._page_offset = new ToggledParameter(this._name + '_PageOffset', {'onValue':1, 'offValue':2, 'value':0})
+	this._page_offset = new ToggledParameter(this._name + '_PageOffset', {'onValue':50, 'offValue':40, 'value':0})
 	this._page_offset.set_target(this._page_offset_callback.bind(this));
 	this._page_length = 64;
 	this._play_callback = undefined;
