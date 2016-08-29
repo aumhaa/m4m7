@@ -117,6 +117,9 @@ function setup_controls()
 		Key2Buttons[id] = new ButtonClass(id, 'Key2_'+id, make_send_func('key2', 'value', id));
 		Key2ControlRegistry.register_control(id, Key2Buttons[id]);
 	}
+	DialControlRegistry = new ControlRegistry('DialRegistry')
+	DetentDial = new ControlClass(0, 'DetentDial', make_send_func('detent_dial', 'value'));
+	DialControlRegistry.register_control(0, DetentDial);
 	script['_grid'] = function(x, y, val)
 	{
 		GridControlRegistry.receive(x+(y*8), val);
@@ -129,11 +132,21 @@ function setup_controls()
 	{
 		Key2ControlRegistry.receive(x, val);
 	}
-
+	script['_detent_dial'] = function(val)
+	{
+		DialControlRegistry.receive(0, val);
+	}
+	
 }
 
 function setup_patcher()
 {
+	script['storage'] = this.patcher.getnamed('drumchooser_storage');
+	script['pad_pattrs'] = new Array(16);
+	for(var i=0;i<16;i++)
+	{
+		pad_pattrs[i] = this.patcher.getnamed('pad['+i+']');
+	}
 }
 
 function setup_device()
@@ -153,7 +166,6 @@ function setup_device()
 
 function setup_notifiers()
 {
-	Grid.set_target(receive_grid);
 }
 
 function setup_modes()
@@ -240,11 +252,9 @@ function make_gui_send_function(patcher_object, message_header)
 	return func;
 }
 
-function test_stuff(){}
-
-function receive_grid(args)
+function test_stuff()
 {
-	debug('receive_grid', args._name, args._value);
+	DetentDial.add_listener(function(obj){debug('detent_dial value:', obj._value);});
 }
 
 function detect_adjacent_drumrack()
@@ -274,7 +284,7 @@ function detect_adjacent_drumrack()
 			//debug('id is:', finder.id);
 			for(var i=0;i<16;i++)
 			{
-				drumpads[i] = new DrumPad(TRANS[i], finder.id);
+				drumpads[i] = new DrumPad(TRANS[i], finder.id, {'index':i});
 				//debug('drumpad id is:',  drumpads[i]._apiDrumpad.id);
 			}
 			drumMatrix = new DrumMatrix(finder.id, drumpads);
@@ -284,6 +294,14 @@ function detect_adjacent_drumrack()
 
 function viewCallback(){}
 
+function recall()
+{
+	debug('recall_preset');
+	for(var i in drumMatrix._drumpads)
+	{
+		drumMatrix._drumpads[i].load_preset_data();
+	}	
+}
 
 
 function DrumMatrix(drumrack_id, drumpads, args)
@@ -468,13 +486,13 @@ function DrumPad(num, root_id, args)
 {
 	//debug('making drumpad:', num, root_id);
 	this.add_bound_properties(this, ['_listener', '_callback', '_Callback', 'update_control', 'set_sample_select_buttons', 'set_layer_mute_buttons', 'update_sample_select_buttons', 
-								'_selectors', '_mutes', 'audition_selected_sample', 'set_page_button', 'update_page_button', '_solo', 'set_solo_button']);
+								'_selectors', '_mutes', 'audition_selected_sample', 'set_page_button', 'update_page_button', '_solo', 'set_solo_button',
+								'update_preset_data', 'load_preset_data']);
 	this._selected = false;
 	this._selectedValue = 20;
 	this._name = 'Drumpad'+num;
 	this._note = num;
 	this._solo_state = false;
-	this._solo = 
 	this._apiDrumpad = new LiveAPI(this._callback.bind(this), 'live_set');
 	this._apiDrumpad.id = Math.floor(root_id);
 	this._apiDrumpad.goto('drum_pads', num);
@@ -527,12 +545,50 @@ function DrumPad(num, root_id, args)
 		this._devices[i].id = Math.floor(this._apiDrumpad.id);
 		this._devices[i].goto('chains', 0, 'devices', 0, 'chains', i, 'devices', 0);
 	}
+	args.onValue = 1;
+	args.offValue = 127;
+	args.value = 0;
+	DrumPad.super_.call(this, this._name, args);
 
-	DrumPad.super_.call(this, this._name, {'onValue':1, 'offValue':127, 'value':0});
+	this._preset = script.patcher.getnamed('pad['+this._index+']');
+	for(var i=0;i<4;i++)
+	{
+		this._selectors[i].add_listener(this.update_preset_data.bind(this));
+		this._mutes[i].add_listener(this.update_preset_data.bind(this));
+	}
+	this.load_preset_data();
 	
 }
 
 inherits(DrumPad, MomentaryParameter);
+
+DrumPad.prototype.load_preset_data = function()
+{
+	var data = this._preset.getvalueof();
+	//debug('index is:', this._index);
+	//var data = script.patcher.getnamed('pad['+this._index+']').getvalueof();
+	debug(this._name, 'load_preset_data:', data);
+	if(data.length == 8)
+	{
+		for(var i=0;i<4;i++)
+		{
+			this._selectors[i].receive(data[i*2]);
+			this._mutes[i].receive(data[(i*2)+1]);
+		}
+	}
+}
+
+DrumPad.prototype.update_preset_data = function()
+{
+	var data = [];
+	for(var i=0;i<4;i++)
+	{
+		data.push(this._selectors[i]._value);
+		data.push(this._mutes[i]._value);
+	}
+	//debug(this._name, 'update_preset_data', data);
+	this._preset.setvalueof(data);
+}
 
 DrumPad.prototype.audition_selected_sample = function(obj)
 {
@@ -571,7 +627,9 @@ DrumPad.prototype.update = function(grid)
 		mod.Send( 'push_value_display', 'value', 0, this._selectedLayer._value);
 		mod.Send( 'push_name_display', 'value', 2, 'DeviceName');
 		mod.Send( 'push_value_display', 'value', 2, this._devices[this._selectedLayer._value].get('name'));
-		
+
+		DetentDial.set_target(this._detent_dial_callback.bind(this));
+
 		//if(trackView){trackView.set('selected_device', this._devices[this._selectedLayer._value]);}
 		/*for(var i in this._apiView)
 		{
@@ -621,6 +679,19 @@ DrumPad.prototype.update_sample_select_buttons = function()
 	}
 	//debug('sample select buttons:', this._sample_select_buttons);//, this._selectedLayer._value);
 	this._selectors[this._selectedLayer._value].set_controls(this._sample_select_buttons);
+}
+
+DrumPad.prototype._detent_dial_callback = function(obj)
+{
+	debug(this._name, '_detent_dial_callback', obj._value, this._selectedLayer._value);
+	if(obj._value < 64)
+	{
+		this._selectors[this._selectedLayer._value].increase_value();
+	}
+	else
+	{
+		this._selectors[this._selectedLayer._value].decrease_value();
+	}
 }
 
 DrumPad.prototype.update_page_button = function()
@@ -675,7 +746,7 @@ DrumPad.prototype.set_solo_button = function(button)
 
 function PagedRadioComponent(name, minimum, maximum, initial, callback, onValue, offValue, args)
 {
-	this.add_bound_properties(this, ['_Callback', 'update_controls', '_page_offset_callback']);
+	this.add_bound_properties(this, ['_Callback', 'update_controls', '_page_offset_callback', 'increase_value', 'decrease_value']);
 	this._page_offset = new ToggledParameter(this._name + '_PageOffset', {'onValue':50, 'offValue':40, 'value':0})
 	this._page_offset.set_target(this._page_offset_callback.bind(this));
 	this._page_length = 64;
@@ -716,6 +787,27 @@ PagedRadioComponent.prototype._page_offset_callback = function(obj)
 	this.update_controls();
 }
 
+PagedRadioComponent.prototype.increase_value = function()
+{
+	this.receive(this._value + 1);
+	if(this._apiObj){this._apiObj.set('value', this._value);}
+	if(this._play_callback)
+	{
+		this._play_callback({'_value':127});
+		this._play_callback({'_value':0});
+	}
+}
+
+PagedRadioComponent.prototype.decrease_value = function()
+{
+	this.receive(this._value - 1);
+	if(this._apiObj){this._apiObj.set('value', this._value);}
+	if(this._play_callback)
+	{
+		this._play_callback({'_value':127});
+		this._play_callback({'_value':0});
+	}
+}
 
 
 function SpecialToggledParameter(name, args)

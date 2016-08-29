@@ -133,6 +133,7 @@ class AumPush(Push):
 																			alt_button = self.elements.select_button,
 																			key_buttons = self.elements.select_buttons, 
 																			key2_buttons = self.elements.track_state_buttons,
+																			detent_dial = self.elements.tempo_control,
 																			name_display_line = self.elements.display_line3,
 																			value_display_line = self.elements.display_line4 )
 		self.modhandler.legacy_shift_layer = AddLayerMode( self.modhandler, Layer(priority = 6, 
@@ -283,7 +284,8 @@ class PushModHandler(ModHandler):
 	def __init__(self, *a, **k):
 		self._color_type = 'Push'
 		self._grid = None
-		addresses = {'key2': {'obj':Array('key2', 8), 'method':self._receive_key2},
+		addresses = {'detent_dial':{'obj':StoredElement(_name = 'detent_dial'), 'method':self._receive_detent_dial},
+					'key2': {'obj':Array('key2', 8), 'method':self._receive_key2},
 					'push_name_display': {'obj': Array('push_name_display', 8, _value = ' '), 'method': self._receive_push_name_display},
 					'push_value_display': {'obj': Array('push_value_display', 8, _value = ' '), 'method': self._receive_push_value_display},
 					'push_alt_name_display': {'obj': Array('push_alt_name_display', 8, _value = ' '), 'method': self._receive_push_alt_name_display},
@@ -387,6 +389,24 @@ class PushModHandler(ModHandler):
 	def set_alt_value_display_line(self, display):
 		if self._alt_display:
 			self._alt_display.set_value_display_line(display)
+	
+
+	def set_detent_dial(self, dial):
+		self._detent_dial_value.subject = dial
+		if self.active_mod():
+			self.active_mod.send('detent_dial', value)
+	
+
+	def _receive_detent_dial(self, value):
+		if not self._detent_dial_value.subject is None:
+			self._detent_dial_value.subject.send_value(value)
+	
+
+	@listens('value')
+	def _detent_dial_value(self, value, *a, **k):
+		debug('_detent_dial_value', value)
+		if self._active_mod:
+			self._active_mod.send('detent_dial', value)
 	
 
 	def update_device(self):
