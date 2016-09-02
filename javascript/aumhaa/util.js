@@ -197,3 +197,17 @@ exports.Forceload = Forceload;
 
 //MyClass.prototype = clone(AnotherClass.prototype);
 
+
+function startsWith(str, search)
+{
+	return str.lastIndexOf(search, 0) === 0;
+}
+
+exports.startsWith = startsWith;
+
+function parse_ids(arr)
+{
+	return arr.filter(function(element){return element == 'id' ? false : element == '' ? false : true});
+}
+
+exports.parse_ids = parse_ids;

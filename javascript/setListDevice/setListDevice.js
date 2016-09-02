@@ -12,17 +12,27 @@ var unique = jsarguments[1];
 
 var finder;
 var api_song;
+var api_xfader;
 var decks;
 var Alive = false;
 var defer;
 var scene_data = {};
 var next_scPset = [0, 0];
-var tempo_value = undefined;
+var next_dcPset = [0, 0];
+var lastTempo = undefined;
+var nextTempo = 100;
 var TEMPO_FADE = 1500;  //ms
+
+var device_ids = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+
 
 var mod_finder;
 
 var Mod = ModComponent.bind(script);
+
+var SETLIST_BANKS = {'NoDevice':[['CustomParameter_0', 'CustomParameter_1', 'CustomParameter_2', 'CustomParameter_3', 'CustomParameter_4', 'CustomParameter_5', 'CustomParameter_6', 'CustomParameter_7', 'CustomParameter_8']],
+					'Other':[['CustomParameter_0', 'CustomParameter_1', 'CustomParameter_2', 'CustomParameter_3', 'CustomParameter_4', 'CustomParameter_5', 'CustomParameter_6', 'CustomParameter_7', 'CustomParameter_8']]};
+
 
 
 function startsWith(str, search)
@@ -37,14 +47,20 @@ function init()
 	defer = this.patcher.getnamed('defer');
 	if(!finder)
 	{
-		finder = new LiveAPI(function(){}, 'live_set');
+		script['finder'] = new LiveAPI(function(){}, 'live_set');
 	}
 	finder.goto('live_set', 'tracks', 0);
 
 	if(!api_song)
 	{
-		api_song = new LiveAPI(tempo_callback, 'live_set');
+		script['api_song'] = new LiveAPI(tempo_callback, 'live_set');
 		api_song.property = 'tempo';
+		//nextTempo = this.api_song.get('tempo');
+	}
+
+	if(!api_xfader)
+	{
+		script['api_xfader'] = new LiveAPI(function(){}, 'live_set', 'master_track', 'mixer_device', 'crossfader');
 	}
 
 	mod = new Mod(script, 'setlistdevice', unique, false);
@@ -163,16 +179,63 @@ function setup_patcher()
 function setup_device()
 {
 	mod.Send('receive_device', 'set_mod_device_type', 'setListDevice');
-	mod.Send( 'receive_device', 'set_number_params', 8);
-	//detect_adjacent_drumrack();
-	/*for(var dev_type in DRUMCHOOSER_BANKS)
+	mod.Send( 'receive_device', 'set_number_params', 16);
+	mod.Send( 'receive_device', 'set_number_custom', 16);
+	for(var dev_type in SETLIST_BANKS)
 	{
-		for(var bank_num in DRUMCHOOSER_BANKS[dev_type])
+		for(var bank_num in SETLIST_BANKS[dev_type])
 		{
-			mod.SendDirect('receive_device_proxy', 'set_bank_dict_entry', dev_type, bank_num, DRUMCHOOSER_BANKS[dev_type][bank_num]);
+			mod.SendDirect('receive_device_proxy', 'set_bank_dict_entry', dev_type, bank_num, SETLIST_BANKS[dev_type][bank_num]);
 		}
-		//mod.Send('receive_device_proxy', 'update_parameters');
-	}*/
+		mod.Send('receive_device_proxy', 'update_parameters');
+	}
+	finder.path = 'live_set';
+	var tracks = parse_ids(finder.get('tracks'));
+	//debug('parsed ids:', tracks);
+	for(var id in tracks)
+	{
+		//debug('track:', id, 'id:', tracks[id]);
+		finder.id = Math.floor(tracks[id]);
+		var devices = parse_ids(finder.get('devices'));
+		//debug('devices:', devices, 'length:', devices.length);
+		if(devices.length>0)
+		{
+			finder.id = Math.floor(devices[0]);
+			//debug('finder path is now:', finder.path);
+			if(finder.get('name')=='DECK_FX_A')
+			{
+				debug('found DECK_FX_A');
+				var params = parse_ids(finder.get('parameters'));
+				device_ids[0] =params[1];
+				device_ids[1] = params[2];
+				finder.goto('canonical_parent', 'mixer_device', 'sends', 0);
+				device_ids[2] = finder.id;
+			}
+			else if(finder.get('name')=='DECK_FX_B')
+			{
+				debug('found DECK_FX_B');
+				var params = parse_ids(finder.get('parameters'));
+				device_ids[3] = params[1];
+				device_ids[4] = params[2];
+				finder.goto('canonical_parent', 'mixer_device', 'sends', 0);
+				device_ids[5] = finder.id;
+			}
+			if(finder.get('name')=='DECK_FX_ACAP')
+			{
+				debug('found DECK_FX_ACAP');
+				var params = parse_ids(finder.get('parameters'));
+				device_ids[6] =params[1];
+				device_ids[7] = params[2];
+				finder.goto('canonical_parent', 'mixer_device', 'sends', 0);
+				device_ids[8] = finder.id;
+			}
+		}
+	}
+	debug('device ids:', device_ids);
+	for(var i=0;i<8;i++)
+	{
+		mod.Send('send_explicit', 'receive_device', 'set_custom_parameter', i, 'id', device_ids[i] ? device_ids[i] : 0);
+	}
 }
 
 function setup_decks()
@@ -182,7 +245,19 @@ function setup_decks()
 
 function setup_notifiers()
 {
-	//Grid.add_listener(rcvGrid);
+	var send_dcPset = function(){debug('send_dcPset');outlet(0, 'dc_pset', 1, next_dcPset[0] + 1);}
+	var send_scPset1 = function(){outlet(0, 'sc_pset', 1, next_scPset[0]);}
+	var send_scPset2 = function(){outlet(0, 'sc_pset', 2, next_scPset[1]);}
+	var set_xFadeA = function(){api_xfader.set('value', -1);};
+	var set_xFadeB = function(){api_xfader.set('value', 1);};
+	var set_xFadeC = function(){api_xfader.set('value', 0);};
+	tempoChange = new MomentaryParameter('TempoChange', {'onValue':1, 'offValue':2, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&fade_tempo(nextTempo);}});
+	soundChange = new MomentaryParameter('soundChange', {'onValue':1, 'offValue':2, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_dcPset();}});
+	SC1soundChange = new MomentaryParameter('SC1soundChange', {'onValue':1, 'offValue':2, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_scPset1();}});
+	SC2soundChange = new MomentaryParameter('SC2soundChange', {'onValue':1, 'offValue':2, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_scPset2();}});
+	xFadeA = new MomentaryParameter('xFadeA', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&set_xFadeA();}});
+	xFadeB = new MomentaryParameter('xFadeB', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&set_xFadeB();}});
+	xFadeC = new MomentaryParameter('xFadeC', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&set_xFadeC();}});
 }
 
 function setup_modes()
@@ -191,7 +266,14 @@ function setup_modes()
 	var main_Page = new Page('Main');
 	main_Page.enter_mode = function()
 	{
-		decks.override.set_control(KeyButtons[2]);
+		tempoChange.set_control(KeyButtons[7]);
+		soundChange.set_control(KeyButtons[6]);
+		SC1soundChange.set_control(KeyButtons[4]);
+		SC2soundChange.set_control(KeyButtons[5]);
+		decks.override.set_control(KeyButtons[1]);
+		xFadeA.set_control(GridButtons[0][2]);
+		xFadeB.set_control(GridButtons[2][2]);
+		xFadeC.set_control(GridButtons[1][2]);
 		decks.set_browser_controls(KeyButtons[5], KeyButtons[6], KeyButtons[7]);
 		decks.set_subCrate_controls(Key2Grid);
 		decks.deck_a.nextSong.set_control(GridButtons[0][0]);
@@ -201,6 +283,10 @@ function setup_modes()
 	}
 	main_Page.exit_mode = function()
 	{
+		tempoChange.set_control();
+		soundChange.set_control();
+		SC1soundChange.set_control();
+		SC2soundChange.set_control();
 		decks.override.set_control();
 		decks.set_browser_controls();
 		decks.set_subCrate_controls();
@@ -274,20 +360,15 @@ function set_start_marker(id, val)
 {
 	debug('set_start_marker:', id, val);
 	finder.id = id;
+	debug('path:', finder.path);
 	finder.set('start_marker', val);
 }
-
-function set_start_marker(){}
 
 function sc_pset(num, val)
 {
 	debug('send sc_pset, button', num, val?'pressed':'not pressed');
 	//messnamed('sc_pset', num, next_scPset[num]);
 	outlet(0, 'sc_pset', num+1, next_scPset[num]);
-}
-
-function get_crate_names(bpm)
-{
 }
 
 function data_for_name(name)
@@ -302,10 +383,22 @@ function data_for_name(name)
 	return data;
 }
 
+
+function tempo_time(val)
+{
+	TEMPO_FADE = val;
+}
+
 function set_tempo(val)
 {
 	//debug('set_tempo:', val);
 	api_song.set('tempo', val);
+}
+
+function fade_tempo(newTempo)
+{
+	patcher.getnamed('tempo_line').message('int', lastTempo);
+	patcher.getnamed('tempo_line').message('list', newTempo, TEMPO_FADE);
 }
 
 function tempo_callback(args)
@@ -313,7 +406,7 @@ function tempo_callback(args)
 	//debug('tempo_callback', args);
 	if(args[0]=='tempo')
 	{
-		tempo_value = args[1];
+		lastTempo = args[1];
 	}
 }
 
@@ -323,6 +416,7 @@ function DecksComponent(name, name, args)
 {
 	this.add_bound_properties(this, ['currentSlot_callback', 'fire_scene', 'other_deck', 'update_decks', 'set_browser_controls', 'set_subCrate_controls', 'override_callback', 'enable_browser']);
 	DecksComponent.super_.call(this, name, args);
+	this._slotPointer = 0;
 	this._browser_mode = false;
 	this._upButton = undefined;
 	this._downButton = undefined;
@@ -333,6 +427,7 @@ function DecksComponent(name, name, args)
 	this.currentSlot = new ParameterClass('currentSlot', {'apiProperty':'playing_slot_index', 'callback':this.currentSlot_callback.bind(this)} );
 	this.deck_a = new DeckLoaderComponent('DeckALoader', {'deckID':0, 'group_track_index':1, 'parent':this});
 	this.deck_b = new DeckLoaderComponent('DeckBLoader', {'deckID':1, 'group_track_index':7, 'parent':this});
+	this.decks = [this.deck_a, this.deck_b];
 	this._last_deck = -1;
 	this.acappella = new LiveAPI(function(){}, 'live_set', 'tracks', 13);
 	this.api_current_slot = new LiveAPI(this.currentSlot._apiCallback, 'live_set', 'tracks', 0);
@@ -345,14 +440,15 @@ DecksComponent.prototype.currentSlot_callback = function(obj)
 {
 	if(Alive&&obj._value>-1)
 	{
+		this._slotPointer = obj._value > this._slotPointer ? obj._value : this._slotPointer;
 		finder.goto('live_set', 'tracks', 0, 'clip_slots', obj._value, 'clip');
 		var id = Math.floor(finder.id);
 		var data = data_for_name(finder.get('name'));
 		this.fire_scene(data, id);
+		debug('currentSlot:', id, this.deck_a._api_next_clip.id, this.deck_b._api_next_clip.id, id==Math.floor(this.deck_a._api_next_clip.id), id==Math.floor(this.deck_b._api_next_clip.id));
+		id==Math.floor(this.deck_a._api_next_clip.id)&&this.deck_a.set_current_clip_data(data.n);
+		id==Math.floor(this.deck_b._api_next_clip.id)&&this.deck_b.set_current_clip_data(data.n);
 		this.update_decks(id);
-		debug('currentSlot:', Math.floor(finder.id)==Math.floor(this.deck_a._api_next_clip.id), Math.floor(finder.id)==Math.floor(this.deck_a._api_next_clip.id));
-		Math.floor(finder.id)==Math.floor(this.deck_a._api_next_clip.id)&&this.deck_a.set_current_clip_data(data.n);
-		Math.floor(finder.id)==Math.floor(this.deck_b._api_next_clip.id)&&this.deck_b.set_current_clip_data(data.n);
 	}
 }
 
@@ -364,7 +460,7 @@ DecksComponent.prototype.fire_scene = function(data, clip_id)
 		if(active_deck.decks[data.bpm-1])
 		{
 			//song
-			active_deck.group.call('stop_all_clips');
+			//active_deck.group.call('stop_all_clips');
 			finder.id = Math.floor(active_deck.decks[data.bpm-1].id);
 			finder.goto('clip_slots', Math.floor(data.s-1));
 			finder.call('stop')
@@ -381,7 +477,9 @@ DecksComponent.prototype.fire_scene = function(data, clip_id)
 						var cueData = nameData[i].split('q:')[1].split(',');
 						if(cueData[data.q-1])
 						{
-							tasks.addTask(set_start_marker, [Math.floor(finder.id), Math.floor(4 * cueData[data.q-1])], 1, false, 'song');
+							debug('firing q:', data.q-1, cueData[data.q-1]);
+							tasks.addTask(set_start_marker, [Math.floor(finder.id), Math.floor(4 * cueData[data.q-1])], 2, false, 'song');
+							//set_start_marker(Math.floor(finder.id), Math.floor(4 * cueData[data.q-1]));
 						}
 						break;
 					}
@@ -424,7 +522,15 @@ DecksComponent.prototype.fire_scene = function(data, clip_id)
 			{
 				next_scPset[1] = data.sc2;
 			}
-			debug('scPsets:', next_scPset);
+			if(data.dc1)
+			{
+				next_dcPset[0] = data.dc1;
+			}
+			if(data.dc2)
+			{
+				next_dcPset[1] = data.dc2;
+			}
+			debug('scPsets:', next_scPset, 'dcPsets:', next_dcPset);
 		}
 	}
 }
@@ -434,36 +540,11 @@ DecksComponent.prototype.other_deck = function(deck)
 	return deck == this.deck_a ? this.deck_b : this.deck_a;
 }
 
-DecksComponent.prototype.update_decks = function(id)
+DecksComponent.prototype.update_decks = function(current_playing_id)
 {
-	finder.id = Math.floor(id);
-	if(finder.id == this.deck_a._api_next_clip.id)
+	for(var i in this.decks)
 	{
-		//debug('DECK_A IS PLAYING ITS NEXT_CLIP, lets find another...', finder.path);
-		finder.path = 'live_set tracks 0 clip_slots '+(this.currentSlot._value+1)+' clip';
-		if(finder.id != this.deck_b._api_next_clip.id)
-		{
-			this.deck_a.select_next_clip(Math.floor(finder.id));
-		}
-		else
-		{
-			finder.path = 'live_set tracks 0 clip_slots '+(this.currentSlot._value+2)+' clip';
-			this.deck_a.select_next_clip(Math.floor(finder.id));
-		}
-	}
-	else if(finder.id == this.deck_b._api_next_clip.id)
-	{
-		//debug('DECK_B IS PLAYING NEXT_CLIP, lets find another...', finder.id);
-		finder.path = 'live_set tracks 0 clip_slots '+(this.currentSlot._value+1)+' clip';
-		if(finder.id != this.deck_a._api_next_clip.id)
-		{
-			this.deck_b.select_next_clip(Math.floor(finder.id));
-		}
-		else
-		{
-			finder.path = 'live_set tracks 0 clip_slots '+(this.currentSlot._value+2)+' clip';
-			this.deck_b.select_next_clip(Math.floor(finder.id));
-		}
+		this.decks[i].update_deck(current_playing_id);
 	}
 }
 
@@ -525,8 +606,9 @@ DecksComponent.prototype.enable_browser = function(focused_deck)
 
 function DeckLoaderComponent(name, args)
 {
-	this.add_bound_properties(this, ['play_next_song', 'stop_song', 'select_next_clip', 'override_clip', 'playing_slot_index_callback', 'set_current_clip_data', 'set_next_clip_data', 'update_display', 'update_browser_data']);
+	this.add_bound_properties(this, ['play_next_song', 'stop_song', 'load_next_clip', 'override_clip', 'playing_slot_index_callback', 'set_current_clip_data', 'set_next_clip_data', 'update_display', 'update_browser_data']);
 	this.current_slot = -1;
+	this.currentMainSlot = -1;
 	this._nextClip = undefined;
 	this._current_playing_clip_name = '';
 	this._next_playing_clip_name = '';
@@ -541,11 +623,12 @@ function DeckLoaderComponent(name, args)
 	this.stopSong = new MomentaryParameter(this._name + 'stopSong', {'onValue':3, 'offValue':2, 'callback':this.stop_song.bind(this)});
 	this.group = new LiveAPI(function(){}, 'live_set', 'tracks', this._group_track_index);
 	this.decks = [];
+	this.deck_playing_slot_indexes = [];
 	this._subCrate_names = [];
 	this._api_next_clip = new LiveAPI(function(){}, 'live_set', 'tracks', 0, 'clip_slots', this._deckID, 'clip');
 	var make_slot_index_callback = function(index)
 	{
-		return function(args){debug('callback:', index, args); this.playing_slot_index_callback(index, args);}
+		return function(args){this.playing_slot_index_callback(index, args);}
 	}
 	for(var i=0;i<5;i++)
 	{
@@ -554,7 +637,8 @@ function DeckLoaderComponent(name, args)
 		this._subCrate_names[i] = this.decks[i].get('name');
 		this.decks[i].property = 'playing_slot_index';
 	}
-	this.select_next_clip(this._api_next_clip.id);
+	//this.load_next_clip(this._api_next_clip.id, this._deckID);
+	this.load_next_clip();
 	this.set_current_clip_data('None');
 }
 
@@ -566,73 +650,86 @@ DeckLoaderComponent.prototype.play_next_song = function(obj)
 	{
 		if(this._parent.override._value)
 		{
-			//this.set_browser_buttons(this._parent._browser_buttons, this._parent._track_buttons);
-			this._parent.enable_browser(this);
+			this._parent.enable_browser(false);
+			this.load_next_clip();
+			
 		}
 		else
 		{
-			debug(this._name+'play_next_song');
+			this.group.call('stop_all_clips');
 			this._api_next_clip.call('fire');
-			//tasks.addTask(this._parent.update_decks);
 		}
 	}
 }
 
 DeckLoaderComponent.prototype.stop_song = function(obj)
 {
-	obj._value&&this.group.call('stop_all_clips');
+	if(obj._value)
+	{
+		if(this._parent.override._value)
+		{
+			//this.set_browser_buttons(this._parent._browser_buttons, this._parent._track_buttons);
+			this._parent.enable_browser(this);
+		}
+		else
+		{
+			this.group.call('stop_all_clips');
+		}
+	}
 }
 
-DeckLoaderComponent.prototype.select_next_clip = function(id)
+DeckLoaderComponent.prototype.load_next_clip = function()
 {
-	debug(this._name, 'select_next_clip:', id);
+	debug(this._name, 'load_next_clip  slotPointer:', this._parent._slotPointer);
+	var path = 'live_set tracks 0 clip_slots '+(this._parent._slotPointer)+' clip';
+	finder.path = path;
+	this._api_next_clip.id = Math.floor(finder.id);
+	this.set_next_clip_data(this._api_next_clip.id!=0 ? data_for_name(this._api_next_clip.get('name')).n : 'NoData');
+	this._parent._slotPointer += 1;
+}
+
+DeckLoaderComponent.prototype.override_next_clip = function(id, index)
+{
 	this._api_next_clip.id = Math.floor(id);
-	debug('path is:', this._api_next_clip.path);
-	(this._api_next_clip.id!=0)&&(this.set_next_clip_data(data_for_name(this._api_next_clip.get('name')).n));
-}
-
-DeckLoaderComponent.prototype.override_clip = function()
-{
-
+	this.set_next_clip_data(this._api_next_clip.id!=0 ? data_for_name(this._api_next_clip.get('name')).n : 'NoData');
 }
 
 DeckLoaderComponent.prototype.playing_slot_index_callback = function(index, args)
 {
-	debug(this._name + 'slot index callback:', index, args[0], '.', args[1]);
-	if((args[0] == 'playing_slot_index')&&(args[1]>-1))
+	//debug(this._name + 'slot index callback:', index, args[0], '.', args[1]);
+	if(args[0] == 'playing_slot_index')
 	{
-		this.current_slot = args[1];
-		var path = 'live_set tracks '+(index + this._group_track_index + 1)+' clip_slots '+args[1]+' clip';
-		finder.path = path;
-		debug(path, finder.get('name')); //Math.floor(finder.id), '==', Math.floor(this._api_next_clip.id), Math.floor(finder.id)==Math.floor(this._api_next_clip.id));
-		var data = data_for_name(finder.get('name'));
-		if(data.bpm)
+		this.deck_playing_slot_indexes[index] = args[1];
+		if(args[1]>-1)
 		{
-			debug('sending out tempo request:', data.bpm);
-			patcher.getnamed('tempo_line').message('int', tempo_value);
-			patcher.getnamed('tempo_line').message('list', data.bpm, TEMPO_FADE);
+			var path = 'live_set tracks '+(index + this._group_track_index + 1)+' clip_slots '+args[1]+' clip';
+			finder.path = path;
+			var data = data_for_name(finder.get('name'));
+			if(data.bpm)
+			{
+				//debug('sending out tempo request:', data.bpm);
+				nextTempo = data.bpm;
+			}
+			if(Math.floor(finder.id)==Math.floor(this._api_next_clip.id))
+			{
+				debug(this._name, 'playing_slot_index_callback.set_current_clip_data:', data_for_name(finder.get('name')).n);
+				this.set_current_clip_data(data.n);
+				this.update_deck(Math.floor(finder.id));
+			}
 		}
-		if(Math.floor(finder.id)==Math.floor(this._api_next_clip.id))
-		{
-			//debug('set_current_clip_data:', data_for_name(finder.get('name')).n);
-			this.set_current_clip_data(data.n);
-			tasks.addTask(this._parent.update_decks, [Math.floor(finder.id)]);
-		}
-		//this._parent.update_decks.apply(this._parent, [Math.floor(finder.id)]);
-		//this._last_deck = this._deckID;
 	}
 }
 
 DeckLoaderComponent.prototype.set_current_clip_data = function(name)
 {
-	debug(this._name, 'set_current_clip_data:', name);
+	//debug(this._name, 'set_current_clip_data:', name);
 	this._current_playing_clip_name = name ? name.length < 8 ? name+'       ' : name : 'no name data :(';
 	this.update_display();
 }
 
 DeckLoaderComponent.prototype.set_next_clip_data = function(name)
 {
-	debug(this._name, 'set_next_clip_data:', name);
+	//debug(this._name, 'set_next_clip_data:', name);
 	this._next_playing_clip_name = name ? name.length < 8 ? name+'       ' : name : 'no name data :(';
 	this.update_display();
 }
@@ -667,9 +764,43 @@ DeckLoaderComponent.prototype.update_display = function()
 	}
 }
 
+DeckLoaderComponent.prototype.update_display = function()
+{
+	if(!this._parent.override._value)
+	{
+	
+		mod.Send( 'push_name_display', 'value', this._deckID*2, this._current_playing_clip_name.slice(0,8));
+		mod.Send( 'push_name_display', 'value', (this._deckID*2) + 1, this._current_playing_clip_name.slice(8));
+
+	
+		mod.Send( 'push_value_display', 'value', (this._deckID*2), this._next_playing_clip_name.slice(0,8));
+		mod.Send( 'push_value_display', 'value', (this._deckID*2) + 1, this._next_playing_clip_name.slice(8));
+
+		mod.Send( 'push_name_display', 'value', 6, 'Tempo:');
+		mod.Send( 'push_name_display', 'value', 7, lastTempo);
+
+	
+		mod.Send( 'push_value_display', 'value', 6, 'NxtTempo:');
+		mod.Send( 'push_value_display', 'value', 7, nextTempo);
+	}
+	else
+	{
+		var pointer_position = (this._browserOffset._value) % 8;
+		var browser_page = Math.floor(this._browserOffset._value / 8);
+		for(var i=0;i<8;i++)
+		{
+
+			mod.Send( 'push_name_display', 'value', i, i == pointer_position ? ('>' + this._browser_data[i+(browser_page*8)]) : this._browser_data[i+(browser_page*8)]);
+			mod.Send( 'push_value_display', 'value', i, this._subCrate_names.length > i ? this._subCrate._value == i ? ('>' + this._subCrate_names[i]) : this._subCrate_names[i] : ' - ');
+		}
+		
+	}
+}
+
 DeckLoaderComponent.prototype.loadSong_callback = function(obj)
 {
-	this.select_next_clip(this._browser_data_ids[this._browserOffset._value]);
+	//this.load_next_clip(this._browser_data_ids[this._browserOffset._value], this.currentMainSlot);
+	this.override_next_clip(this._browser_data_ids[this._browserOffset._value], this.currentMainSlot);
 	//tasks.add_task(this._parent.override.set_value, [0]);   ///WTF???
 	this._parent.enable_browser(false);
 }
@@ -706,8 +837,16 @@ DeckLoaderComponent.prototype.update_browser_data = function()
 	this.update_display();
 }
 
+DeckLoaderComponent.prototype.update_deck = function(current_playing_id)
+{
+	finder.id = Math.floor(current_playing_id);
+	if(finder.id == this._api_next_clip.id)
+	{
+		this.load_next_clip();
+	}
+}
 
 
 
-//function
+
 forceload(this);

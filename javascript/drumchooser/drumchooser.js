@@ -17,6 +17,9 @@ var unique = jsarguments[1];
 var drumMatrix;
 var main_modes;
 var trackView;
+var pset_id = 0;
+var name_listener;
+var NOTE_DURATION = '8n';
 
 var DRUMCHOOSER_BANKS = {'MultiSampler':[['Transpose', 'Mod_Chain_Vol', 'Filter Freq', 'Filter Res', 'Shaper Amt', 'Filter Type', 'Ve Release', undefined]]};
 									//['Mod_Chain_Vol_0', 'Mod_Chain_Vol_1', 'Mod_Chain_Vol_2', 'Mod_Chain_Vol_3']]};
@@ -70,6 +73,7 @@ function initialize(val)
 		setup_device();
 		setup_notifiers();
 		setup_modes();
+		setup_pset_id();
 		test_stuff();
 	}
 }
@@ -141,6 +145,7 @@ function setup_controls()
 
 function setup_patcher()
 {
+	script['makenote'] = this.patcher.getnamed('makenote');
 	script['storage'] = this.patcher.getnamed('drumchooser_storage');
 	script['pad_pattrs'] = new Array(16);
 	for(var i=0;i<16;i++)
@@ -254,7 +259,7 @@ function make_gui_send_function(patcher_object, message_header)
 
 function test_stuff()
 {
-	DetentDial.add_listener(function(obj){debug('detent_dial value:', obj._value);});
+	//DetentDial.add_listener(function(obj){debug('detent_dial value:', obj._value);});
 }
 
 function detect_adjacent_drumrack()
@@ -292,6 +297,35 @@ function detect_adjacent_drumrack()
 	}
 }
 
+function setup_pset_id()
+{
+	if((!name_listener)||(!name_listener.id))
+	{
+		name_listener = new LiveAPI(name_callback, 'live_set', 'this_device');
+		debug('this set id is', name_listener.id);
+		name_listener.property = 'name';
+	}
+	device_name = name_listener.get('name').toString().split(' ');
+	for(var i in device_name)
+	{
+		if(startsWith(device_name[i], '@id:'))
+		{
+			pset_id = device_name[i].split('@id:')[1];
+			debug('________pset_id is:', pset_id);
+			break;
+		}
+	}
+}
+
+function name_callback(args)
+{
+	debug('name_listener cb:', args[0], args[1]);
+	if((args[0]=='name')&&(args[1]!=device_name))
+	{
+		setup_pset_id();
+	}
+}
+
 function viewCallback(){}
 
 function recall()
@@ -302,6 +336,20 @@ function recall()
 		drumMatrix._drumpads[i].load_preset_data();
 	}	
 }
+
+function dc_pset(num, pset)
+{
+	debug('receive dc_pset', num, pset);
+	if(num==pset_id)
+	{
+		debug('updating preset to:', pset);
+		script.patcher.getnamed('preset_number').message(Math.floor(pset));
+	}
+
+}
+
+function anything(){}
+
 
 
 function DrumMatrix(drumrack_id, drumpads, args)
@@ -592,8 +640,15 @@ DrumPad.prototype.update_preset_data = function()
 
 DrumPad.prototype.audition_selected_sample = function(obj)
 {
-	debug('audition_selected_sample');
-	outlet(0, this._note, obj._value);
+	if(obj)
+	{
+		debug('audition_selected_sample');
+		outlet(0, this._note, obj._value);
+	}
+	else
+	{
+		makenote.message('list', this._note, 110, NOTE_DURATION);
+	}
 }
 
 DrumPad.prototype._callback = function(args)
@@ -793,8 +848,7 @@ PagedRadioComponent.prototype.increase_value = function()
 	if(this._apiObj){this._apiObj.set('value', this._value);}
 	if(this._play_callback)
 	{
-		this._play_callback({'_value':127});
-		this._play_callback({'_value':0});
+		this._play_callback();
 	}
 }
 
@@ -804,8 +858,7 @@ PagedRadioComponent.prototype.decrease_value = function()
 	if(this._apiObj){this._apiObj.set('value', this._value);}
 	if(this._play_callback)
 	{
-		this._play_callback({'_value':127});
-		this._play_callback({'_value':0});
+		this._play_callback();
 	}
 }
 

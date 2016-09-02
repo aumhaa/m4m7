@@ -805,7 +805,7 @@ ModeClass.prototype.mode_cycle_value = function(button)
 
 ModeClass.prototype.mode_value = function(button)
 {
-	debug('mode value', this._name, ':', button, button.pressed());
+	//debug('mode value', this._name, ':', button, button.pressed());
 	if(button.pressed())
 	{
 		this.change_mode(this.mode_buttons.indexOf(button));
@@ -869,7 +869,7 @@ ModeClass.prototype.add_mode = function(mode, callback)
 
 ModeClass.prototype.set_mode_buttons = function(buttons)
 {
-	debug('set_mode_buttons:', buttons ? 'buttons length:' + buttons.length : 'incoming buttons undefined', this._mode_callbacks.length); 
+	//debug('set_mode_buttons:', buttons ? 'buttons length:' + buttons.length : 'incoming buttons undefined', this._mode_callbacks.length); 
 	if (((buttons == undefined)||(buttons.length == this._mode_callbacks.length))&&(buttons != this.mode_buttons))
 	{
 		for (var i in this.mode_buttons)
@@ -920,7 +920,7 @@ PageStack = function(number_of_modes, name, args)
 {
 	this.add_bound_properties(this, ['current_page', 'restore_mode']);
 
-	debug('making pagestack', number_of_modes, name, args);
+	//debug('making pagestack', number_of_modes, name, args);
 	this._pages = new Array(number_of_modes);
 	PageStack.super_.call(this, number_of_modes, name, args);
 	this._value = -1;
@@ -933,7 +933,7 @@ PageStack.prototype.add_mode = function(mode, page)
 	if ((page instanceof Page) && (mode < this._mode_callbacks.length))
 	{
 		this._pages[mode] = page;
-		debug('adding page:', page, this._pages);
+		//debug('adding page:', page, this._pages);
 	}
 	else
 	{
@@ -943,12 +943,12 @@ PageStack.prototype.add_mode = function(mode, page)
 
 PageStack.prototype.change_mode = function(value, force)
 {
-	debug('change_mode:', value, '#callbacks:', this._mode_callbacks.length);
+	//debug('change_mode:', value, '#callbacks:', this._mode_callbacks.length);
 	if((-1 < value)&&(value < this._mode_callbacks.length))
 	{
 		if((this._value != value)||(force))
 		{
-			debug('changing mode, old mode:', this._value, 'new mode:', value);
+			//debug('changing mode, old mode:', this._value, 'new mode:', value);
 			this._pages[this._value]&&this._pages[this._value].exit_mode();
 			this._value = value;
 			this._pages[this._value]&&this._pages[this._value].enter_mode();
@@ -1929,7 +1929,7 @@ exports.NotificationDisplayComponent = NotificationDisplayComponent;
 
 ControlRegistry = function(name)
 {
-	debug('making ControlRegistry');
+	//debug('making ControlRegistry');
 	var self = this;
 	this._name = !name ? 'ControlRegistry' : name;
 	this.registry = {};
