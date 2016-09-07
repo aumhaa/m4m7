@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 from ableton.v2.control_surface.profile import profile
 from ableton.v2.control_surface.control_surface import *
 from ableton.v2.control_surface.input_control_element import InputControlElement, MIDI_CC_TYPE, MIDI_NOTE_TYPE, MIDI_PB_TYPE, MIDI_SYSEX_TYPE
-
+from ableton.v2.control_surface import midi
 from aumhaa.v2.control_surface.elements import MonoButtonElement, MonoBridgeElement
 from aumhaa.v2.livid.utilities import LividSettings
 from aumhaa.v2.base.debug import initialize_debug

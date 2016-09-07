@@ -255,9 +255,9 @@ class Cntrlr(LividControlSurface):
 
 	def _toggle_view(self, *a):
 		debug('toggle_view')
-		debug('Clip is visible:', self.application().view.is_view_visible('Detail/Clip'))
-		debug('Device is visible:', self.application().view.is_view_visible('Detail/DeviceChain'))
-		if self.application().view.is_view_visible('Detail/Clip'):
+		debug('Clip is visible:', self.application.view.is_view_visible('Detail/Clip'))
+		debug('Device is visible:', self.application.view.is_view_visible('Detail/DeviceChain'))
+		if self.application.view.is_view_visible('Detail/Clip'):
 			self._view_control.show_view('Detail/DeviceChain')
 		else:
 			self._view_control.show_view('Detail/Clip')

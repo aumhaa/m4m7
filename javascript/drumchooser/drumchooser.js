@@ -330,11 +330,14 @@ function viewCallback(){}
 
 function recall()
 {
-	debug('recall_preset');
-	for(var i in drumMatrix._drumpads)
+	if(Alive)
 	{
-		drumMatrix._drumpads[i].load_preset_data();
-	}	
+		debug('recall_preset');
+		for(var i in drumMatrix._drumpads)
+		{
+			drumMatrix._drumpads[i].load_preset_data();
+		}
+	}
 }
 
 function dc_pset(num, pset)
