@@ -570,7 +570,7 @@ function DrumPad(num, root_id, args)
 	for(var i=0;i<4;i++)
 	{
 		this._mutes[i] = new ToggledParameter(this._name+'_Layer'+i+'_Mute', {'onValue':1, 'offValue':2, 'apiAction':'mute'});
-		this._mutes[i]._apiObj = new LiveAPI(function(args){if(args[0] == 'mute'){this.receive(args[1]);}}.bind(this._mutes[i]), 'live_set');
+		this._mutes[i]._apiObj = new LiveAPI(function(args){if(args[0] == 'mute'){debug('mute val:', args);this.receive(args[1]);}}.bind(this._mutes[i]), 'live_set');
 		this._mutes[i]._apiObj.id = Math.floor(this._apiDrumpad.id);
 		this._mutes[i]._apiObj.goto('chains', 0, 'devices', 0, 'chains', i);
 		this._mutes[i]._value = this._mutes[i]._apiObj.get('mute');
@@ -620,8 +620,11 @@ DrumPad.prototype.load_preset_data = function()
 	{
 		for(var i=0;i<4;i++)
 		{
-			this._selectors[i].receive(data[i*2]);
-			this._mutes[i].receive(data[(i*2)+1]);
+			//this._selectors[i].receive(data[i*2]);
+			this._selectors[i]._apiObj.set('value', data[i*2]);
+			//this._mutes[i].receive(data[(i*2)+1]);
+			//debug('setting mute[',i,']:', Math.floor(data[(i*2)+1]));
+			this._mutes[i]._apiObj.set('mute', Math.floor(data[(i*2)+1]));
 		}
 	}
 }
