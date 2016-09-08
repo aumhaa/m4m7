@@ -580,10 +580,10 @@ function DrumPad(num, root_id, args)
 	for(var i=0;i<4;i++)
 	{
 		this._solos[i] = new ToggledParameter(this._name+'_Layer'+i+'_Solo', {'onValue':1, 'offValue':2, 'apiAction':'solo'});
-		this._solos[i]._apiObj = new LiveAPI(function(args){if(args[0] == 'mute'){this.receive(args[1]);}}.bind(this._mutes[i]), 'live_set');
+		this._solos[i]._apiObj = new LiveAPI(function(args){if(args[0] == 'solo'){this.receive(args[1]);}}.bind(this._solos[i]), 'live_set');
 		this._solos[i]._apiObj.id = Math.floor(this._apiDrumpad.id);
 		this._solos[i]._apiObj.goto('chains', 0, 'devices', 0, 'chains', i);
-		this._solos[i]._value = this._mutes[i]._apiObj.get('solo');
+		this._solos[i]._value = this._solos[i]._apiObj.get('solo');
 		this._solos[i]._apiObj.property = 'solo';
 	}
 	this._devices = [];
