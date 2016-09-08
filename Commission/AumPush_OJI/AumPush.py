@@ -393,8 +393,8 @@ class PushModHandler(ModHandler):
 
 	def set_detent_dial(self, dial):
 		self._detent_dial_value.subject = dial
-		if self.active_mod():
-			self.active_mod.send('detent_dial', value)
+		#if self._active_mod:
+		#	self._active_mod.send('detent_dial', value)
 	
 
 	def _receive_detent_dial(self, value):
