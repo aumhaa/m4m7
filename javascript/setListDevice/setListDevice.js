@@ -35,11 +35,6 @@ var SETLIST_BANKS = {'NoDevice':[['CustomParameter_0', 'CustomParameter_1', 'Cus
 
 
 
-function startsWith(str, search)
-{
-	return str.lastIndexOf(search, 0) === 0;
-}
-
 function init()
 {
 	debug('setListDevice init');
@@ -184,7 +179,10 @@ function setup_controls()
 	{
 		Key2ControlRegistry.receive(x, val);
 	}
-
+	script['ShiftButton'] = new ButtonClass(0, 'Shift', make_send_func('shift', 'value', 0));
+	script['_shift'] = function(val){ShiftButton.receive(val);}
+	script['AltButton'] = new ButtonClass(0, 'Alt', make_send_func('alt', 'value', 0));
+	script['_alt'] = function(val){AltButton.receive(val);}
 }
 
 function setup_patcher()
@@ -206,7 +204,7 @@ function setup_device()
 	}
 	finder.path = 'live_set';
 	var tracks = parse_ids(finder.get('tracks'));
-	//debug('parsed ids:', tracks);
+	debug('parsed ids:', tracks);
 	for(var id in tracks)
 	{
 		//debug('track:', id, 'id:', tracks[id]);
@@ -301,6 +299,12 @@ function setup_modes()
 		decks.deck_b.nextSong.set_control(GridButtons[2][0]);
 		decks.deck_a.stopSong.set_control(GridButtons[0][1]);
 		decks.deck_b.stopSong.set_control(GridButtons[2][1]);
+		decks.deck_a.retrigSong.set_control(GridButtons[0][3]);
+		decks.deck_b.retrigSong.set_control(GridButtons[2][3]);
+		decks.deck_a.resetParams.set_control(KeyButtons[0]);
+		decks.deck_b.resetParams.set_control(KeyButtons[2]);
+		decks.acap_nextSong.set_control(GridButtons[3][0]);
+		decks.acap_stopSong.set_control(GridButtons[3][1]);
 	}
 	main_Page.exit_mode = function()
 	{
@@ -435,9 +439,11 @@ function tempo_callback(args)
 
 function DecksComponent(name, name, args)
 {
-	this.add_bound_properties(this, ['currentSlot_callback', 'fire_scene', 'other_deck', 'update_decks', 'set_browser_controls', 'set_subCrate_controls', 'override_callback', 'enable_browser']);
+	this.add_bound_properties(this, ['currentSlot_callback', 'fire_scene', 'other_deck', 'update_decks', 'set_browser_controls', 'set_subCrate_controls', 'override_callback', 'enable_browser', 'acap_play_next_song', 'acap_stop_song']);
 	DecksComponent.super_.call(this, name, args);
 	this._slotPointer = 0;
+	this._nextAcap = 0;
+	this._nextAcapQ = 0;
 	this._browser_mode = false;
 	this._upButton = undefined;
 	this._downButton = undefined;
@@ -446,16 +452,67 @@ function DecksComponent(name, name, args)
 	this._browserFocus = undefined;
 	this.override = new ToggledParameter('Override', {'onValue':1, 'offValue':2, 'value':0, 'callback':this.override_callback.bind(this)});
 	this.currentSlot = new ParameterClass('currentSlot', {'apiProperty':'playing_slot_index', 'callback':this.currentSlot_callback.bind(this)} );
+	this.acap_currentSlot = new ParameterClass('acap_currentSlot', {'apiProperty':'playing_slot_index'} );
+
 	this.deck_a = new DeckLoaderComponent('DeckALoader', {'deckID':0, 'group_track_index':1, 'parent':this});
 	this.deck_b = new DeckLoaderComponent('DeckBLoader', {'deckID':1, 'group_track_index':7, 'parent':this});
 	this.decks = [this.deck_a, this.deck_b];
 	this._last_deck = -1;
-	this.acappella = new LiveAPI(function(){}, 'live_set', 'tracks', 13);
+	this.acappella = new LiveAPI(this.acap_currentSlot._apiCallback, 'live_set', 'tracks', 13);
+
+	this.acap_nextSong = new MomentaryParameter(this._name + 'acap_nextSong', {'onValue':4, 'offValue':6, 'callback':this.acap_play_next_song.bind(this)});
+	this.acap_nextSong.update_control = function(){if(this.acap_nextSong._control){this.acap_nextSong._control.send(((this.acap_currentSlot._value > -1)+1)*6);}}.bind(this);
+	this.acap_stopSong = new MomentaryParameter(this._name + 'stopSong', {'onValue':3, 'offValue':2, 'callback':this.acap_stop_song.bind(this)});
+	this.acap_stopSong.update_control = function(){if(this.acap_stopSong._control){this.acap_stopSong._control.send((this.acap_currentSlot._value > -1)*5);}}.bind(this);
+
 	this.api_current_slot = new LiveAPI(this.currentSlot._apiCallback, 'live_set', 'tracks', 0);
 	this.api_current_slot.property = 'playing_slot_index';
+	this.acappella.property = 'playing_slot_index';
+	var callback = function()
+	{
+		this.acap_nextSong.update_control();
+		this.acap_stopSong.update_control();
+	}
+	this.acap_currentSlot.set_target(callback.bind(this));
 }
 
 inherits(DecksComponent, Bindable);
+
+DecksComponent.prototype.acap_play_next_song = function(obj)
+{
+	if(obj._value)
+	{
+		this.acappella.call('stop_all_clips');
+		debug('firing acappella clip...', this._nextAcap);
+		finder.id = this._nextAcap;
+		if(this._nextAcapQ > -1)
+		{
+			var nameData = finder.get('name').toString().split(' ');
+			for(var i in nameData)
+			{
+				if(startsWith(nameData[i], 'q:'))
+				{
+					var cueData = nameData[i].split('q:')[1].split(',');
+					if(cueData[data.aq])
+					{
+						tasks.addTask(set_start_marker, [Math.floor(finder.id), Math.floor(4 * cueData[data.aq-1])], 1, false, 'acappella');
+					}
+					break;
+				}
+			}
+		}
+		finder.call('fire');
+	}
+}
+
+DecksComponent.prototype.acap_stop_song = function(obj)
+{
+	if(obj._value)
+	{
+		this.acappella.call('stop_all_clips');
+		debug('stopping acappella clip...');
+	}
+}
 
 DecksComponent.prototype.currentSlot_callback = function(obj)
 {
@@ -488,7 +545,7 @@ DecksComponent.prototype.fire_scene = function(data, clip_id)
 
 			//cues
 			finder.goto('clip');
-			if(data.q)
+			if(data.q!=undefined)
 			{
 				var nameData = finder.get('name').toString().split(' ');
 				for(var i in nameData)
@@ -511,43 +568,30 @@ DecksComponent.prototype.fire_scene = function(data, clip_id)
 			finder.call('fire');
 
 			//acappella
-			if(data.a)
+			this._nextAcap = 0;
+			if(data.a!=undefined)
 			{
 				finder.id = Math.floor(this.acappella.id);
 				finder.goto('clip_slots', Math.floor(data.a-1));
 				finder.call('stop');
 				finder.goto('clip');
-				if(data.aq)
-				{
-					var nameData = finder.get('name').toString().split(' ');
-					for(var i in nameData)
-					{
-						if(startsWith(nameData[i], 'q:'))
-						{
-							var cueData = nameData[i].split('q:')[1].split(',');
-							if(cueData[data.aq])
-							{
-								tasks.addTask(set_start_marker, [Math.floor(finder.id), Math.floor(4 * cueData[data.aq-1])], 1, false, 'acappella');
-							}
-							break;
-						}
-					}
-				}
-				finder.call('fire');
+				this._nextAcapQ =  data.aq ? data.aq : -1;
+				this._nextAcap = Math.floor(finder.id);
+				//finder.call('fire');
 			}
-			if(data.sc1)
+			if(data.sc1!=undefined)
 			{
 				next_scPset[0] = data.sc1;
 			}
-			if(data.sc2)
+			if(data.sc2!=undefined)
 			{
 				next_scPset[1] = data.sc2;
 			}
-			if(data.dc1)
+			if(data.dc1!=undefined)
 			{
 				next_dcPset[0] = data.dc1;
 			}
-			if(data.dc2)
+			if(data.dc2!=undefined)
 			{
 				next_dcPset[1] = data.dc2;
 			}
@@ -652,6 +696,10 @@ function DeckLoaderComponent(name, args)
 	this.nextSong.update_control = function(){if(this.nextSong._control){this.nextSong._control.send((this._parent.override._value ? 12 : Math.floor(this._isPlaying)+1)*6);}}.bind(this);
 	this.stopSong = new MomentaryParameter(this._name + 'stopSong', {'onValue':3, 'offValue':2, 'callback':this.stop_song.bind(this)});
 	this.stopSong.update_control = function(){if(this.stopSong._control){this.stopSong._control.send(this._parent.override._value ? 13 : Math.floor(this._isPlaying)*5);}}.bind(this);
+	this.retrigSong = new MomentaryParameter(this._name + 'retrigSong', {'onValue':3, 'offValue':2, 'callback':this.retrig_song.bind(this)});
+	this.retrigSong.update_control = function(){if(this.retrigSong._control){this.retrigSong._control.send(this._parent.override._value ? 14 : Math.floor(this._isPlaying)*15);}}.bind(this);
+	this.resetParams = new MomentaryParameter(this._name + 'resetParams', {'value':0, 'onValue':13, 'offValue':10, 'callback':this.reset_params.bind(this)});
+
 	this.group = new LiveAPI(function(){}, 'live_set', 'tracks', this._group_track_index);
 	this.decks = [];
 	this.deck_playing_slot_indexes = [];
@@ -676,6 +724,19 @@ function DeckLoaderComponent(name, args)
 
 inherits(DeckLoaderComponent, Bindable);
 
+DeckLoaderComponent.prototype.reset_params = function(obj)
+{
+	debug('reset params');
+	if(obj._value)
+	{
+		for(var i=0;i<3;i++)
+		{
+			//debug('set_custom_parameter_value', i+(this._id*3), 0);
+			mod.Send('send_explicit', 'receive_device_proxy', 'set_custom_parameter_value', i+(this._deckID*3), 0);
+		}
+	}
+}
+
 DeckLoaderComponent.prototype.play_next_song = function(obj)
 {
 	if(obj._value)
@@ -689,6 +750,7 @@ DeckLoaderComponent.prototype.play_next_song = function(obj)
 		else
 		{
 			this.group.call('stop_all_clips');
+			this._retrig_clip_id = Math.floor(this._api_next_clip.id);
 			this._api_next_clip.call('fire');
 		}
 	}
@@ -705,7 +767,28 @@ DeckLoaderComponent.prototype.stop_song = function(obj)
 		}
 		else
 		{
-			this.group.call('stop_all_clips');
+			if(ShiftButton.pressed())
+			{
+				this.group.call('stop_all_clips');
+			}
+		}
+	}
+}
+
+DeckLoaderComponent.prototype.retrig_song = function(obj)
+{
+	if(obj._value)
+	{
+		if(this._parent.override._value)
+		{
+			//this.set_browser_buttons(this._parent._browser_buttons, this._parent._track_buttons);
+			//this._parent.enable_browser(this);
+		}
+		else
+		{
+			debug('retrigger song:', this._retrig_clip_id);
+			finder.id = this._retrig_clip_id;
+			finder.call('fire');
 		}
 	}
 }
@@ -753,6 +836,23 @@ DeckLoaderComponent.prototype.playing_slot_index_callback = function(index, args
 				//debug('sending out tempo request:', data.bpm);
 				nextTempo = data.bpm;
 			}
+			if(data.sc1!=undefined)
+			{
+				next_scPset[0] = data.sc1;
+			}
+			if(data.sc2!=undefined)
+			{
+				next_scPset[1] = data.sc2;
+			}
+			if(data.dc1!=undefined)
+			{
+				next_dcPset[0] = data.dc1;
+			}
+			if(data.dc2!=undefined)
+			{
+				next_dcPset[1] = data.dc2;
+			}
+			debug('scPsets:', next_scPset, 'dcPsets:', next_dcPset);
 			if(Math.floor(finder.id)==Math.floor(this._api_next_clip.id))
 			{
 				debug(this._name, 'playing_slot_index_callback.set_current_clip_data:', data_for_name(finder.get('name')).n);
