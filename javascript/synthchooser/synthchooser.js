@@ -2,7 +2,7 @@ autowatch = 1;
 
 aumhaa = require('_base');
 var FORCELOAD = false;
-var DEBUG = true;
+var DEBUG = false;
 aumhaa.init(this);
 var script = this;
 
@@ -40,6 +40,8 @@ var dyn1 = -1;
 var dyn2 = -1;
 var Alive = false;
 var twister_encoder_button_grid;
+var current_preset = 0;
+var current_sub = 0;
 
 var multi_synths = [0, 1];
 var super_synth = 0;
@@ -116,6 +118,8 @@ function initialize(val)
 		setup_notifiers();
 		setup_modes();
 		setup_pset_id();
+		DEBUG&&storage.message('clientwindow');
+		DEBUG&&storage.message('storagewindow');
 	}
 }
 
@@ -761,6 +765,50 @@ function sc_pset(num, val)
 		script.patcher.getnamed('preset_number').message(Math.floor(val));
 	}
 
+}
+
+function sub_preset(val)
+{
+	debug('sub_preset', val);
+	current_sub = val;
+	var sub = Math.floor((current_preset*5)+(current_sub))
+	for(var i=1;i<5;i++)
+	{
+		storage.message('recall', 'lo'+i, sub);
+		storage.message('recall', 'hi'+i, sub);
+		storage.message('recall', 'touch'+i, sub);
+	}
+}
+
+function preset(val)
+{
+	debug('preset:', val);
+	//storage.message(val);
+	if(val!='bang')
+	{
+		current_preset = val;
+		storage.message('recall', current_preset*5);
+		this.patcher.getnamed('sub_preset_tab').message('int', 0);
+	}
+	else
+	{
+		//storage.message('store', current_preset*5);
+		var sub = Math.floor((current_preset*5)+(current_sub))
+		for(var i=1;i<5;i++)
+		{
+			storage.message('store', 'synth'+current_preset, current_preset);
+			storage.message('store', 'prog'+current_preset, current_preset);
+			storage.message('store', 'lo'+i, sub);
+			storage.message('store', 'hi'+i, sub);
+			storage.message('store', 'touch'+i, sub);
+		}
+	}
+}
+
+function preset_dump()
+{
+	var args = arrayfromargs(arguments);
+	debug('preset_dump:', args);
 }
 
 forceload(this);
