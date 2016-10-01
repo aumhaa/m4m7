@@ -2,7 +2,7 @@ autowatch = 1;
 
 aumhaa = require('_base');
 var FORCELOAD = false;
-var DEBUG = false;
+var DEBUG = true;
 aumhaa.init(this);
 var script = this;
 
@@ -771,12 +771,16 @@ function sub_preset(val)
 {
 	debug('sub_preset', val);
 	current_sub = val;
+	this.patcher.getnamed('sub_preset_tab').message('set', current_sub);
 	var sub = Math.floor((current_preset*5)+(current_sub))
-	for(var i=1;i<5;i++)
+	if(storage!=undefined)
 	{
-		storage.message('recall', 'lo'+i, sub);
-		storage.message('recall', 'hi'+i, sub);
-		storage.message('recall', 'touch'+i, sub);
+		for(var i=1;i<5;i++)
+		{
+			storage.message('recall', 'lo'+i, sub);
+			storage.message('recall', 'hi'+i, sub);
+			storage.message('recall', 'touch'+i, sub);
+		}
 	}
 }
 
@@ -787,20 +791,28 @@ function preset(val)
 	if(val!='bang')
 	{
 		current_preset = val;
-		storage.message('recall', current_preset*5);
-		this.patcher.getnamed('sub_preset_tab').message('int', 0);
+		debug('current preset is now:', current_preset);
+		if(storage!=undefined)
+		{
+			debug('we have a storage handle, proceeding...');
+			storage.message('recall', current_preset*5);
+			this.patcher.getnamed('sub_preset_tab').message('int', 0);
+		}
 	}
 	else
 	{
 		//storage.message('store', current_preset*5);
 		var sub = Math.floor((current_preset*5)+(current_sub))
-		for(var i=1;i<5;i++)
+		if(storage!=undefined)
 		{
-			storage.message('store', 'synth'+current_preset, current_preset);
-			storage.message('store', 'prog'+current_preset, current_preset);
-			storage.message('store', 'lo'+i, sub);
-			storage.message('store', 'hi'+i, sub);
-			storage.message('store', 'touch'+i, sub);
+			for(var i=1;i<5;i++)
+			{
+				storage.message('store', 'synth'+i, current_preset*5);
+				storage.message('store', 'prog'+i, current_preset*5);
+				storage.message('store', 'lo'+i, sub);
+				storage.message('store', 'hi'+i, sub);
+				storage.message('store', 'touch'+i, sub);
+			}
 		}
 	}
 }
