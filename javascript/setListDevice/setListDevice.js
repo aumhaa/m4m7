@@ -22,7 +22,8 @@ var next_dcPset = [0, 0];
 var lastTempo = undefined;
 var nextTempo = 100;
 var TEMPO_FADE = 1500;  //ms
-
+var xFaderValue = 0;
+var xFades = [];
 var device_ids = [0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 
@@ -34,11 +35,6 @@ var SETLIST_BANKS = {'NoDevice':[['CustomParameter_0', 'CustomParameter_1', 'Cus
 					'Other':[['CustomParameter_0', 'CustomParameter_1', 'CustomParameter_2', 'CustomParameter_3', 'CustomParameter_4', 'CustomParameter_5', 'CustomParameter_6', 'CustomParameter_7', 'CustomParameter_8']]};
 
 
-
-function startsWith(str, search)
-{
-	return str.lastIndexOf(search, 0) === 0;
-}
 
 function init()
 {
@@ -60,8 +56,11 @@ function init()
 
 	if(!api_xfader)
 	{
-		script['api_xfader'] = new LiveAPI(function(){}, 'live_set', 'master_track', 'mixer_device', 'crossfader');
+		script['api_xfader'] = new LiveAPI(xfader_cb, 'live_set', 'master_track', 'mixer_device', 'crossfader');
+		//xFaderValue = api_xfader.get('value');
+		api_xfader.property = 'value';
 	}
+
 
 	mod = new Mod(script, 'setlistdevice', unique, false);
 	//mod.debug = debug;
@@ -89,6 +88,18 @@ function mod_callback(args)
 	}
 }
 
+function xfader_cb(args)
+{
+	debug('xfader_cb', args);
+	if(args[0]=='value')
+	{
+		xFaderValue = Math.floor(args[1]);
+		for(var i in xFades)
+		{
+			xFades[i].update_control();
+		}
+	}
+}
 
 function alive(val)
 {
@@ -169,7 +180,10 @@ function setup_controls()
 	{
 		Key2ControlRegistry.receive(x, val);
 	}
-
+	script['ShiftButton'] = new ButtonClass(0, 'Shift', make_send_func('shift', 'value', 0));
+	script['_shift'] = function(val){ShiftButton.receive(val);}
+	script['AltButton'] = new ButtonClass(0, 'Alt', make_send_func('alt', 'value', 0));
+	script['_alt'] = function(val){AltButton.receive(val);}
 }
 
 function setup_patcher()
@@ -191,7 +205,7 @@ function setup_device()
 	}
 	finder.path = 'live_set';
 	var tracks = parse_ids(finder.get('tracks'));
-	//debug('parsed ids:', tracks);
+	debug('parsed ids:', tracks);
 	for(var id in tracks)
 	{
 		//debug('track:', id, 'id:', tracks[id]);
@@ -251,13 +265,19 @@ function setup_notifiers()
 	var set_xFadeA = function(){api_xfader.set('value', -1);};
 	var set_xFadeB = function(){api_xfader.set('value', 1);};
 	var set_xFadeC = function(){api_xfader.set('value', 0);};
+
 	tempoChange = new MomentaryParameter('TempoChange', {'onValue':1, 'offValue':2, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&fade_tempo(nextTempo);}});
 	soundChange = new MomentaryParameter('soundChange', {'onValue':1, 'offValue':2, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_dcPset();}});
 	SC1soundChange = new MomentaryParameter('SC1soundChange', {'onValue':1, 'offValue':2, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_scPset1();}});
 	SC2soundChange = new MomentaryParameter('SC2soundChange', {'onValue':1, 'offValue':2, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_scPset2();}});
+
 	xFadeA = new MomentaryParameter('xFadeA', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&set_xFadeA();}});
+	xFadeA.update_control = function(){if(this._control){this._control.send(Math.floor(xFaderValue==-1)+1);}}
 	xFadeB = new MomentaryParameter('xFadeB', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&set_xFadeB();}});
+	xFadeB.update_control = function(){if(this._control){this._control.send(Math.floor(xFaderValue==1)+1);}}
 	xFadeC = new MomentaryParameter('xFadeC', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&set_xFadeC();}});
+	xFadeC.update_control = function(){if(this._control){this._control.send(Math.floor(xFaderValue==0)+1);}}
+	xFades = [xFadeA, xFadeB, xFadeC];
 }
 
 function setup_modes()
@@ -280,6 +300,12 @@ function setup_modes()
 		decks.deck_b.nextSong.set_control(GridButtons[2][0]);
 		decks.deck_a.stopSong.set_control(GridButtons[0][1]);
 		decks.deck_b.stopSong.set_control(GridButtons[2][1]);
+		decks.deck_a.retrigSong.set_control(GridButtons[0][3]);
+		decks.deck_b.retrigSong.set_control(GridButtons[2][3]);
+		decks.deck_a.resetParams.set_control(KeyButtons[0]);
+		decks.deck_b.resetParams.set_control(KeyButtons[2]);
+		decks.acap_nextSong.set_control(GridButtons[3][0]);
+		decks.acap_stopSong.set_control(GridButtons[3][1]);
 	}
 	main_Page.exit_mode = function()
 	{
@@ -368,7 +394,6 @@ function sc_pset(num, val)
 {
 	debug('send sc_pset, button', num, val?'pressed':'not pressed');
 	//messnamed('sc_pset', num, next_scPset[num]);
-	this.patcher.getnamed('sc'+(num+1)+'_button').message('set', 0);
 	outlet(0, 'sc_pset', num+1, next_scPset[num]);
 }
 
@@ -415,9 +440,11 @@ function tempo_callback(args)
 
 function DecksComponent(name, name, args)
 {
-	this.add_bound_properties(this, ['currentSlot_callback', 'fire_scene', 'other_deck', 'update_decks', 'set_browser_controls', 'set_subCrate_controls', 'override_callback', 'enable_browser']);
+	this.add_bound_properties(this, ['currentSlot_callback', 'fire_scene', 'other_deck', 'update_decks', 'set_browser_controls', 'set_subCrate_controls', 'override_callback', 'enable_browser', 'acap_play_next_song', 'acap_stop_song']);
 	DecksComponent.super_.call(this, name, args);
 	this._slotPointer = 0;
+	this._nextAcap = 0;
+	this._nextAcapQ = 0;
 	this._browser_mode = false;
 	this._upButton = undefined;
 	this._downButton = undefined;
@@ -426,16 +453,67 @@ function DecksComponent(name, name, args)
 	this._browserFocus = undefined;
 	this.override = new ToggledParameter('Override', {'onValue':1, 'offValue':2, 'value':0, 'callback':this.override_callback.bind(this)});
 	this.currentSlot = new ParameterClass('currentSlot', {'apiProperty':'playing_slot_index', 'callback':this.currentSlot_callback.bind(this)} );
+	this.acap_currentSlot = new ParameterClass('acap_currentSlot', {'apiProperty':'playing_slot_index'} );
+
 	this.deck_a = new DeckLoaderComponent('DeckALoader', {'deckID':0, 'group_track_index':1, 'parent':this});
 	this.deck_b = new DeckLoaderComponent('DeckBLoader', {'deckID':1, 'group_track_index':7, 'parent':this});
 	this.decks = [this.deck_a, this.deck_b];
 	this._last_deck = -1;
-	this.acappella = new LiveAPI(function(){}, 'live_set', 'tracks', 13);
+	this.acappella = new LiveAPI(this.acap_currentSlot._apiCallback, 'live_set', 'tracks', 13);
+
+	this.acap_nextSong = new MomentaryParameter(this._name + 'acap_nextSong', {'onValue':4, 'offValue':6, 'callback':this.acap_play_next_song.bind(this)});
+	this.acap_nextSong.update_control = function(){if(this.acap_nextSong._control){this.acap_nextSong._control.send(((this.acap_currentSlot._value > -1)+1)*6);}}.bind(this);
+	this.acap_stopSong = new MomentaryParameter(this._name + 'stopSong', {'onValue':3, 'offValue':2, 'callback':this.acap_stop_song.bind(this)});
+	this.acap_stopSong.update_control = function(){if(this.acap_stopSong._control){this.acap_stopSong._control.send((this.acap_currentSlot._value > -1)*5);}}.bind(this);
+
 	this.api_current_slot = new LiveAPI(this.currentSlot._apiCallback, 'live_set', 'tracks', 0);
 	this.api_current_slot.property = 'playing_slot_index';
+	this.acappella.property = 'playing_slot_index';
+	var callback = function()
+	{
+		this.acap_nextSong.update_control();
+		this.acap_stopSong.update_control();
+	}
+	this.acap_currentSlot.set_target(callback.bind(this));
 }
 
 inherits(DecksComponent, Bindable);
+
+DecksComponent.prototype.acap_play_next_song = function(obj)
+{
+	if(obj._value)
+	{
+		this.acappella.call('stop_all_clips');
+		debug('firing acappella clip...', this._nextAcap);
+		finder.id = this._nextAcap;
+		if(this._nextAcapQ > -1)
+		{
+			var nameData = finder.get('name').toString().split(' ');
+			for(var i in nameData)
+			{
+				if(startsWith(nameData[i], 'q:'))
+				{
+					var cueData = nameData[i].split('q:')[1].split(',');
+					if(cueData[data.aq])
+					{
+						tasks.addTask(set_start_marker, [Math.floor(finder.id), Math.floor(4 * cueData[data.aq-1])], 1, false, 'acappella');
+					}
+					break;
+				}
+			}
+		}
+		finder.call('fire');
+	}
+}
+
+DecksComponent.prototype.acap_stop_song = function(obj)
+{
+	if(obj._value)
+	{
+		this.acappella.call('stop_all_clips');
+		debug('stopping acappella clip...');
+	}
+}
 
 DecksComponent.prototype.currentSlot_callback = function(obj)
 {
@@ -468,7 +546,7 @@ DecksComponent.prototype.fire_scene = function(data, clip_id)
 
 			//cues
 			finder.goto('clip');
-			if(data.q)
+			if(data.q!=undefined)
 			{
 				var nameData = finder.get('name').toString().split(' ');
 				for(var i in nameData)
@@ -491,43 +569,30 @@ DecksComponent.prototype.fire_scene = function(data, clip_id)
 			finder.call('fire');
 
 			//acappella
-			if(data.a)
+			this._nextAcap = 0;
+			if(data.a!=undefined)
 			{
 				finder.id = Math.floor(this.acappella.id);
 				finder.goto('clip_slots', Math.floor(data.a-1));
 				finder.call('stop');
 				finder.goto('clip');
-				if(data.aq)
-				{
-					var nameData = finder.get('name').toString().split(' ');
-					for(var i in nameData)
-					{
-						if(startsWith(nameData[i], 'q:'))
-						{
-							var cueData = nameData[i].split('q:')[1].split(',');
-							if(cueData[data.aq])
-							{
-								tasks.addTask(set_start_marker, [Math.floor(finder.id), Math.floor(4 * cueData[data.aq-1])], 1, false, 'acappella');
-							}
-							break;
-						}
-					}
-				}
-				finder.call('fire');
+				this._nextAcapQ =  data.aq ? data.aq : -1;
+				this._nextAcap = Math.floor(finder.id);
+				//finder.call('fire');
 			}
-			if(data.sc1)
+			if(data.sc1!=undefined)
 			{
 				next_scPset[0] = data.sc1;
 			}
-			if(data.sc2)
+			if(data.sc2!=undefined)
 			{
 				next_scPset[1] = data.sc2;
 			}
-			if(data.dc1)
+			if(data.dc1!=undefined)
 			{
 				next_dcPset[0] = data.dc1;
 			}
-			if(data.dc2)
+			if(data.dc2!=undefined)
 			{
 				next_dcPset[1] = data.dc2;
 			}
@@ -566,7 +631,10 @@ DecksComponent.prototype.override_callback = function(obj)
 	//debug(this._name, debug('override_callback', obj));
 	if(obj._value)
 	{
-		
+		this.deck_a.nextSong.update_control();
+		this.deck_b.nextSong.update_control();
+		this.deck_a.stopSong.update_control();
+		this.deck_b.stopSong.update_control();
 	}
 	else
 	{
@@ -601,6 +669,10 @@ DecksComponent.prototype.enable_browser = function(focused_deck)
 		this.deck_b._subCrate.set_controls();
 		this.deck_a.update_display();
 		this.deck_b.update_display();
+		this.deck_a.nextSong.update_control();
+		this.deck_b.nextSong.update_control();
+		this.deck_a.stopSong.update_control();
+		this.deck_b.stopSong.update_control();
 	}
 }
 
@@ -610,6 +682,7 @@ function DeckLoaderComponent(name, args)
 	this.add_bound_properties(this, ['play_next_song', 'stop_song', 'load_next_clip', 'override_clip', 'playing_slot_index_callback', 'set_current_clip_data', 'set_next_clip_data', 'update_display', 'update_browser_data']);
 	this.current_slot = -1;
 	this.currentMainSlot = -1;
+	this._isPlaying = false;
 	this._nextClip = undefined;
 	this._current_playing_clip_name = '';
 	this._next_playing_clip_name = '';
@@ -618,10 +691,16 @@ function DeckLoaderComponent(name, args)
 	this._browser_data_ids = new Array(127);
 	DeckLoaderComponent.super_.call(this, name, args);
 	this._subCrate = new RadioComponent(this._name + '_subCrate', 0, 7, 0, undefined, 1, 6, {'onValue':1, 'offValue':2, 'initial':0, 'callback':this.update_browser_data.bind(this)});
-	this._browserOffset = new OffsetComponent(this._name + '_browserOffset', 0, 127, 0, this.update_display.bind(this), 1, 2);
-	this._loadSong = new MomentaryParameter(this._name + '_loadSong', {'onValue':5, 'offValue':7, 'callback':this.loadSong_callback.bind(this)});
+	this._browserOffset = new OffsetComponent(this._name + '_browserOffset', 0, 127, 0, this.update_display.bind(this), 64, 0);
+	this._loadSong = new MomentaryParameter(this._name + '_loadSong', {'onValue':1, 'offValue':1, 'callback':this.loadSong_callback.bind(this)});
 	this.nextSong = new MomentaryParameter(this._name + 'nextSong', {'onValue':4, 'offValue':6, 'callback':this.play_next_song.bind(this)});
+	this.nextSong.update_control = function(){if(this.nextSong._control){this.nextSong._control.send((this._parent.override._value ? 12 : Math.floor(this._isPlaying)+1)*6);}}.bind(this);
 	this.stopSong = new MomentaryParameter(this._name + 'stopSong', {'onValue':3, 'offValue':2, 'callback':this.stop_song.bind(this)});
+	this.stopSong.update_control = function(){if(this.stopSong._control){this.stopSong._control.send(this._parent.override._value ? 13 : Math.floor(this._isPlaying)*5);}}.bind(this);
+	this.retrigSong = new MomentaryParameter(this._name + 'retrigSong', {'onValue':3, 'offValue':2, 'callback':this.retrig_song.bind(this)});
+	this.retrigSong.update_control = function(){if(this.retrigSong._control){this.retrigSong._control.send(this._parent.override._value ? 14 : Math.floor(this._isPlaying)*15);}}.bind(this);
+	this.resetParams = new MomentaryParameter(this._name + 'resetParams', {'value':0, 'onValue':13, 'offValue':10, 'callback':this.reset_params.bind(this)});
+
 	this.group = new LiveAPI(function(){}, 'live_set', 'tracks', this._group_track_index);
 	this.decks = [];
 	this.deck_playing_slot_indexes = [];
@@ -641,9 +720,23 @@ function DeckLoaderComponent(name, args)
 	//this.load_next_clip(this._api_next_clip.id, this._deckID);
 	this.load_next_clip();
 	this.set_current_clip_data('None');
+	this._isPlaying = false;
 }
 
 inherits(DeckLoaderComponent, Bindable);
+
+DeckLoaderComponent.prototype.reset_params = function(obj)
+{
+	debug('reset params');
+	if(obj._value)
+	{
+		for(var i=0;i<3;i++)
+		{
+			//debug('set_custom_parameter_value', i+(this._id*3), 0);
+			mod.Send('send_explicit', 'receive_device_proxy', 'set_custom_parameter_value', i+(this._deckID*3), 0);
+		}
+	}
+}
 
 DeckLoaderComponent.prototype.play_next_song = function(obj)
 {
@@ -658,6 +751,7 @@ DeckLoaderComponent.prototype.play_next_song = function(obj)
 		else
 		{
 			this.group.call('stop_all_clips');
+			this._retrig_clip_id = Math.floor(this._api_next_clip.id);
 			this._api_next_clip.call('fire');
 		}
 	}
@@ -674,7 +768,28 @@ DeckLoaderComponent.prototype.stop_song = function(obj)
 		}
 		else
 		{
-			this.group.call('stop_all_clips');
+			if(ShiftButton.pressed())
+			{
+				this.group.call('stop_all_clips');
+			}
+		}
+	}
+}
+
+DeckLoaderComponent.prototype.retrig_song = function(obj)
+{
+	if(obj._value)
+	{
+		if(this._parent.override._value)
+		{
+			//this.set_browser_buttons(this._parent._browser_buttons, this._parent._track_buttons);
+			//this._parent.enable_browser(this);
+		}
+		else
+		{
+			debug('retrigger song:', this._retrig_clip_id);
+			finder.id = this._retrig_clip_id;
+			finder.call('fire');
 		}
 	}
 }
@@ -701,6 +816,17 @@ DeckLoaderComponent.prototype.playing_slot_index_callback = function(index, args
 	if(args[0] == 'playing_slot_index')
 	{
 		this.deck_playing_slot_indexes[index] = args[1];
+		this._isPlaying = false;
+		for(var i in this.deck_playing_slot_indexes)
+		{
+			if(this.deck_playing_slot_indexes[i]>-1)
+			{
+				this._isPlaying = true;
+				break;
+			}
+		}
+		this.nextSong.update_control();
+		this.stopSong.update_control();
 		if(args[1]>-1)
 		{
 			var path = 'live_set tracks '+(index + this._group_track_index + 1)+' clip_slots '+args[1]+' clip';
@@ -711,6 +837,23 @@ DeckLoaderComponent.prototype.playing_slot_index_callback = function(index, args
 				//debug('sending out tempo request:', data.bpm);
 				nextTempo = data.bpm;
 			}
+			if(data.sc1!=undefined)
+			{
+				next_scPset[0] = data.sc1;
+			}
+			if(data.sc2!=undefined)
+			{
+				next_scPset[1] = data.sc2;
+			}
+			if(data.dc1!=undefined)
+			{
+				next_dcPset[0] = data.dc1;
+			}
+			if(data.dc2!=undefined)
+			{
+				next_dcPset[1] = data.dc2;
+			}
+			debug('scPsets:', next_scPset, 'dcPsets:', next_dcPset);
 			if(Math.floor(finder.id)==Math.floor(this._api_next_clip.id))
 			{
 				debug(this._name, 'playing_slot_index_callback.set_current_clip_data:', data_for_name(finder.get('name')).n);
