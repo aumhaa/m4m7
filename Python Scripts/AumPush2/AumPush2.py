@@ -1,5 +1,5 @@
-# by amounra 0216 : http://www.aumhaa.com
-# written against Live 9.6 release on 021516
+# by amounra 1016 : http://www.aumhaa.com
+# written against Live 9.62 release on 100616
 
 from __future__ import absolute_import, print_function
 import Live
@@ -234,7 +234,7 @@ class AumPush2DeviceComponent(DeviceComponentBase):
 		super(AumPush2DeviceComponent, self).__init__(*a, **k)
 	
 
-	#our new device_proxy messes up realtimedata, its looking for an actual LiveDeviceObject in C code.  We need to show tell the realtimechannel where our ACTUAL device is.
+	#our new device_proxy messes up realtimedata, its looking for an actual LiveDeviceObject in C code.  We need to tell the realtimechannel where our ACTUAL device is.
 	def _set_device(self, device):
 		super(AumPush2DeviceComponent, self)._set_device(device)
 		if hasattr(device, '_mod_device'):
@@ -308,6 +308,12 @@ class AumPush2(Push2):
 
 	#no idea why this is messing up the stock colors?
 	def _create_skin(self):
+		return self.register_disconnectable(make_default_skin())
+	
+
+	def _create_skin(self):
+		if self._color_chooser_feature_enabled:
+			return self.register_disconnectable(make_drum_pad_coloring_skin())
 		return self.register_disconnectable(make_default_skin())
 	
 
