@@ -16,7 +16,7 @@ from ableton.v2.base import task, inject, clamp, nop, const, NamedTuple, listens
 from ableton.v2.control_surface import defaults, Component, BackgroundLayer, ClipCreator, ControlSurface, DeviceBankRegistry, Layer, midi, PrioritizedResource 
 from ableton.v2.control_surface.components import MixerComponent, TransportComponent, DeviceComponent
 from ableton.v2.control_surface.elements import DisplayDataSource, adjust_string, ButtonElement, ButtonMatrixElement, ComboElement, DoublePressElement, DoublePressContext, MultiElement, OptionalElement, to_midi_value
-from ableton.v2.control_surface.mode import CompoundMode, AddLayerMode, ReenterBehaviour, ModesComponent, SetAttributeMode
+from ableton.v2.control_surface.mode import CompoundMode, AddLayerMode, ReenterBehaviour, ModesComponent, SetAttributeMode, DelayMode
 from ableton.v2.control_surface.input_control_element import ParameterSlot
 
 from Push2.push2 import Push2
@@ -24,7 +24,7 @@ from pushbase.value_component import ValueComponent
 from pushbase.configurable_button_element import ConfigurableButtonElement
 from pushbase.device_chain_utils import is_simpler
 from pushbase.touch_strip_element import TouchStripElement
-from pushbase.touch_strip_controller import TouchStripControllerComponent, TouchStripEncoderConnection
+from pushbase.touch_strip_controller import TouchStripControllerComponent, TouchStripEncoderConnection, TouchStripModes
 from pushbase.control_element_factory import create_button
 from pushbase.matrix_maps import *
 from pushbase.consts import *
@@ -54,6 +54,35 @@ debug = initialize_debug()
 def tracks_to_use_from_song(song):
     return tuple(song.visible_tracks) + tuple(song.return_tracks)
 
+
+
+class AumPushTouchStripControllerComponent(TouchStripControllerComponent):
+
+
+	def set_parameter(self, parameter):
+		if parameter is None:
+			if(not self._touch_strip is None) and (self._touch_strip.mapped_parameter() == self._parameter):
+				self._touch_strip._parameter_to_map_to = None
+				self._touch_strip.request_rebuild()
+			self._parameter = None
+		else:
+			super(AumPushTouchStripControllerComponent, self).set_parameter(parameter)
+	
+
+	def set_touch_strip(self, touch_strip):
+		if touch_strip is None:
+			if (not self._touch_strip is None) and (self._touch_strip.mapped_parameter() == self._parameter):
+				debug('releasing crossfader')
+				self._touch_strip._parameter_to_map_to = None
+				self._touch_strip.request_rebuild()
+			self._touch_strip = None
+		else:
+			super(AumPushTouchStripControllerComponent, self).set_touch_strip(touch_strip)
+	
+
+	def _calculate_strip_mode(self):
+		return TouchStripModes.CUSTOM_VOLUME
+	
 
 
 class AumPushValueComponent(ValueComponent):
@@ -244,29 +273,6 @@ class AumPush2DeviceComponent(DeviceComponentBase):
 			self.notify_options()
 	
 
-	"""
-	def _current_bank_details(self):
-		debug('current bank deets...')
-		if not self._script.modhandler.active_mod() is None:
-			#debug('bank deets: active_mod')
-			if self._script.modhandler.active_mod() and self._script.modhandler.active_mod()._param_component._device_parent != None:
-				bank_name = self._script.modhandler.active_mod()._param_component._bank_name
-				bank = [param._parameter for param in self._script.modhandler.active_mod()._param_component._params]
-				if self._script.modhandler._alt_value.subject and self._script.modhandler._alt_value.subject.is_pressed():
-					bank = bank[8:]
-				#debug('current mod bank details: ' + str(bank_name) + ' ' + str(bank))
-				return (bank_name, bank)
-			else:
-				#debug('returning ProviderDeviceComponent...')
-				return DeviceComponentBase._current_bank_details(self)
-				#super(AumPush2DeviceComponent, self)._current_bank_details()
-		else:
-			#debug('no mod found, returning ProviderDeviceComponent...')
-			return DeviceComponentBase._current_bank_details(self)
-			#super(AumPush2DeviceComponent, self)._current_bank_details()
-	"""
-
-
 
 class AumPush2DeviceProvider(ModDeviceProvider):
 
@@ -279,12 +285,35 @@ class AumPush2DeviceProvider(ModDeviceProvider):
 	
 
 
+"""A bug in original implemenation prevents touchstrip from releasing parameter correctly so we have to delay it"""
+class AumPushCrossfader(Component):
+
+
+	def __init__(self, strip_controller, task_group, *a, **k):
+		super(AumPushCrossfader, self).__init__(*a, **k)
+		self._strip_controller = strip_controller
+		self._task_group = task_group
+	
+
+	def update(self):
+		if self.is_enabled():
+			self._strip_controller.set_parameter(self.song.master_track.mixer_device.crossfader)
+			self._strip_controller.set_enabled(True)
+		else:
+			self._strip_controller.set_parameter(None)
+			self._task_group.add(sequence(delay(1), self.delayed_disable))
+	
+
+	def delayed_disable(self, *a, **k):
+		self._strip_controller.set_enabled(False)
+	
+
+
 class AumPush2(Push2):
 
 
 	device_component_class = AumPush2DeviceComponent
 	device_provider_class = ModDeviceProvider
-
 
 	def __init__(self, c_instance, model):
 		self._monomod_version = 'b996'
@@ -304,11 +333,6 @@ class AumPush2(Push2):
 	def _create_components(self):
 		self._remove_pedal()
 		super(AumPush2, self)._create_components()
-	
-
-	#no idea why this is messing up the stock colors?
-	def _create_skin(self):
-		return self.register_disconnectable(make_default_skin())
 	
 
 	def _create_skin(self):
@@ -378,37 +402,6 @@ class AumPush2(Push2):
 		return self.device_component_class(script = self, device_decorator_factory=self._device_decorator_factory, device_bank_registry=self._device_bank_registry, banking_info=self._banking_info, name='DeviceComponent', is_enabled=True, is_root=True)
 	
 
-	"""
-	def _create_main_mixer_modes(self):
-		self._mixer_control = MixerControlComponent(name='Global_Mix_Component', view_model=self._model.mixerView, tracks_provider=self._session_ring, is_enabled=False, layer=Layer(controls='fine_grain_param_controls', volume_button='track_state_buttons_raw[0]', panning_button='track_state_buttons_raw[1]', send_slot_one_button='track_state_buttons_raw[2]', send_slot_two_button='track_state_buttons_raw[3]', send_slot_three_button='track_state_buttons_raw[4]', send_slot_four_button='track_state_buttons_raw[5]', send_slot_five_button='track_state_buttons_raw[6]', cycle_sends_button='track_state_buttons_raw[7]'))
-		self._model.mixerView.realtimeMeterData = self._mixer_control.real_time_meter_handlers
-		track_mixer_control = TrollMixerControlComponent(script = self, name='Track_Mix_Component', is_enabled=False, tracks_provider=self._session_ring, layer=Layer(controls='fine_grain_param_controls', scroll_left_button='track_state_buttons_raw[6]', scroll_right_button='track_state_buttons_raw[7]'))
-		self._track_mixer_control = track_mixer_control
-		self._model.mixerView.trackControlView = track_mixer_control
-		self._mix_modes = ModesComponent(is_enabled=False)
-		self._mix_modes.add_mode('global', self._mixer_control)
-		self._mix_modes.add_mode('track', track_mixer_control)
-		self._mix_modes.selected_mode = 'global'
-		self._model.mixerSelectView = self._mixer_control
-		self._model.trackMixerSelectView = track_mixer_control
-
-		class MixModeBehaviour(ReenterBehaviour):
-
-			def press_immediate(behaviour_self, component, mode):
-				if self._is_on_master() and self._mix_modes.selected_mode != 'track':
-					self._mix_modes.selected_mode = 'track'
-				super(MixModeBehaviour, behaviour_self).press_immediate(component, mode)
-			
-			def on_reenter(behaviour_self):
-				if not self._is_on_master():
-					self._mix_modes.cycle_mode()
-			
-		
-
-		self._main_modes.add_mode('mix', [self._mix_modes, tuple([self._check_track_mixer_entry, self._check_track_mixer_exit]), SetAttributeMode(obj=self._note_editor_settings_component, attribute='parameter_provider', value=self._track_parameter_provider)], behaviour=MixModeBehaviour())
-	"""
-
-
 	def _create_main_mixer_modes(self):
 		self._mixer_control = MixerControlComponent(name='Global_Mix_Component', view_model=self._model.mixerView, tracks_provider=self._session_ring, is_enabled=False, layer=Layer(controls='fine_grain_param_controls', volume_button='track_state_buttons_raw[0]', panning_button='track_state_buttons_raw[1]', send_slot_one_button='track_state_buttons_raw[2]', send_slot_two_button='track_state_buttons_raw[3]', send_slot_three_button='track_state_buttons_raw[4]', send_slot_four_button='track_state_buttons_raw[5]', send_slot_five_button='track_state_buttons_raw[6]', cycle_sends_button='track_state_buttons_raw[7]'))
 		self._model.mixerView.realtimeMeterData = self._mixer_control.real_time_meter_handlers
@@ -448,11 +441,12 @@ class AumPush2(Push2):
 	
 
 	def _hack_stuff(self):
-
-		self._crossfader_strip = TouchStripControllerComponent()
-		self._crossfader_strip.layer = Layer(touch_strip = self.elements.touch_strip_control)
-		self._crossfader_strip.set_enabled(False)
-
+		crossfader_strip = TouchStripControllerComponent()
+		crossfader_strip.layer = Layer(touch_strip = self.elements.touch_strip_control)
+		crossfader_strip.set_enabled(False)
+		self._crossfader_control = AumPushCrossfader(strip_controller = crossfader_strip, task_group = self._task_group, is_root = True)
+		self._crossfader_control.set_enabled(False)
+		
 		self._device_selector = DeviceSelectorComponent(self)
 		self._device_selector._off_value = 64
 		self._device_selector.layer = Layer(priority = 9, matrix = self.elements.matrix.submatrix[:, :4])
@@ -462,14 +456,12 @@ class AumPush2(Push2):
 		self._send_reset.layer = Layer(priority = 9, send_a_button = self._with_select(self.elements.track_state_buttons_raw[4]), send_b_button = self._with_select(self.elements.track_state_buttons_raw[5]), send_c_button = self._with_select(self.elements.track_state_buttons_raw[6]), send_d_button = self._with_select(self.elements.track_state_buttons_raw[7]))
 		self._send_reset.set_enabled(False)
 
-		static_modes = CompoundMode(tuple([self._grab_crossfader, self._release_crossfader]), self._crossfader_strip, self._device_selector, self._send_reset)
+		static_modes = CompoundMode(self._crossfader_control, self._device_selector, self._send_reset)
 		self._troll_modes = ModesComponent()
 		self._troll_modes.add_mode('disabled', [], cycle_mode_button_color = 'DefaultButton.Off')
 		self._troll_modes.add_mode('enabled', [static_modes, tuple([self._grab_track_mode, self._release_track_mode, ])], cycle_mode_button_color = 'DefaultButton.Alert')
 		self._troll_modes.layer = Layer(priority = 6, cycle_mode_button = 'master_select_button')
 		self._troll_modes.selected_mode = 'disabled'
-
-		#self.schedule_message(5, self._remove_pedal)
 	
 
 	@listens('selected_mode')

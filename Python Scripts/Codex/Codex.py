@@ -107,35 +107,15 @@ class Codex(Codec):
 									))
 	
 
-	"""def _setup_modes(self):
-		self._main_modes = ModesComponent()
-		self._main_modes.add_mode('disabled', [])
-		self._main_modes.add_mode('mix_shifted', [self._alt_device_selector, self._mixer._troll_layer, self._mixer._select_layer, DelayMode(delay = .1, mode = tuple([self._troll_shifted_enabled, self._troll_shifted_disabled]), parent_task_group = self._task_group)], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
-		self._main_modes.add_mode('mix', [self._alt_send_reset, self._device1, self._device2, self._mixer._returns_layer, self._mixer._xfade_layer, self._mixer._troll_layer, self._mixer._selected_strip_layer, self._mixer._select_layer, self.normal_encoder_sysex], behaviour = self._shift_latching(color = 'Mode.Main'))
-		self._main_modes.add_mode('sends_shifted', [self._value_default, self._mixer._sends_layer, self._device_selector, self.slow_encoder_sysex], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
-		self._main_modes.add_mode('sends', [self._mixer._sends_layer, self.normal_encoder_sysex], behaviour = self._shift_latching(color = 'Mode.Main'))
-		self._main_modes.add_mode('device_shifted', [self._selected_device_modes, self._value_default, self._device_selector, self._device[0], self._device[1], self._device[2], self._device[3], self.slow_encoder_sysex], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
-		self._main_modes.add_mode('device', [self._selected_device_modes, self._device[0], self._device[1], self._device[2], self._device[3], self.normal_encoder_sysex], behaviour = self._shift_latching(color = 'Mode.Main'))
-		self._main_modes.add_mode('special_device_shifted', [self._value_default, self._special_device, self._device_selector, self.slow_encoder_sysex], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
-		self._main_modes.add_mode('special_device', [self._special_device, self.normal_encoder_sysex], behaviour = self._shift_latching(color = 'Mode.Main'))
-		self._main_modes.add_mode('mod_shifted', [self.modhandler, self.modhandler.keys_layer, self.modhandler.code_buttons_layer, self.slow_encoder_sysex], behaviour = self._shift_latching(color = 'Mode.Main'))
-		self._main_modes.add_mode('mod', [self.modhandler, self.normal_encoder_sysex], behaviour = self._shift_latching(color = 'Mode.Main'))
-		self._main_modes.add_mode('select', [self.normal_encoder_sysex], behaviour = DelayedExcludingMomentaryBehaviour(excluded_groups = ['shifted']))
-		self._main_modes.layer = Layer(mix_button = self._row_button[0],
-										sends_button = self._row_button[1],
-										device_button = self._row_button[2],
-										special_device_button = self._row_button[3],
-										mod_button = self._livid,
-										)
-		self._main_modes.selected_mode = 'disabled'
-		self._main_modes.set_enabled(False)"""
-	
-
 	def _setup_modes(self):
+
+		self._mixer._mute_layer = AddLayerMode(self._mixer, Layer(priority = 4, mute_buttons = self._button_matrix.submatrix[:8,3],
+									))
+
 		self._main_modes = ModesComponent(name = 'MainModes')
 		self._main_modes.add_mode('disabled', [])
 		self._main_modes.add_mode('mix_shifted', [self._mixer, self._mixer._troll_layer, self._device_selector, self._background, DelayMode(delay = .1, mode = tuple([self._troll_shifted_enabled, self._troll_shifted_disabled]), parent_task_group = self._task_group)], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
-		self._main_modes.add_mode('mix', [self._device1, self._device2, self._mixer, self._mixer._returns_layer, self._mixer._xfade_layer, self._mixer._troll_layer, self._mixer._select_layer, self._mixer._solo_mute_layer, self._mixer._selected_strip_layer, self._session_navigation, self._background, self._main_shift_modes], behaviour = self._shift_latching(color = 'Mode.Main'))
+		self._main_modes.add_mode('mix', [self._alt_send_reset, self._device1, self._device2, self._mixer, self._mixer._returns_layer, self._mixer._xfade_layer, self._mixer._troll_layer, self._mixer._select_layer, self._mixer._mute_layer, self._mixer._selected_strip_layer, self._session_navigation, self._background, self._main_shift_modes], behaviour = self._shift_latching(color = 'Mode.Main'))
 		self._main_modes.add_mode('sends_shifted', [self._mixer, self._mixer._sends_layer, self._mixer._select_layer, self._device_selector, self._background], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
 		self._main_modes.add_mode('sends', [self._mixer, self._mixer._sends_layer, self._mixer._select_layer, self._background, self._main_shift_modes], behaviour = self._shift_latching(color = 'Mode.Main'))
 		self._main_modes.add_mode('device_shifted', [self._selected_device_modes, self._device_selector, self._device[0], self._device[1], self._device[2], self._device[3], self._device_selector, self._background], groups = ['shifted'], behaviour = self._shift_latching(color = 'Mode.Main'))
