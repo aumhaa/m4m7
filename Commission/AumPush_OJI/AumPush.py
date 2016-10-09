@@ -128,11 +128,11 @@ class AumPush(Push):
 			self.modhandler = PushModHandler(self) ## song = self.song, register_component = self._register_component)
 		self.modhandler.name = 'ModHandler'
 		self.modhandler.layer = Layer( priority = 10, lock_button = self.elements.note_mode_button, 
-																			grid = self.elements.matrix, 
-																			shift_button = self.elements.shift_button,
-																			alt_button = self.elements.select_button,
+																			grid = self.elements.matrix,
 																			key_buttons = self.elements.select_buttons, 
 																			key2_buttons = self.elements.track_state_buttons,
+																			Shift_button = self.elements.shift_button,
+																			Alt_button = self.elements.select_button,
 																			detent_dial = self.elements.tempo_control,
 																			name_display_line = self.elements.display_line3,
 																			value_display_line = self.elements.display_line4 )
@@ -281,6 +281,9 @@ class ModShiftBehaviour(ModeButtonBehaviour):
 class PushModHandler(ModHandler):
 
 
+	Shift_button = ButtonControl()
+	Alt_button = ButtonControl()
+
 	def __init__(self, *a, **k):
 		self._color_type = 'Push'
 		self._grid = None
@@ -383,7 +386,7 @@ class PushModHandler(ModHandler):
 	def set_alt_name_display_line(self, display):
 		if self._alt_display:
 			self._alt_display.set_name_display_line(display)
-			self.log_message('setting alt display')
+			debug('setting alt display')
 	
 
 	def set_alt_value_display_line(self, display):
@@ -430,6 +433,55 @@ class PushModHandler(ModHandler):
 		else:
 			self.legacy_shift_layer and self.legacy_shift_layer.leave_mode()
 			self.shift_layer and self.shift_layer.leave_mode()
+		self.update()
+	
+
+	@Shift_button.pressed
+	def Shift_button(self, button):
+		debug('shift_button.pressed')
+		self._is_shifted = True
+		mod = self.active_mod()
+		if mod:
+			mod.send('shift', 1)
+		self.shift_layer and self.shift_layer.enter_mode()
+		if mod and mod.legacy:
+			self.legacy_shift_layer and self.legacy_shift_layer.enter_mode()
+		self.update()
+	
+
+	@Shift_button.released
+	def Shift_button(self, button):
+		self._is_shifted = False
+		mod = self.active_mod()
+		if mod:
+			mod.send('shift', 0)
+		self.legacy_shift_layer and self.legacy_shift_layer.leave_mode()
+		self.shift_layer and self.shift_layer.leave_mode()
+		self.update()
+	
+
+	@Alt_button.pressed
+	def Alt_button(self, button):
+		debug('alt_button.pressed')
+		self._is_alted = True
+		mod = self.active_mod()
+		if mod:
+			mod.send('alt', 1)
+			mod._device_proxy._alted = True
+			mod._device_proxy.update_parameters()
+		self.alt_layer and self.alt_layer.enter_mode()
+		self.update()
+	
+
+	@Alt_button.released
+	def Alt_button(self, button):
+		self._is_alted = False
+		mod = self.active_mod()
+		if mod:
+			mod.send('alt', 0)
+			mod._device_proxy._alted = False
+			mod._device_proxy.update_parameters()
+		self.alt_layer and self.alt_layer.leave_mode()
 		self.update()
 	
 

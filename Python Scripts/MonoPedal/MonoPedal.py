@@ -543,7 +543,7 @@ class Monoloop(ControlSurfaceComponent):
 
 	def disconnect(self):
 		super(Monoloop, self).disconnect()
-		rebuild_sys()
+		#rebuild_sys()
 	
 
 

@@ -1130,7 +1130,7 @@ class NavigationBox(Component):
 			for button, coord in nav_grid.iterbuttons():
 				x = coord[0]
 				y = coord[1]
-				button.set_light('Mod.Nav.OnValue' if ((x*xinc) in range(xoff, xmax)) and ((y*yinc) in range(yoff, ymax)) else 'Mod.Nav.OffValue')
+				button and button.set_light('Mod.Nav.OnValue' if ((x*xinc) in range(xoff, xmax)) and ((y*yinc) in range(yoff, ymax)) else 'Mod.Nav.OffValue')
 		left_button and left_button.set_light('Mod.Nav.OnValue' if xoff>0 else 'Mod.Nav.OffValue')
 		right_button and right_button.set_light(xoff<(self.width()-self._window_x))
 		up_button and up_button.set_light('Mod.Nav.OnValue' if yoff>0 else 'Mod.Nav.OffValue')

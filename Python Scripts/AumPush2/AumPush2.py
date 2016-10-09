@@ -15,6 +15,7 @@ import re
 from ableton.v2.base import task, inject, clamp, nop, const, NamedTuple, listens, listens_group, find_if, mixin, forward_property, first, NamedTuple, in_range, flatten, liveobj_valid
 from ableton.v2.control_surface import defaults, Component, BackgroundLayer, ClipCreator, ControlSurface, DeviceBankRegistry, Layer, midi, PrioritizedResource 
 from ableton.v2.control_surface.components import MixerComponent, TransportComponent, DeviceComponent
+from ableton.v2.control_surface.control import ButtonControl
 from ableton.v2.control_surface.elements import DisplayDataSource, adjust_string, ButtonElement, ButtonMatrixElement, ComboElement, DoublePressElement, DoublePressContext, MultiElement, OptionalElement, to_midi_value
 from ableton.v2.control_surface.mode import CompoundMode, AddLayerMode, ReenterBehaviour, ModesComponent, SetAttributeMode, DelayMode
 from ableton.v2.control_surface.input_control_element import ParameterSlot
@@ -54,54 +55,6 @@ debug = initialize_debug()
 def tracks_to_use_from_song(song):
     return tuple(song.visible_tracks) + tuple(song.return_tracks)
 
-
-
-class AumPushTouchStripControllerComponent(TouchStripControllerComponent):
-
-
-	def set_parameter(self, parameter):
-		if parameter is None:
-			if(not self._touch_strip is None) and (self._touch_strip.mapped_parameter() == self._parameter):
-				self._touch_strip._parameter_to_map_to = None
-				self._touch_strip.request_rebuild()
-			self._parameter = None
-		else:
-			super(AumPushTouchStripControllerComponent, self).set_parameter(parameter)
-	
-
-	def set_touch_strip(self, touch_strip):
-		if touch_strip is None:
-			if (not self._touch_strip is None) and (self._touch_strip.mapped_parameter() == self._parameter):
-				debug('releasing crossfader')
-				self._touch_strip._parameter_to_map_to = None
-				self._touch_strip.request_rebuild()
-			self._touch_strip = None
-		else:
-			super(AumPushTouchStripControllerComponent, self).set_touch_strip(touch_strip)
-	
-
-	def _calculate_strip_mode(self):
-		return TouchStripModes.CUSTOM_VOLUME
-	
-
-
-class AumPushValueComponent(ValueComponent):
-
-
-	@listens('value')
-	def _on_encoder_value(self, value):
-		value = self.view_transform(getattr(self._subject, self._property_name)) + value * self.encoder_factor
-		setattr(self._subject, self._property_name, self.model_transform(value))
-	
-
-
-class CancellableBehaviourWithRelease(CancellableBehaviour):
-
-
-	def release_delayed(self, component, mode):
-		if len(component.active_modes) > 1:
-			component.pop_mode(mode)
-	
 
 
 class CancellableBehaviourWithRelease(CancellableBehaviour):
@@ -191,31 +144,78 @@ class AumPushResetSendsComponent(ResetSendsComponent):
 class TrollMixerControlComponent(TrackMixerControlComponentBase):
 
 
-	def __init__(self, script = None, *a, **k):
+	def __init__(self, script = None, troll_submodes = None, *a, **k):
 		self._script = script
+		self._troll_submodes = troll_submodes
 		self._main_offset = 0
 		self._troll_offset = 1
 		self._mode_on_troll_entrance = 'global'
-		debug('making track mixer...')
 		super(TrollMixerControlComponent, self).__init__(*a, **k)
+		self._on_troll_submode_changed.subject = self._troll_submodes
+	
+
+	def find_inputs(self):
+		found_device = None
+		tracks = self.song.tracks
+		for track in tracks:
+			if track.name == 'Inputs':
+				for device in track.devices:
+					if bool(device.can_have_chains) and device.name.endswith('Inputs'):
+						found_device = device
+		return found_device
+	
+
+	def find_perc_crossfader(self):
+		found_parameter = None
+		tracks = self.song.tracks
+		for track in tracks:
+			if track.name == 'Perc':
+				for device in track.devices:
+					if bool(device.can_have_chains) and device.name == 'Perc':
+						for parameter in device.parameters:
+							if parameter.name == 'XFade':
+								found_parameter = parameter
+		return found_parameter
 	
 
 	def _troll_mode(self):
 		val = False
 		if hasattr(self._script, '_troll_modes'):
 			val = self._script._troll_modes.selected_mode is 'enabled'
-		debug('mixer._troll_mode():', val)
+		#debug('mixer._troll_mode():', val)
 		return val
 	
 
 	def _get_track_mixer_parameters(self):
 		if self._troll_mode():
-			mixer_params = []
-			if self._tracks_provider.selected_item:
-				mixer = self._tracks_provider.selected_item.mixer_device
-				rets = list(self.song.return_tracks)[:4]
-				returns = [ret.mixer_device.volume for ret in rets]
-				mixer_params = [mixer.volume] + list(mixer.sends[:4]) + returns[:4]
+			if self._troll_submodes.selected_mode == 'Strip':
+				mixer_params = []
+				if self._tracks_provider.selected_item:
+					mixer = self._tracks_provider.selected_item.mixer_device
+					rets = list(self.song.return_tracks)[:4]
+					returns = [ret.mixer_device.volume for ret in rets]
+					mixer_params = [mixer.volume] + list(mixer.sends[:4]) + returns[:4]
+				return mixer_params
+			elif self._troll_submodes.selected_mode == 'FX1':
+				mixer_params = []
+				if self._tracks_provider.selected_item:
+					if len(self.song.return_tracks) and len(self.song.return_tracks[0].devices):
+						mixer_params = [None] + list(self.song.return_tracks[0].devices[0].parameters[1:9])
+			elif self._troll_submodes.selected_mode == 'FX2':
+				mixer_params = []
+				if self._tracks_provider.selected_item:
+					if len(self.song.return_tracks)>1 and len(self.song.return_tracks[0].devices):
+						mixer_params = [None] + list(self.song.return_tracks[1].devices[0].parameters[1:9])
+			elif self._troll_submodes.selected_mode == 'Inputs':
+				mixer_params = [None]
+				if self._tracks_provider.selected_item:
+					inputs = self.find_inputs()
+					if inputs:
+						mixer_params += list(inputs.parameters[1:5])
+					returns = self.song.return_tracks
+					if len(returns) >= 2:
+						mixer_params += [returns[0].mixer_device.sends[1], returns[1].mixer_device.sends[0]]
+					mixer_params += [self.find_perc_crossfader()]
 			return mixer_params
 		else:
 			return TrackMixerControlComponentBase._get_track_mixer_parameters(self)
@@ -251,6 +251,12 @@ class TrollMixerControlComponent(TrackMixerControlComponentBase):
 			self._update_scroll_buttons()
 		else:
 			return TrackMixerControlComponentBase._scroll_controls(self, delta)
+	
+
+	@listens('selected_mode')
+	def _on_troll_submode_changed(self, mode):
+		#debug('_on_troll_submode_changed:', mode)
+		self._update_controls()
 	
 
 
@@ -360,18 +366,16 @@ class AumPush2(Push2):
 		self.monomodular.name = 'monomodular_switcher'
 		with inject(register_component = const(self._register_component), song = const(self.song)).everywhere():
 			self.modhandler = PushModHandler(self) ## song = self.song, register_component = self._register_component)
-		#debug('mod task group:', self.modhandler.parent_task_group)
 		self.modhandler.name = 'ModHandler'
 		self.modhandler.layer = Layer( priority = 6, lock_button = self.elements.note_mode_button, grid = self.elements.matrix, 
-																			shift_button = self.elements.shift_button, 
-																			alt_button = self.elements.select_button,
 																			nav_up_button = self.elements.octave_up_button, 
 																			nav_down_button = self.elements.octave_down_button, 
 																			nav_left_button = self.elements.in_button, 
 																			nav_right_button = self.elements.out_button,
 																			key_buttons = self.elements.side_buttons,
 																			)
-		#self.modhandler.layer.priority = 0
+		self.modhandler.alt_shift_layer = AddLayerMode( self.modhandler, Layer(Shift_button = self.elements.shift_button,
+																			Alt_button = self.elements.select_button))
 		self.modhandler.legacy_shift_layer = AddLayerMode( self.modhandler, Layer(priority = 7, 
 																			device_selector_matrix = self.elements.matrix.submatrix[:, :1],
 																			channel_buttons = self.elements.matrix.submatrix[:, 1:2], 
@@ -386,7 +390,6 @@ class AumPush2(Push2):
 																			))
 																			#key_buttons = self.elements.select_buttons))
 																			#key_buttons = self.elements.track_state_buttons))
-
 		self._device_provider.restart_mod()
 	
 
@@ -394,7 +397,7 @@ class AumPush2(Push2):
 		super(AumPush2, self)._init_matrix_modes()
 		#self._setup_monoinstrument()
 		self._setup_mod()
-		self._note_modes.add_mode('mod', [self.modhandler])
+		self._note_modes.add_mode('mod', [self.modhandler, self.modhandler.alt_shift_layer, DelayMode(delay = .1, mode = self.modhandler.nav_update)])
 		self._note_modes.add_mode('looperhack', [self._audio_loop])
 	
 
@@ -403,9 +406,10 @@ class AumPush2(Push2):
 	
 
 	def _create_main_mixer_modes(self):
+
 		self._mixer_control = MixerControlComponent(name='Global_Mix_Component', view_model=self._model.mixerView, tracks_provider=self._session_ring, is_enabled=False, layer=Layer(controls='fine_grain_param_controls', volume_button='track_state_buttons_raw[0]', panning_button='track_state_buttons_raw[1]', send_slot_one_button='track_state_buttons_raw[2]', send_slot_two_button='track_state_buttons_raw[3]', send_slot_three_button='track_state_buttons_raw[4]', send_slot_four_button='track_state_buttons_raw[5]', send_slot_five_button='track_state_buttons_raw[6]', cycle_sends_button='track_state_buttons_raw[7]'))
 		self._model.mixerView.realtimeMeterData = self._mixer_control.real_time_meter_handlers
-		track_mixer_control = TrollMixerControlComponent(script = self, name='Track_Mix_Component', is_enabled=False, tracks_provider=self._session_ring, layer=Layer(controls='fine_grain_param_controls', scroll_left_button='track_state_buttons_raw[6]', scroll_right_button='track_state_buttons_raw[7]'))
+		track_mixer_control = TrollMixerControlComponent(script = self, troll_submodes = self._troll_submodes, name='Track_Mix_Component', is_enabled=False, tracks_provider=self._session_ring, layer=Layer(controls='fine_grain_param_controls', scroll_left_button='track_state_buttons_raw[6]', scroll_right_button='track_state_buttons_raw[7]'))
 		self._track_mixer_control = track_mixer_control
 		#track_mixer_control = TrackMixerControlComponent(name='Track_Mix_Component', is_enabled=False, tracks_provider=self._session_ring, layer=Layer(controls='fine_grain_param_controls', scroll_left_button='track_state_buttons_raw[6]', scroll_right_button='track_state_buttons_raw[7]'))
 		routing_control = RoutingControlComponent(is_enabled=False, layer=Layer(monitor_state_encoder='parameter_controls_raw[0]'))
@@ -456,11 +460,21 @@ class AumPush2(Push2):
 		self._send_reset.layer = Layer(priority = 9, send_a_button = self._with_select(self.elements.track_state_buttons_raw[4]), send_b_button = self._with_select(self.elements.track_state_buttons_raw[5]), send_c_button = self._with_select(self.elements.track_state_buttons_raw[6]), send_d_button = self._with_select(self.elements.track_state_buttons_raw[7]))
 		self._send_reset.set_enabled(False)
 
-		static_modes = CompoundMode(self._crossfader_control, self._device_selector, self._send_reset)
+		self._troll_submodes = ModesComponent()
+		self._troll_submodes.add_mode('Strip', [])
+		self._troll_submodes.add_mode('FX1', [])
+		self._troll_submodes.add_mode('FX2', [])
+		self._troll_submodes.add_mode('Inputs', [])
+		self._troll_submodes.layer = Layer(priority = 8, Strip_button = 'side_buttons_raw[0]', FX1_button = 'side_buttons_raw[1]', FX2_button = 'side_buttons_raw[2]', Inputs_button = 'side_buttons_raw[3]')
+		self._troll_submodes.selected_mode = 'Strip'
+		self._troll_submodes.set_enabled(False)
+
+		static_modes = CompoundMode(self._crossfader_control, self._device_selector, self._send_reset, self._troll_submodes)
+
 		self._troll_modes = ModesComponent()
 		self._troll_modes.add_mode('disabled', [], cycle_mode_button_color = 'DefaultButton.Off')
 		self._troll_modes.add_mode('enabled', [static_modes, tuple([self._grab_track_mode, self._release_track_mode, ])], cycle_mode_button_color = 'DefaultButton.Alert')
-		self._troll_modes.layer = Layer(priority = 6, cycle_mode_button = 'master_select_button')
+		self._troll_modes.layer = Layer(cycle_mode_button = 'master_select_button')
 		self._troll_modes.selected_mode = 'disabled'
 	
 
@@ -511,7 +525,8 @@ class AumPush2(Push2):
 		debug('_check_track_mixer_entry')
 		if self._troll_modes.selected_mode is 'enabled':
 			if not self._mix_modes.selected_mode is 'track':
-				self._mix_modes.push_mode('track')
+				#self._mix_modes.push_mode('track')
+				self._mix_modes.selected_mode = 'track'
 			self._track_mixer_control.notify_scroll_offset()
 			self._track_mixer_control.update()
 	
@@ -548,6 +563,38 @@ class AumPush2(Push2):
 				self.controls.remove(control)
 				break
 		self.request_rebuild_midi_map()
+	
+
+	#in progress: this will allow viewing returns on right side of channel selectors when trollmode is engaged.
+	def right_align_return_tracks_track_assigner(song, tracks_provider):
+		if self._troll_modes.selected_mode == 'disabled':
+			offset = tracks_provider.track_offset
+			tracks = tracks_provider.tracks_to_use()
+			return_tracks = list(song.return_tracks)
+			size = tracks_provider.num_tracks
+			num_empty_tracks = max(0, size + offset - len(tracks))
+			track_list = size * [None]
+			for i in xrange(size):
+				track_index = i + offset
+				if len(tracks) > track_index:
+					track = tracks[track_index]
+					empty_offset = 0 if tracks[track_index] not in return_tracks else num_empty_tracks
+					track_list[i + empty_offset] = track
+		else:
+			offset = tracks_provider.track_offset
+			tracks = tracks_provider.tracks_to_use()
+			return_tracks = list(song.return_tracks)
+			size = tracks_provider.num_tracks
+			num_empty_tracks = max(0, size + offset - len(tracks))
+			track_list = size * [None]
+			for i in xrange(size):
+				track_index = i + offset
+				if len(tracks) > track_index:
+					track = tracks[track_index]
+					empty_offset = 0 if tracks[track_index] not in return_tracks else num_empty_tracks
+					track_list[i + empty_offset] = track
+
+		return track_list
 	
 
 	"""
@@ -661,6 +708,9 @@ class ModShiftBehaviour(ModeButtonBehaviour):
 class PushModHandler(ModHandler):
 
 
+	Shift_button = ButtonControl()
+	Alt_button = ButtonControl()
+
 	def __init__(self, *a, **k):
 		self._color_type = 'Push'
 		self._grid = None
@@ -744,42 +794,63 @@ class PushModHandler(ModHandler):
 			self._alt_display.set_value_display_line(display)
 	
 
-	@listens('value')
-	def _shift_value(self, value, *a, **k):
-		debug('mod shift value:', value)
-		self._is_shifted = not value is 0
-		button = self._shift_value.subject
-		debug('shift button:', button)
-		button and self._is_shifted and button.set_light('DefaultButton.On') or button.set_light('DefaultButton.Off')
+	def nav_update(self):
+		self.nav_box and self.nav_box.update()
+	
+
+	def set_modifier_colors(self):
+		shiftbutton = self._shift_value.subject
+		shiftbutton and shiftbutton.set_on_off_values('Mod.ShiftOn', 'Mod.ShiftOff')
+		altbutton = self._alt_value.subject
+		altbutton and altbutton.set_on_off_values('Mod.AltOn', 'Mod.AltOff')
+	
+
+	@Shift_button.pressed
+	def Shift_button(self, button):
+		debug('shift_button.pressed')
+		self._is_shifted = True
 		mod = self.active_mod()
 		if mod:
-			mod.send('shift', value)
-		if self.is_shifted():
-			self.shift_layer and self.shift_layer.enter_mode()
-			if mod and mod.legacy:
-				self.legacy_shift_layer and self.legacy_shift_layer.enter_mode()
-
-		else:
-			self.legacy_shift_layer and self.legacy_shift_layer.leave_mode()
-			self.shift_layer and self.shift_layer.leave_mode()
+			mod.send('shift', 1)
+		self.shift_layer and self.shift_layer.enter_mode()
+		if mod and mod.legacy:
+			self.legacy_shift_layer and self.legacy_shift_layer.enter_mode()
 		self.update()
 	
 
-	@listens('value')
-	def _alt_value(self, value, *a, **k):
-		self._is_alted = not value is 0
-		button = self._alt_value.subject
-		debug('alt button:', button)
-		button and self._is_alted and button.set_light('DefaultButton.On') or button.set_light('DefaultButton.Off')
+	@Shift_button.released
+	def Shift_button(self, button):
+		self._is_shifted = False
 		mod = self.active_mod()
 		if mod:
-			mod.send('alt', value)
-			mod._device_proxy._alted = bool(value)
+			mod.send('shift', 0)
+		self.legacy_shift_layer and self.legacy_shift_layer.leave_mode()
+		self.shift_layer and self.shift_layer.leave_mode()
+		self.update()
+	
+
+	@Alt_button.pressed
+	def Alt_button(self, button):
+		debug('alt_button.pressed')
+		self._is_alted = True
+		mod = self.active_mod()
+		if mod:
+			mod.send('alt', 1)
+			mod._device_proxy._alted = True
 			mod._device_proxy.update_parameters()
-		if self.is_alted():
-			self.alt_layer and self.alt_layer.enter_mode()
-		else:
-			self.alt_layer and self.alt_layer.leave_mode()
+		self.alt_layer and self.alt_layer.enter_mode()
+		self.update()
+	
+
+	@Alt_button.released
+	def Alt_button(self, button):
+		self._is_alted = False
+		mod = self.active_mod()
+		if mod:
+			mod.send('alt', 0)
+			mod._device_proxy._alted = False
+			mod._device_proxy.update_parameters()
+		self.alt_layer and self.alt_layer.leave_mode()
 		self.update()
 	
 
@@ -794,24 +865,12 @@ class PushModHandler(ModHandler):
 				self._keys_value.subject.reset()
 	
 
-	def set_shift_button(self, button):
-		button and button.set_on_off_values('DefaultButton.On', 'DefaultButton.Off')
-		button and button.set_light('DefaultButton.On')
-		self._shift_value.subject = button
-	
-
-	def set_alt_button(self, button):
-		debug('setting alt button:', button)
-		button and button.set_on_off_values('DefaultButton.On', 'DefaultButton.Off')
-		button and button.set_light('DefaultButton.On')
-		self._alt_value.subject = button
-	
-
 
 class AumPushNavigationBox(NavigationBox):
 
 
 	def update(self):
+		debug('nav_box.update()')
 		nav_grid = self._on_navigation_value.subject
 		left_button = self._on_nav_left_value.subject
 		right_button = self._on_nav_right_value.subject
@@ -827,7 +886,7 @@ class AumPushNavigationBox(NavigationBox):
 			for button, coord in nav_grid.iterbuttons():
 				x = coord[0]
 				y = coord[1]
-				button.set_light(((x*xinc) in range(xoff, xmax)) and ((y*yinc) in range(yoff, ymax)))
+				button and button.set_light('Mod.Nav.OnValue' if ((x*xinc) in range(xoff, xmax)) and ((y*yinc) in range(yoff, ymax)) else 'Mod.Nav.OffValue')
 		left_button and left_button.set_light('DefaultButton.On' if (xoff>0) else 'DefaultButton.Off')
 		right_button and right_button.set_light('DefaultButton.On' if (xoff<(self.width()-self._window_x)) else 'DefaultButton.Off')
 		up_button and up_button.set_light('DefaultButton.On' if (yoff>0) else 'DefaultButton.Off')

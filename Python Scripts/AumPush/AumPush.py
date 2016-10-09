@@ -662,7 +662,7 @@ class AumPush(Push):
 	
 
 	def _get_current_instrument_channel(self):
-		#self.log_message('_get_current_instrument_channel channel')
+		#debug('_get_current_instrument_channel channel')
 		cur_track = self._mixer._selected_strip._track
 		if cur_track.has_midi_input:
 			cur_chan = cur_track.current_input_sub_routing
@@ -688,7 +688,11 @@ class AumPush(Push):
 		with inject(register_component = const(self._register_component), song = const(self.song)).everywhere():
 			self.modhandler = PushModHandler(self) ## song = self.song, register_component = self._register_component)
 		self.modhandler.name = 'ModHandler'
-		self.modhandler.layer = Layer( priority = 6, lock_button = self.elements.note_mode_button, grid = self.elements.matrix, shift_button = self.elements.shift_button, alt_button = self.elements.select_button, key_buttons = self.elements.side_buttons)
+		self.modhandler.layer = Layer( priority = 6, lock_button = self.elements.note_mode_button, 
+																			grid = self.elements.matrix,
+																			Shift_button = self.elements.shift_button,
+																			Alt_button = self.elements.select_button,
+																			key_buttons = self.elements.side_buttons)
 		self.modhandler.legacy_shift_layer = AddLayerMode( self.modhandler, Layer(priority = 6, 
 																			nav_up_button = self.elements.nav_up_button, 
 																			nav_down_button = self.elements.nav_down_button, 
@@ -800,7 +804,7 @@ class AumPush(Push):
 		self._session_recording.layer = Layer(new_button=OptionalElement(self.elements.new_button, self._settings['workflow'], False), scene_list_new_button=OptionalElement(self.elements.new_button, self._settings['workflow'], True), record_button='record_button', automation_button='automation_button', new_scene_button=self._with_shift('new_button'), re_enable_automation_button=self._with_shift('automation_button'), delete_automation_button=ComboElement('automation_button', 'delete_button'),)  ##foot_switch_button=self.elements.foot_pedal_button.single_press, _uses_foot_pedal='foot_pedal_button')
 		for control in self.controls:
 			if isinstance(control, ConfigurableButtonElement) and control._original_identifier is 69:
-				self.log_message('found control: ' + str(control))
+				debug('found control: ' + str(control))
 				self.controls.remove(control)
 				break
 		self._foot_pedal_button = None
@@ -910,7 +914,7 @@ class AumPush(Push):
 							button.set_light('Instrument.' + note_info.color)
 							button.set_enabled(True)
 					else:
-						self.log_message('button is None: ' + str(i, j))
+						debug('button is None: ' + str(i, j))
 		return _setup_instrument_mode
 		
 	
@@ -929,7 +933,7 @@ class AumPush(Push):
 		def _arm_value(value):
 			assert(not channelstrip._arm_button != None)
 			assert(value in range(128))
-			#self.log_message('channelstrip arm value')
+			#debug('channelstrip arm value')
 			if channelstrip.is_enabled():
 				if channelstrip._track != None and channelstrip._track.can_be_armed:
 					arm_exclusive = channelstrip._song.exclusive_arm != channelstrip._shift_pressed
@@ -939,7 +943,7 @@ class AumPush(Push):
 						if track.can_be_armed:
 							if track == channelstrip._track or respect_multi_selection and track.is_part_of_selection:
 								track.arm = new_value
-								#self.log_message('armed track')
+								#debug('armed track')
 							#elif arm_exclusive and track.arm:
 							#	track.arm = False
 		return _arm_value
@@ -1008,6 +1012,9 @@ class ModShiftBehaviour(ModeButtonBehaviour):
 
 class PushModHandler(ModHandler):
 
+
+	Shift_button = ButtonControl()
+	Alt_button = ButtonControl()
 
 	def __init__(self, *a, **k):
 		self._color_type = 'Push'
@@ -1090,7 +1097,7 @@ class PushModHandler(ModHandler):
 	def set_alt_name_display_line(self, display):
 		if self._alt_display:
 			self._alt_display.set_name_display_line(display)
-			self.log_message('setting alt display')
+			debug('setting alt display')
 	
 
 	def set_alt_value_display_line(self, display):
@@ -1119,6 +1126,55 @@ class PushModHandler(ModHandler):
 		else:
 			self.legacy_shift_layer and self.legacy_shift_layer.leave_mode()
 			self.shift_layer and self.shift_layer.leave_mode()
+		self.update()
+	
+
+	@Shift_button.pressed
+	def Shift_button(self, button):
+		debug('shift_button.pressed')
+		self._is_shifted = True
+		mod = self.active_mod()
+		if mod:
+			mod.send('shift', 1)
+		self.shift_layer and self.shift_layer.enter_mode()
+		if mod and mod.legacy:
+			self.legacy_shift_layer and self.legacy_shift_layer.enter_mode()
+		self.update()
+	
+
+	@Shift_button.released
+	def Shift_button(self, button):
+		self._is_shifted = False
+		mod = self.active_mod()
+		if mod:
+			mod.send('shift', 0)
+		self.legacy_shift_layer and self.legacy_shift_layer.leave_mode()
+		self.shift_layer and self.shift_layer.leave_mode()
+		self.update()
+	
+
+	@Alt_button.pressed
+	def Alt_button(self, button):
+		debug('alt_button.pressed')
+		self._is_alted = True
+		mod = self.active_mod()
+		if mod:
+			mod.send('alt', 1)
+			mod._device_proxy._alted = True
+			mod._device_proxy.update_parameters()
+		self.alt_layer and self.alt_layer.enter_mode()
+		self.update()
+	
+
+	@Alt_button.released
+	def Alt_button(self, button):
+		self._is_alted = False
+		mod = self.active_mod()
+		if mod:
+			mod.send('alt', 0)
+			mod._device_proxy._alted = False
+			mod._device_proxy.update_parameters()
+		self.alt_layer and self.alt_layer.leave_mode()
 		self.update()
 	
 
