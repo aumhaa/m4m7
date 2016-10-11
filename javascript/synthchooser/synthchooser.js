@@ -582,7 +582,12 @@ function update_main_device()
 		//finder.id = Math.floor(synth_tracks[i].id);
 		//finder.goto('devices', 0, 'chains', 1, 'devices', 0, 'parameters', 1);
 		//debug('SYNTH', i, 'PRM id:', finder.id);
-		mod.Send('send_explicit', 'receive_device', 'set_custom_parameter', i+40, 'id', synth_param_ids[i][presets[i].synth-1][1]);
+		try{
+			mod.Send('send_explicit', 'receive_device', 'set_custom_parameter', i+40, 'id', synth_param_ids[i][presets[i].synth-1][1]);
+		}
+		catch(err){
+			debug(err);
+		}
 	}
 }
 
@@ -696,10 +701,17 @@ function detect_synth_tracks()
 					{
 						finder.id = parseInt(synth_tracks[index].id);
 						finder.goto('devices', 0, 'chains', i, 'devices', 0);
-						//debug('s'+(index), 'chain:', i, 'paramters:', finder.get('parameters'));
-						synth_param_ids[index][i] = finder.get('parameters').filter(function(element){return element !== 'id';})//.splice(1,-1);
-						raw_synth_param_ids[index][i] = finder.get('parameters');
-						//debug('just added:', synth_param_ids[index][i]);
+						if(finder.id!=0)
+						{
+							//debug('s'+(index), 'chain:', i, 'paramters:', finder.get('parameters'));
+							synth_param_ids[index][i] = finder.get('parameters').filter(function(element){return element !== 'id';})//.splice(1,-1);
+							raw_synth_param_ids[index][i] = finder.get('parameters');
+							//debug('just added:', synth_param_ids[index][i]);
+						}
+						else
+						{
+							post('Cant locate device for chain:', i);
+						}
 					}
 					break;
 				}

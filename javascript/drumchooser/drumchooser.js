@@ -175,45 +175,47 @@ function setup_notifiers()
 
 function setup_modes()
 {
-
-	var main_Page = new Page('Main');
-	main_Page.enter_mode = function()
+	if(drumMatrix!=undefined)
 	{
-		drumMatrix.set_layer_buttons([Key2Buttons[4], Key2Buttons[5], Key2Buttons[6], Key2Buttons[7]]);
-		drumMatrix.set_page_button(Key2Buttons[1]);
-		drumMatrix.set_grid(Grid);
-		drumMatrix.set_solo_button(Key2Buttons[2]);
-		drumMatrix.set_mute_button(Key2Buttons[3]);
-		drumMatrix._audition.set_control(Key2Buttons[0]);
-	}
-	main_Page.exit_mode = function()
-	{
-		drumMatrix.set_layer_buttons([undefined, undefined, undefined, undefined]);
-		drumMatrix.set_page_button();
-		drumMatrix.set_grid();
-		drumMatrix.set_solo_button();
-		drumMatrix._audition.set_control();
-		main_Page.set_shift_button();
-	}
-	main_Page.update_mode = function()
-	{
-		debug('main_Page updated');
-		if(main_Page._shift_button&&main_Page._shift_button.pressed())
+		var main_Page = new Page('Main');
+		main_Page.enter_mode = function()
 		{
+			drumMatrix.set_layer_buttons([Key2Buttons[4], Key2Buttons[5], Key2Buttons[6], Key2Buttons[7]]);
+			drumMatrix.set_page_button(Key2Buttons[1]);
+			drumMatrix.set_grid(Grid);
+			drumMatrix.set_solo_button(Key2Buttons[2]);
+			drumMatrix.set_mute_button(Key2Buttons[3]);
+			drumMatrix._audition.set_control(Key2Buttons[0]);
 		}
-		else
+		main_Page.exit_mode = function()
 		{
+			drumMatrix.set_layer_buttons([undefined, undefined, undefined, undefined]);
+			drumMatrix.set_page_button();
+			drumMatrix.set_grid();
+			drumMatrix.set_solo_button();
+			drumMatrix._audition.set_control();
+			main_Page.set_shift_button();
 		}
-	}
-	main_Page._shiftValue = function(obj)
-	{
-		main_Page.update_mode();
-	}
+		main_Page.update_mode = function()
+		{
+			debug('main_Page updated');
+			if(main_Page._shift_button&&main_Page._shift_button.pressed())
+			{
+			}
+			else
+			{
+			}
+		}
+		main_Page._shiftValue = function(obj)
+		{
+			main_Page.update_mode();
+		}
 
 
-	main_modes = new PageStack(1, 'MainModes');
-	main_modes.add_mode(0, main_Page);
-	main_modes.change_mode(0, true);
+		main_modes = new PageStack(1, 'MainModes');
+		main_modes.add_mode(0, main_Page);
+		main_modes.change_mode(0, true);
+	}
 }
 
 function callback(){}
@@ -294,6 +296,10 @@ function detect_adjacent_drumrack()
 			}
 			drumMatrix = new DrumMatrix(finder.id, drumpads);
 		}
+		else
+		{
+			post('No Adjacent DrumRack found.');
+		}
 	}
 }
 
@@ -346,6 +352,12 @@ function dc_pset(num, pset)
 		script.patcher.getnamed('preset_number').message(Math.floor(pset));
 	}
 
+}
+
+function pgm_in(val)
+{
+	debug('updating preset to:', val+1, 'via pgm_in');
+	script.patcher.getnamed('preset_number').message(Math.floor(val+1));
 }
 
 function anything(){}
