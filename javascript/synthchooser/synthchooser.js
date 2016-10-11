@@ -2,7 +2,8 @@ autowatch = 1;
 
 aumhaa = require('_base');
 var FORCELOAD = false;
-var DEBUG = true;
+var DEBUG = false;
+var PSET_WINDOWS = false;
 aumhaa.init(this);
 var script = this;
 
@@ -118,8 +119,8 @@ function initialize(val)
 		setup_notifiers();
 		setup_modes();
 		setup_pset_id();
-		DEBUG&&storage.message('clientwindow');
-		DEBUG&&storage.message('storagewindow');
+		PSET_WINDOWS&&storage.message('clientwindow');
+		PSET_WINDOWS&&storage.message('storagewindow');
 	}
 }
 
