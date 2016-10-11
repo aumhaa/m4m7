@@ -594,24 +594,34 @@ function update_main_device()
 function update_multi_device()
 {
 	debug('update_multi_device');
-	var a_ids = synth_param_ids[multi_a._value][presets[multi_a._value].synth-1].slice(1+(multi_a_bank._value*8), (multi_a_bank._value*8)+9);
-	var b_ids = synth_param_ids[multi_b._value][presets[multi_b._value].synth-1].slice(1+(multi_b_bank._value*8), (multi_b_bank._value*8)+9);
-	for(var i=0;i<8;i++)
-	{
-		mod.Send('send_explicit', 'receive_device', 'set_custom_parameter', i+16, 'id', a_ids[i] ? a_ids[i] : 0);
-		mod.Send('send_explicit', 'receive_device', 'set_custom_parameter', i+24, 'id', b_ids[i] ? b_ids[i] : 0, i == 7 ? 1 : 0);
+	try{
+		var a_ids = synth_param_ids[multi_a._value][presets[multi_a._value].synth-1].slice(1+(multi_a_bank._value*8), (multi_a_bank._value*8)+9);
+		var b_ids = synth_param_ids[multi_b._value][presets[multi_b._value].synth-1].slice(1+(multi_b_bank._value*8), (multi_b_bank._value*8)+9);
+		for(var i=0;i<8;i++)
+		{
+			mod.Send('send_explicit', 'receive_device', 'set_custom_parameter', i+16, 'id', a_ids[i] ? a_ids[i] : 0);
+			mod.Send('send_explicit', 'receive_device', 'set_custom_parameter', i+24, 'id', b_ids[i] ? b_ids[i] : 0, i == 7 ? 1 : 0);
+		}
+	}
+	catch(err){
+		debug(err);
 	}
 }
 
 function update_super_device()
 {
 	debug('update_super_device');
-	var ids = synth_param_ids[super_synth._value][presets[super_synth._value].synth-1].slice(1+(super_bank._value*16), (super_bank._value*16)+17);
-	debug('super ids:', ids);
-	for(var i=0;i<16;i++)
-	{
-			//debug('setting super id:', i,  ids[i] ? ids[i] : 0);
-			mod.Send('send_explicit', 'receive_device', 'set_custom_parameter', i, 'id', ids[i] ? ids[i] : 0, i == 15 ? 1 : 0);
+	try{
+		var ids = synth_param_ids[super_synth._value][presets[super_synth._value].synth-1].slice(1+(super_bank._value*16), (super_bank._value*16)+17);
+		debug('super ids:', ids);
+		for(var i=0;i<16;i++)
+		{
+				//debug('setting super id:', i,  ids[i] ? ids[i] : 0);
+				mod.Send('send_explicit', 'receive_device', 'set_custom_parameter', i, 'id', ids[i] ? ids[i] : 0, i == 15 ? 1 : 0);
+		}
+	}
+	catch(err){
+		debug(err);
 	}
 	//var raw_ids = raw_synth_param_ids.splice(super_bank*32, (super_bank*32)+32);
 	//mod.Send('send_explicit', 'receive_device', 'set_custom_parameters', 0, raw_ids);
