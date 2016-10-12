@@ -12,7 +12,7 @@ from itertools import chain, imap, izip_longest, izip
 
 from ableton.v2.base import clamp, flatten, depends, listenable_property, listens, listens_group, liveobj_changed, liveobj_valid, EventObject
 from ableton.v2.control_surface import ControlSurface, Component, CompoundComponent, ControlElement, NotifyingControlElement, InputSignal
-from ableton.v2.control_surface.components.device import DeviceProvider
+from ableton.v2.control_surface.device_provider import DeviceProvider
 from ableton.v2.control_surface.elements import ButtonMatrixElement
 from ableton.v2.control_surface.control import ControlManager
 from ableton.v2.base.task import *

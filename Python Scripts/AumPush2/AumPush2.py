@@ -342,8 +342,6 @@ class AumPush2(Push2):
 	
 
 	def _create_skin(self):
-		if self._color_chooser_feature_enabled:
-			return self.register_disconnectable(make_drum_pad_coloring_skin())
 		return self.register_disconnectable(make_default_skin())
 	
 

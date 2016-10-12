@@ -8,7 +8,7 @@ from re import *
 
 from _Generic.Devices import *
 
-from ableton.v2.control_surface.components.device import DeviceProvider, DeviceComponent
+from ableton.v2.control_surface.components.device import DeviceComponent
 
 from ableton.v2.control_surface.mode import DelayMode
 

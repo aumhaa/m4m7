@@ -30,6 +30,23 @@ if not (livid_path) in sys.path:
 		sys.path.append(livid_path)"""
 
 
+CS_LIST_KEY = 'control_surfaces'
+
+def publish_control_surface(control_surface):
+	get_control_surfaces().append(control_surface)
+
+
+def get_control_surfaces():
+	if isinstance(__builtins__, dict):
+		if CS_LIST_KEY not in __builtins__.keys():
+			__builtins__[CS_LIST_KEY] = []
+		return __builtins__[CS_LIST_KEY]
+	else:
+		if not hasattr(__builtins__, CS_LIST_KEY):
+			setattr(__builtins__, CS_LIST_KEY, [])
+		return getattr(__builtins__, CS_LIST_KEY)
+
+
 DEBUG = True
 
 def _normalize_filename(filename):

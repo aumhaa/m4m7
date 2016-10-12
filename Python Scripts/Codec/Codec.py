@@ -257,9 +257,9 @@ class CodecDeviceComponent(DeviceComponent):
 		if (self.song.view.selected_track is not track):
 			self.song.view.selected_track = track
 		self.song.view.select_device(livedevice(self._get_device()))
-		if ((not self.application().view.is_view_visible('Detail')) or (not self.application().view.is_view_visible('Detail/DeviceChain'))):
-			self.application().view.show_view('Detail')
-			self.application().view.show_view('Detail/DeviceChain')
+		if ((not self.application.view.is_view_visible('Detail')) or (not self.application.view.is_view_visible('Detail/DeviceChain'))):
+			self.application.view.show_view('Detail')
+			self.application.view.show_view('Detail/DeviceChain')
 	
 
 	def find_track(self, obj):
@@ -300,9 +300,9 @@ class SpecialCodecDeviceComponent(DeviceComponent):
 		if (self.song.view.selected_track is not track):
 			self.song.view.selected_track = track
 		self.song.view.select_device(livedevice(self._get_device()))
-		if ((not self.application().view.is_view_visible('Detail')) or (not self.application().view.is_view_visible('Detail/DeviceChain'))):
-			self.application().view.show_view('Detail')
-			self.application().view.show_view('Detail/DeviceChain')
+		if ((not self.application.view.is_view_visible('Detail')) or (not self.application.view.is_view_visible('Detail/DeviceChain'))):
+			self.application.view.show_view('Detail')
+			self.application.view.show_view('Detail/DeviceChain')
 	
 
 	def find_track(self, obj):
@@ -337,7 +337,7 @@ class SpecialCodecDeviceComponent(DeviceComponent):
 				if self._script._device_component != self:
 					self._script.set_device_component(self)
 				direction = Live.Application.Application.View.NavDirection.left
-				self.application().view.scroll_view(direction, 'Detail/DeviceChain', True)
+				self.application.view.scroll_view(direction, 'Detail/DeviceChain', True)
 				self.update()"""
 		pass
 	
@@ -346,7 +346,7 @@ class SpecialCodecDeviceComponent(DeviceComponent):
 	def _on_nav_next_value(self, value):
 		"""if self.is_enabled() and not self.is_locked() and value != 0:
 			direction = Live.Application.Application.View.NavDirection.left
-			self.application().view.scroll_view(direction, 'Detail/DeviceChain', True)
+			self.application.view.scroll_view(direction, 'Detail/DeviceChain', True)
 			self.update()"""
 		pass
 	

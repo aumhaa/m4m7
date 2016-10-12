@@ -12,6 +12,7 @@ from ableton.v2.base import listens, listens_group
 from ableton.v2.control_surface.elements import ButtonMatrixElement, EncoderElement, DoublePressElement, ButtonElement
 from ableton.v2.control_surface import CompoundComponent, Component
 from ableton.v2.control_surface.components import SceneComponent
+from ableton.v2.control_surface.input_control_element import MIDI_CC_TYPE, MIDI_NOTE_TYPE
 
 from aumhaa.v2.control_surface.elements.mono_encoder import CodecEncoderElement
 from aumhaa.v2.control_surface.elements.mono_bridge import MonoBridgeElement
