@@ -46,8 +46,8 @@ from _Generic.Devices import *
 from .ModDevices import *
 from .Map import *
 
-from CNTRLR import Cntrlr as BaseCntrlr
-from CNTRLR.Cntrlr import CntrlrMonoInstrumentComponent
+from Livid_CNTRLR_v2.Cntrlr import Cntrlr as BaseCntrlr
+from Livid_CNTRLR_v2.Cntrlr import CntrlrMonoInstrumentComponent
 
 class GTrollMonoInstrumentComponent(CntrlrMonoInstrumentComponent):
 
@@ -232,7 +232,8 @@ class Cntrlr(BaseCntrlr):
 									self._transport.overdub_layer,
 									self._recorder,
 									self._recorder.main_layer, 
-									self._device)
+									self._device,
+									self._device.button_layer)
 		shifted_main_buttons=CompoundMode(self._G_mixer.shifted_buttons_layer,
 									self._recorder, 
 									self._recorder.shift_layer,
@@ -240,20 +241,24 @@ class Cntrlr(BaseCntrlr):
 									self._session.scene_launch_layer,
 									self._session.stop_clips_layer,
 									self._transport,
-									self._device)
+									self._device,
+									self._device.button_layer)
 		main_faders=CompoundMode(self._G_mixer.main_faders_layer, 
 									self._G_mixer.master_fader_layer)
 		main_dials=CompoundMode(self._view_control,
 									self._view_control.main_layer,
+									self._device,
+									self._device.dial_layer,
 									self._device_navigator,
 									self._device_navigator.select_dial_layer, 
 									self.encoder_navigation_on)
 		shifted_dials=CompoundMode(self._session_navigation,
 									self._session_navigation.nav_dial_layer,
+									self._device,
+									self._device.dial_layer,
 									self._device_navigator,
 									self._device_navigator.select_dial_layer,
 									self.encoder_navigation_on)
-
 		self._modalt_mode = ModesComponent(name = 'ModAltMode')
 		self._modalt_mode.add_mode('disabled', None)
 		self._modalt_mode.add_mode('enabled', [tuple([self._enable_mod_alt, self._disable_mod_alt])], behaviour = CancellableBehaviourWithRelease(), cycle_mode_button_color = 'Mod.AltOn')
@@ -262,153 +267,127 @@ class Cntrlr(BaseCntrlr):
 		self._modalt_mode.layer = Layer(priority = 4, enabled_button = self._encoder_button[1])
 
 		self._modswitcher = ModesComponent(name = 'ModSwitcher')
-		self._modswitcher.add_mode('mod', [self.modhandler, self._modalt_mode, main_faders, self._G_mixer.main_knobs_layer, self._device, self._device_navigator.main_layer,	main_dials, DelayMode(self.modhandler.update, delay = .5, parent_task_group = self._task_group)])
-		self._modswitcher.add_mode('instrument', [self._instrument.shift_button_layer, main_buttons, main_faders, self._G_mixer.main_knobs_layer, self._device, self._device_navigator.main_layer]) #self._instrument.shift_button_layer, self._optional_translations])
+		self._modswitcher.add_mode('mod', [self.modhandler, self._modalt_mode, main_faders, self._G_mixer.main_knobs_layer, self._device, self._device.dial_layer, self._device_navigator.main_layer,	main_dials, DelayMode(self.modhandler.update, delay = .5, parent_task_group = self._task_group)])
+		self._modswitcher.add_mode('instrument', [self._instrument, self._instrument.shift_button_layer, main_buttons, main_faders, self._G_mixer.main_knobs_layer, self._device, self._device.dial_layer, self._device.button_layer, self._device_navigator.main_layer,]) #self._instrument.shift_button_layer, self._optional_translations])
 		self._modswitcher.selected_mode = 'instrument'
 		self._modswitcher.set_enabled(False)
 
 		self._instrument._main_modes = ModesComponent(name = 'InstrumentModes')
-		self._instrument._main_modes.add_mode('disabled', [main_buttons, main_dials, self._device.main_layer, self._session, self._session, self._session.clip_launch_layer])
+		self._instrument._main_modes.add_mode('disabled', [main_buttons, main_dials, self._session, self._session, self._session.clip_launch_layer])
 		self._instrument._main_modes.add_mode('drumpad', [self._instrument._drumpad.sequencer_layer, 
 																					main_buttons, 
-																					self._device.main_layer,
 																					main_dials])
 		self._instrument._main_modes.add_mode('drumpad_split', [self._instrument._drumpad.split_layer,
 																					self._instrument._selected_session,
 																					main_buttons, 
-																					self._device.main_layer,
 																					main_dials])
 		self._instrument._main_modes.add_mode('drumpad_sequencer', [self._instrument._drumpad.sequencer_layer, 
 																					main_buttons, 
-																					self._device.main_layer,
 																					main_dials])
 		self._instrument._main_modes.add_mode('drumpad_shifted', [self._instrument._drumpad.sequencer_shift_layer, 
 																					self._instrument.drumpad_shift_layer, 
 																					shifted_main_buttons, 
-																					self._device.main_layer,
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('drumpad_split_shifted', [self._instrument._drumpad.split_layer, 
 																					self._instrument.drumpad_shift_layer, 
 																					shifted_main_buttons, 
-																					self._device.main_layer,
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('drumpad_sequencer_shifted', [self._instrument._drumpad.sequencer_shift_layer, 
 																					self._instrument.drumpad_shift_layer, 
 																					shifted_main_buttons, 
-																					self._device.main_layer,
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('keypad', [self._instrument._keypad.sequencer_layer, 
 																					main_buttons, 
-																					self._device.main_layer,
 																					main_dials])
 		self._instrument._main_modes.add_mode('keypad_split', [self._instrument._keypad.split_layer,
 																					self._instrument._selected_session,
 																					main_buttons, 
-																					self._device.main_layer,
 																					main_dials])
 		self._instrument._main_modes.add_mode('keypad_sequencer', [self._instrument._keypad.sequencer_layer, 
 																					main_buttons, 
-																					self._device.main_layer,
 																					main_dials])
 		self._instrument._main_modes.add_mode('keypad_shifted', [self._instrument._keypad.sequencer_shift_layer, 
 																					self._instrument.keypad_shift_layer, 
 																					shifted_main_buttons,
-																					self._device.main_layer,
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('keypad_split_shifted', [self._instrument._keypad.split_layer, 
 																					self._instrument.keypad_shift_layer,
 																					shifted_main_buttons, 
-																					self._device.main_layer,
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('keypad_sequencer_shifted', [self._instrument._keypad.sequencer_shift_layer, 
 																					self._instrument.keypad_shift_layer, 
 																					shifted_main_buttons, 
-																					self._device.main_layer,
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('drumpad_session', [self._instrument._drumpad.sequencer_session_layer, 
 																					main_buttons,
-																					self._device.main_layer,
 																					self._session,
 																					DelayMode(self._session.clip_launch_layer, delay = .1), 
 																					main_dials])
 		self._instrument._main_modes.add_mode('drumpad_split_session', [self._instrument._drumpad.split_session_layer,
 																					self._instrument._selected_session,
 																					main_buttons,
-																					self._device.main_layer,
 																					self._session,
 																					DelayMode(self._session.clip_launch_layer, delay = .1), 
 																					main_dials])
 		self._instrument._main_modes.add_mode('drumpad_sequencer_session', [self._instrument._drumpad.sequencer_session_layer, 
 																					main_buttons,
-																					self._device.main_layer,
 																					self._session,  
 																					DelayMode(self._session.clip_launch_layer, delay = .1), 
 																					main_dials])
 		self._instrument._main_modes.add_mode('drumpad_shifted_session', [self._instrument._drumpad.sequencer_session_shift_layer, 
 																					self._instrument.drumpad_shift_layer, 
 																					main_buttons, 
-																					self._device.main_layer,
 																					self._session_zoom, 
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('drumpad_split_shifted_session', [self._instrument._drumpad.split_session_layer,
 																					self._instrument.drumpad_shift_layer, 
 																					shifted_main_buttons,
-																					self._device.main_layer,
 																					self._session_zoom, 
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('drumpad_sequencer_shifted_session', [self._instrument._drumpad.sequencer_session_shift_layer, 
 																					self._instrument.drumpad_shift_layer, 
 																					shifted_main_buttons,
-																					self._device.main_layer,
 																					self._session_zoom, 
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('keypad_session', [self._instrument._keypad.sequencer_session_layer, 
 																					main_buttons,
-																					self._device.main_layer,
 																					self._session, 
 																					DelayMode(self._session.clip_launch_layer, delay = .1), 
 																					main_dials])
 		self._instrument._main_modes.add_mode('keypad_split_session', [self._instrument._keypad.split_session_layer,
 																					self._instrument._selected_session,
 																					main_buttons,
-																					self._device.main_layer,
 																					self._session,
 																					DelayMode(self._session.clip_launch_layer, delay = .1), 
 																					main_dials])
 		self._instrument._main_modes.add_mode('keypad_sequencer_session', [self._instrument._keypad.sequencer_session_layer, 
 																					main_buttons,
-																					self._device.main_layer,
 																					self._session, 
 																					DelayMode(self._session.clip_launch_layer, delay = .1), 
 																					main_dials])
 		self._instrument._main_modes.add_mode('keypad_shifted_session', [self._instrument._keypad.sequencer_session_shift_layer, 
 																					self._instrument.keypad_shift_layer, 
 																					shifted_main_buttons,
-																					self._device.main_layer,
 																					self._session_zoom, 
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('keypad_split_shifted_session', [self._instrument._keypad.split_session_layer, 
 																					self._instrument.keypad_shift_layer, 
 																					shifted_main_buttons,
-																					self._device.main_layer,
 																					self._session_zoom, 
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('keypad_sequencer_shifted_session', [self._instrument._keypad.sequencer_session_shift_layer,
 																					self._instrument.keypad_shift_layer, 
 																					shifted_main_buttons,
-																					self._device.main_layer,
 																					self._session_zoom, 
 																					shifted_dials])
 
 		self._instrument._main_modes.add_mode('audioloop', [self._instrument.audioloop_layer, 
 																					main_buttons, 
-																					self._device.main_layer,
 																					main_dials,
 																					self._session,
 																					DelayMode(self._session.clip_launch_layer, delay = .1)])
 		self._instrument._main_modes.add_mode('audioloop_shifted', [self._instrument.audioloop_layer, 
 																					shifted_main_buttons,
-																					self._device.main_layer,
 																					self._session_zoom, 
 																					shifted_dials])
 		#self._instrument._main_modes.add_mode('audioloop_shifted_session', [self._instrument.audioloop_layer, self._session, shifted_main_buttons, main_dials, shifted_dials])
@@ -425,26 +404,26 @@ class Cntrlr(BaseCntrlr):
 													main_faders, 
 													self._G_mixer.main_knobs_layer,
 													self._device,
-													self._device.main_layer,
 													self._device_navigator,
 													self._device_navigator.main_layer,
 													self._device_navigator.select_dial_layer])
 		self._main_modes.add_mode('ModSwitcher', [common,
 													main_faders, 
 													main_dials, 
-													self._G_mixer.main_knobs_layer,
+													self._G_mixer.main_knobs_layer, 
+													self._session_navigation.select_dial_layer, 
 													self._view_control,
 													self._view_control.main_layer, 
 													self._device_navigator,
-													self._device_navigator.select_dial_layer, 
-													self.encoder_navigation_on, 
+													self._device_navigator.select_dial_layer,
+													self.encoder_navigation_on,
 													self._modswitcher, 
 													DelayMode(self._update_modswitcher, delay = .1)], 
 													behaviour = ColoredCancellableBehaviourWithRelease(color = 'ModeButtons.ModSwitcher', off_color = 'ModeButtons.ModSwitcherDisabled'))
 		self._main_modes.add_mode('Translations', [common, 
 													main_faders, 
 													main_dials,
-													self._G_mixer.main_knobs_layer, 
+													self._mixer.main_knobs_layer, 
 													self._translations, 
 													DelayMode(self._translations.selector_layer, delay = .1)], 
 													behaviour = DefaultedBehaviour(default_mode = 'MixMode', color = 'ModeButtons.Translations', off_color = 'ModeButtons.TranslationsDisabled'))
@@ -457,10 +436,8 @@ class Cntrlr(BaseCntrlr):
 													main_dials, 
 													main_faders, 
 													self._G_mixer.main_knobs_layer, 
-													self._device.main_layer,
-													self._device_navigator,
-													self._device_navigator.main_layer,
-													self._device_navigator.select_dial_layer], 
+													self._device,
+													self._device_navigator], 
 													behaviour = ColoredCancellableBehaviourWithRelease(color = 'ModeButtons.DeviceSelector', off_color = 'ModeButtons.DeviceSelectorDisabled'))
 		self._main_modes.layer = Layer(priority = 4, ModSwitcher_button = self._encoder_button[2], DeviceSelector_button = self._encoder_button[0], Translations_button = self._encoder_button[3]) #, 
 		self._main_modes.selected_mode = 'disabled'
@@ -468,7 +445,5 @@ class Cntrlr(BaseCntrlr):
 
 		self._test.subject = self._instrument._main_modes
 	
-
-
 
 #a

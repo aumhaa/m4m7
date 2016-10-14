@@ -24,7 +24,7 @@ DIAL_BANKING = False		#When "True", the dials will be remapped to a User channel
 
 EQS_INSTEAD_OF_MACROS = False  #Maps right dials to EQs when "True"
 
-SHIFT_LOCK = False		#Setting this flag to "True" will allow the shift control to be toggled when pressed quickly in the same manner as the top mode buttons.
+SHIFT_LOCK = True		#Setting this flag to "True" will allow the shift control to be toggled when pressed quickly in the same manner as the top mode buttons.
 
 FREE_ENCODER_IS_CROSSFADER = False   #Setting this flag to "True" will cause the second top encoder to be assigned to the crossfader 
 
@@ -147,27 +147,27 @@ class CntrlrColors:
 		ModSwitcherDisabled = LividRGB.CYAN
 		Translations = LividRGB.BlinkMedium.MAGENTA
 		TranslationsDisabled = LividRGB.MAGENTA
-		DeviceSelector = LividRGB.BlinkMedium.YELLOW
-		DeviceSelectorDisabled = LividRGB.YELLOW
+		DeviceSelector = LividRGB.BlinkMedium.BLUE
+		DeviceSelectorDisabled = LividRGB.BLUE
 	
 
 	class ShiftButtons:
-		SessionOn = LividRGB.YELLOW
+		SessionOn = LividRGB.RED
 		SessionOff = LividRGB.OFF
 	
 
 	class DefaultButton:
-		On = LividRGB.WHITE
+		On = LividRGB.MAGENTA
 		Off = LividRGB.OFF
 		Disabled = LividRGB.OFF
-		Alert = LividRGB.BlinkFast.WHITE
+		Alert = LividRGB.BlinkFast.MAGENTA
 	
 
 	class Session:
 		StopClipTriggered = LividRGB.BlinkFast.BLUE
 		StopClip = LividRGB.WHITE
 		Scene = LividRGB.CYAN
-		NoScene = LividRGB.OFF
+		NoScene = LividRGB.WHITE
 		SceneTriggered = LividRGB.BlinkFast.BLUE
 		ClipTriggeredPlay = LividRGB.BlinkFast.GREEN
 		ClipTriggeredRecord = LividRGB.BlinkFast.RED
@@ -255,8 +255,8 @@ class CntrlrColors:
 	
 
 	class Mixer:
-		SoloOn = LividRGB.CYAN
-		SoloOff = LividRGB.OFF
+		SoloOn = LividRGB.BLUE
+		SoloOff = LividRGB.WHITE
 		MuteOn = LividRGB.YELLOW
 		MuteOff = LividRGB.OFF
 		ArmSelected = LividRGB.BiColor.WHITE.RED
@@ -313,8 +313,8 @@ class CntrlrColors:
 	
 
 	class DeviceSelector:
-		AssignOn = LividRGB.BlinkFast.YELLOW
-		AssignOff = LividRGB.YELLOW
+		AssignOn = LividRGB.BlinkFast.BLUE
+		AssignOff = LividRGB.BLUE
 	
 
 	class Mod:
@@ -340,7 +340,7 @@ class CntrlrColors:
 		SequencerModeOffValue = LividRGB.OFF
 		DrumOffsetOnValue = LividRGB.MAGENTA
 		DrumOffsetOffValue = LividRGB.OFF
-		VerticalOffsetOnValue = LividRGB.BLUE
+		VerticalOffsetOnValue = LividRGB.RED
 		VerticalOffsetOffValue = LividRGB.OFF 
 		ShiftOn = LividRGB.BlinkFast.YELLOW
 		ShiftOff = LividRGB.YELLOW
