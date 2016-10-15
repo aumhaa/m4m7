@@ -27,7 +27,7 @@ var WIKI = 'boinngg';
 
 
 var FORCELOAD = false;
-var DEBUG = true;
+var DEBUG = false;
 
 var debug = (DEBUG&&Debug) ? Debug : function(){};
 var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};

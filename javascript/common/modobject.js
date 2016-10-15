@@ -4,38 +4,34 @@ inlets = 2;
 outlets = 1;
 
 
+aumhaa = require('_base');
 var FORCELOAD = false;
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
-
 var DEBUG = false;
-var debug = (DEBUG&&Debug) ? Debug : function(){};
-
-debug = function(){};
+aumhaa.init(this);
 
 var script = this;
 var finder;
+var legacy = false;
 var mod;
 var mod_finder;
 
-var unique = jsarguments[1];
-var type = jsarguments[2];
+var unique = jsarguments[1] != undefined ? jsarguments[1] : 'modobject';
+var type = jsarguments[2] != undefined ? jsarguments[2] : 'modobject';
 
 var initialize_instance = function(){}
 
 var Translations = require(type+"Translations");
-//include(type+'Translations');
 var Colors = require(type+"Colors");
-//include(type+'Colors');
 include(type+'Functions', this);
 
 var Mod = ModComponent.bind(script);
 
 function init()
 {
-	debug('modobject init b997');
-	debug = function(){};          ////////something has debug turned on globally (probably new imports have mucked with it);
-	mod = new Mod(script, type, unique, false);
-	mod.debug = function(){}
+	debug('modobject init b997:', type);
+	assign_jsarg_attributes()
+	mod = new Mod(script, type, unique, script.legacy);
+	//mod.debug = function(){}
 	mod_finder = new LiveAPI(mod_callback, 'this_device');
 	mod.assign_api(mod_finder);
 }
@@ -44,7 +40,7 @@ function mod_callback(args)
 {
 	if((args[0]=='value')&&(args[1]!='bang'))
 	{
-		debug('mod callback:', args);
+		//debug('mod callback:', args);
 		if(args[1] in script)
 		{
 			//debug('args[1] is in script', script[args[1]]);
@@ -118,5 +114,4 @@ function anything()
 	debug('anything', type+':', args);
 }
 
-
-forceload(this);
+forceload(script);

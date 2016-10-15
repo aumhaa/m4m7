@@ -20,8 +20,8 @@ outlets = 4;
 inlets = 5;
 
 aumhaa = require('_base');
-var FORCELOAD = true;
-var DEBUG = true;
+var FORCELOAD = false;
+var DEBUG = false;
 aumhaa.init(this);
 
 

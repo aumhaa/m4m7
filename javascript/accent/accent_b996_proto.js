@@ -21,6 +21,8 @@ autowatch = 1;
 outlets = 4;
 inlets = 5;
 
+aumhaa = require('_base');
+
 var FORCELOAD = false;
 var NEW_DEBUG = false;
 var DEBUG = false;
@@ -34,14 +36,13 @@ var DEBUG_LOCK = 0;
 var DEBUG_FRWL = 0;
 var SHOW_POLYSELECTOR = 0;
 
-var debug = (NEW_DEBUG&&Debug) ? Debug : function(){};
+aumhaa.init(this);
+
 var debuglcd = (DEBUG_LCD&&Debug) ? Debug : function(){};
 var debugptr = (DEBUG_PTR&&Debug) ? Debug :function(){};
 var debugstep = (DEBUG_STEP&&Debug) ? Debug : function(){};
 var debugblink = (DEBUG_BLINK&&Debug) ? Debug : function(){};
 var debugrec = (DEBUG_REC&&Debug) ? Debug : function(){};
-
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
 
 var unique = jsarguments[1];
 

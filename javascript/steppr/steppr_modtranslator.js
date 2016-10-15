@@ -9,24 +9,33 @@ setoutletassist(0,"latch messages, msgs from pattrstorage, etc.");
 setoutletassist(1,"to mods");
 setinletassist(0,"to pattrstorage");
 
+
+var script = this;
+
+aumhaa = require('_base');
+var FORCELOAD = false;
 var DEBUG = false;
+aumhaa.init(this);
+
 var DEBUG_UPDT = false;
 var DEBUG_LCD = false;
 var DEBUG_NEW = false;
-var FORCELOAD = false;
-
-var debug = (DEBUG&&Debug) ? Debug : function(){};
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
 
 var unique = jsarguments[1];
 
 var SYNTH = (jsarguments[2]=='synth');
+var type = jsarguments[2] == 'synth' ? 'SynthSteppr' : 'DrumSteppr';
 
+var Translations = require(type+"Translations");
+var Colors = require(type+"Colors");
+include(type+'Functions', this);
+
+var Mod = ModComponent.bind(script);
 
 var gridbuf=new Array();
 var gridunique = 1;
 
-var script = this;
+
 var done_count = 0;
 
 var selected_sequence_number = 0;
@@ -52,16 +61,53 @@ var GRIDMAP =[	[undefined, undefined, undefined, undefined, 'pads_0', 'pads_1', 
 
 var Ctl_to_Trans= {};
 
+var Mod = ModComponent.bind(script);
+
 function init()
 {
-	setup_translations();
-	setup_modtranslations();
-	setup_mutes();
-	init_device();
-	update_all();
-	messnamed(unique+'loadbang', 'bang');
-	if(!SYNTH){ctl('pads_12', 1);}
-	outlet(0, 'receive_translation', 'keys2_8', 'value', 1);
+	mod = new Mod(script, 'hex', unique, false);
+	//mod.debug = debug;
+	mod_finder = new LiveAPI(mod_callback, 'this_device');
+	mod.assign_api(mod_finder);
+}
+
+function mod_callback(args)
+{
+	if((args[0]=='value')&&(args[1]!='bang'))
+	{
+		//debug('mod callback:', args);
+		if(args[1] in script)
+		{
+			//debug(script[args[1]]);
+			script[args[1]].apply(script, args.slice(2));
+		}
+		if(args[1]=='disconnect')
+		{
+			mod.restart.schedule(3000);
+		}
+	}
+}
+
+function alive(val)
+{
+	initialize(val);
+}
+
+function initialize(val)
+{
+	if(val)
+	{
+		Alive = 1;
+		deprivatize_script_functions(script);
+		setup_translations();
+		setup_modtranslations();
+		setup_mutes();
+		init_device();
+		update_all();
+		messnamed(unique+'loadbang', 'bang');
+		if(!SYNTH){ctl('pads_12', 1);}
+		mod.Send('receive_translation', 'keys2_8', 'value', 1);
+	}
 }
 
 function setup_translations()
@@ -76,68 +122,68 @@ function setup_translations()
 	{
 		for(var i = 0;i < 16;i++)
 		{
-			outlet(0, 'add_translation', 'pads_'+i, 'base_grid', 'base_pads', i%8, Math.floor(i/8));
-			outlet(0, 'add_translation', 'keys2_'+i, 'base_grid', 'base_keys', i%8, Math.floor(i/8));
-			outlet(0, 'add_translation', 'keys_'+i, 'base_grid', 'base_keys2', i%8, Math.floor(i/8)+2);
+			mod.Send('add_translation', 'pads_'+i, 'base_grid', 'base_pads', i%8, Math.floor(i/8));
+			mod.Send('add_translation', 'keys2_'+i, 'base_grid', 'base_keys', i%8, Math.floor(i/8));
+			mod.Send('add_translation', 'keys_'+i, 'base_grid', 'base_keys2', i%8, Math.floor(i/8)+2);
 		}
 		for(var i=0;i<8;i++)
 		{
-			outlet(0, 'add_translation', 'buttons_'+i, 'key', 'base_buttons', i);
+			mod.Send('add_translation', 'buttons_'+i, 'key', 'base_buttons', i);
 		}
 	}
 	else
 	{
 		for(var i = 0;i < 16;i++)
 		{
-			outlet(0, 'add_translation', 'pads_'+i, 'base_grid', 'base_pads', i%4, Math.floor(i/4));
-			outlet(0, 'add_translation', 'keys_'+i, 'base_grid', 'base_keys', (i%4)+(4*(!SYNTH)), Math.floor(i/4));
-			outlet(0, 'add_translation', 'keys2_'+i, 'base_grid', 'base_keys2', (i%4)+4, Math.floor(i/4));
+			mod.Send('add_translation', 'pads_'+i, 'base_grid', 'base_pads', i%4, Math.floor(i/4));
+			mod.Send('add_translation', 'keys_'+i, 'base_grid', 'base_keys', (i%4)+(4*(!SYNTH)), Math.floor(i/4));
+			mod.Send('add_translation', 'keys2_'+i, 'base_grid', 'base_keys2', (i%4)+4, Math.floor(i/4));
 		}
-		outlet(0, 'add_translation', 'pads_batch_fold', 'base_grid', 'base_pads', 0, 4);
-		outlet(0, 'add_translation', 'keys_batch_fold', 'base_grid', 'base_keys', 0, 4);
-		outlet(0, 'add_translation', 'keys2_batch_fold', 'base_grid', 'base_keys2', 0, 8, 4);
+		mod.Send('add_translation', 'pads_batch_fold', 'base_grid', 'base_pads', 0, 4);
+		mod.Send('add_translation', 'keys_batch_fold', 'base_grid', 'base_keys', 0, 4);
+		mod.Send('add_translation', 'keys2_batch_fold', 'base_grid', 'base_keys2', 0, 8, 4);
 		for(var i=0;i<8;i++)
 		{
-			outlet(0, 'add_translation', 'buttons_'+i, 'key', 'base_buttons', i);
+			mod.Send('add_translation', 'buttons_'+i, 'key', 'base_buttons', i);
 		}
 	}
-	outlet(0, 'enable_translation_group', SYNTH ? 'base_pads' : 'base_keys', 0);
+	mod.Send('enable_translation_group', SYNTH ? 'base_pads' : 'base_keys', 0);
 
 	//CNTRLR stuff:
 	for(var i = 0;i < 16;i++)
 	{
-		outlet(0, 'add_translation', 'pads_'+i, 'cntrlr_grid', 'cntrlr_pads', i%4, Math.floor(i/4));
-		outlet(0, 'add_translation', 'keys_'+i, 'cntrlr_key', 'cntrlr_keys', i, 0);
-		outlet(0, 'add_translation', 'keys2_'+i, 'cntrlr_key', 'cntrlr_keys2', i, 1);
+		mod.Send('add_translation', 'pads_'+i, 'cntrlr_grid', 'cntrlr_pads', i%4, Math.floor(i/4));
+		mod.Send('add_translation', 'keys_'+i, 'cntrlr_key', 'cntrlr_keys', i, 0);
+		mod.Send('add_translation', 'keys2_'+i, 'cntrlr_key', 'cntrlr_keys2', i, 1);
 	}
-	outlet(0, 'add_translation', 'pads_batch', 'cntrlr_grid', 'cntrlr_pads', 0);
-	outlet(0, 'add_translation', 'keys_batch', 'cntrlr_key', 'cntrlr_keys', 0);
-	outlet(0, 'add_translation', 'keys2_batch', 'cntrlr_key', 'cntrlr_keys2', 1); 
+	mod.Send('add_translation', 'pads_batch', 'cntrlr_grid', 'cntrlr_pads', 0);
+	mod.Send('add_translation', 'keys_batch', 'cntrlr_key', 'cntrlr_keys', 0);
+	mod.Send('add_translation', 'keys2_batch', 'cntrlr_key', 'cntrlr_keys2', 1); 
 	for(var i=0;i<8;i++)
 	{
-		outlet(0, 'add_translation', 'buttons_'+i, 'cntrlr_encoder_button_grid', 'cntrlr_buttons', i);
-		outlet(0, 'add_translation', 'extras_'+i, 'cntrlr_encoder_button_grid', 'cntrlr_extras', i);
+		mod.Send('add_translation', 'buttons_'+i, 'cntrlr_encoder_button_grid', 'cntrlr_buttons', i);
+		mod.Send('add_translation', 'extras_'+i, 'cntrlr_encoder_button_grid', 'cntrlr_extras', i);
 	}
-	outlet(0, 'add_translation', 'buttons_batch', 'cntrlr_encoder_button_grid', 'cntrlr_buttons');
-	outlet(0, 'add_translation', 'extras_batch', 'cntrlr_encoder_button_grid', 'cntrlr_extras');
+	mod.Send('add_translation', 'buttons_batch', 'cntrlr_encoder_button_grid', 'cntrlr_buttons');
+	mod.Send('add_translation', 'extras_batch', 'cntrlr_encoder_button_grid', 'cntrlr_extras');
 
 	//Ohm stuff:
 	for(var i = 0;i < 16;i++)
 	{
-		outlet(0, 'add_translation', 'pads_'+i, 'grid', 'ohm_pads', (i%4)+4, Math.floor(i/4));
-		outlet(0, 'add_translation', 'keys_'+i, 'grid', 'ohm_keys', i%8, (i < 8 ? 4 : 6));
-		outlet(0, 'add_translation', 'keys2_'+i, 'grid', 'ohm_keys2', i%8, (i < 8 ? 5 : 7));
+		mod.Send('add_translation', 'pads_'+i, 'grid', 'ohm_pads', (i%4)+4, Math.floor(i/4));
+		mod.Send('add_translation', 'keys_'+i, 'grid', 'ohm_keys', i%8, (i < 8 ? 4 : 6));
+		mod.Send('add_translation', 'keys2_'+i, 'grid', 'ohm_keys2', i%8, (i < 8 ? 5 : 7));
 	}
-	//outlet(0, 'add_translation', 'pads_batch', 'grid', 'ohm_pads', 0);
-	//outlet(0, 'add_translation', 'keys_batch', 'grid', 'ohm_keys', 2);
-	//outlet(0, 'add_translation', 'keys2_batch', 'grid', 'ohm_keys2', 4); 
+	//mod.Send('add_translation', 'pads_batch', 'grid', 'ohm_pads', 0);
+	//mod.Send('add_translation', 'keys_batch', 'grid', 'ohm_keys', 2);
+	//mod.Send('add_translation', 'keys2_batch', 'grid', 'ohm_keys2', 4); 
 	for(var i=0;i<8;i++)
 	{
-		outlet(0, 'add_translation', 'buttons_'+i, 'grid', 'ohm_buttons', i%4, Math.floor(i/4)+1);
-		//outlet(0, 'add_translation', 'extras_'+i, 'grid', 'ohm_extras', i, 7);
+		mod.Send('add_translation', 'buttons_'+i, 'grid', 'ohm_buttons', i%4, Math.floor(i/4)+1);
+		//mod.Send('add_translation', 'extras_'+i, 'grid', 'ohm_extras', i, 7);
 	}
-	//outlet(0, 'add_translation', 'buttons_batch', 'grid', 'ohm_buttons', 6);
-	//outlet(0, 'add_translation', 'extras_batch', 'grid', 'ohm_extras', 7);
+	//mod.Send('add_translation', 'buttons_batch', 'grid', 'ohm_buttons', 6);
+	//mod.Send('add_translation', 'extras_batch', 'grid', 'ohm_extras', 7);
 
 }
 
@@ -289,18 +335,18 @@ function shift(val)
 		shifted = val;
 		if(SYNTH)
 		{
-			outlet(0, 'enable_translation_group', 'base_keys', Math.floor(!shifted));
-			outlet(0, 'enable_translation_group', 'base_pads', Math.floor(shifted));
-			outlet(0, 'enable_translation_group', 'base_keys2', Math.floor(!shifted));
+			mod.Send('enable_translation_group', 'base_keys', Math.floor(!shifted));
+			mod.Send('enable_translation_group', 'base_pads', Math.floor(shifted));
+			mod.Send('enable_translation_group', 'base_keys2', Math.floor(!shifted));
 		}
 		else
 		{
-			outlet(0, 'enable_translation_group', 'base_pads', Math.floor(!shifted));
-			outlet(0, 'enable_translation_group', 'base_keys', Math.floor(shifted));
-			outlet(0, 'enable_translation_group', 'base_keys2', Math.floor(!shifted));
+			mod.Send('enable_translation_group', 'base_pads', Math.floor(!shifted));
+			mod.Send('enable_translation_group', 'base_keys', Math.floor(shifted));
+			mod.Send('enable_translation_group', 'base_keys2', Math.floor(!shifted));
 		}
-		//outlet(0, 'enable_translation_group', 'base_buttons',  Math.floor(shifted));
-		//outlet(0, 'enable_translation_group', 'base_extras',  Math.floor(shifted));
+		//mod.Send('enable_translation_group', 'base_buttons',  Math.floor(shifted));
+		//mod.Send('enable_translation_group', 'base_extras',  Math.floor(shifted));
 		update_all();
 	}
 }
@@ -310,22 +356,22 @@ function update_all()
 	if(SYNTH)
 	{
 		var i=15;do{
-			outlet(0, 'receive_translation', 'pads_'+i, 'value', 1);
-			outlet(0, 'receive_translation', 'keys_'+i, 'value', 0);
+			mod.Send('receive_translation', 'pads_'+i, 'value', 1);
+			mod.Send('receive_translation', 'keys_'+i, 'value', 0);
 		}while(i--);
 		outlet(1, 'getsequence[0]::preset');
 	}
 	else
 	{
 		var i=15;do{
-			outlet(0, 'receive_translation', 'pads_'+i, 'value', padsToChain[i]==selected_sequence_number ? 6 : 1);
+			mod.Send('receive_translation', 'pads_'+i, 'value', padsToChain[i]==selected_sequence_number ? 6 : 1);
 			outlet(1, 'getchainmute['+i+']');
 		}while(i--);
 	}
 	for(var i=0;i<8;i++)
 	{
-		outlet(0, 'receive_translation', 'buttons_'+i, 'value', BUTTON_COLORS[i]);
-		//outlet(0, 'receive_translation', 'extras_'+i, 'value', 0);
+		mod.Send('receive_translation', 'buttons_'+i, 'value', BUTTON_COLORS[i]);
+		//mod.Send('receive_translation', 'extras_'+i, 'value', 0);
 	}
 	for(var i=0;i<16;i++)
 	{
@@ -647,7 +693,7 @@ function ctlout(){
 	var keyout = a[0];
 	var valout = a[1];
 	debug('ctlout', keyout, valout);
-	outlet(0, 'receive_translation', keyout, 'value', valout);
+	mod.Send('receive_translation', keyout, 'value', valout);
 	
 }
 
@@ -851,34 +897,6 @@ var LiveClassNames = [
 ///////////////////////////*/
 
 
-var STEPPR_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Mod_Chain_Pan', 'Mod_Chain_Vol', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'DrumGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Mod_Chain_Pan', 'Mod_Chain_Vol', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'MidiEffectGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Mod_Chain_Pan', 'Mod_Chain_Vol', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'Operator':[['Osc-A Level', 'Osc-B Level', 'Osc-C Level', 'Osc-D Level', 'Transpose', 'Filter Freq', 'Mod_Chain_Pan', 'Mod_Chain_Vol', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'UltraAnalog':[['AEG1 Attack', 'AEG1 Decay', 'AEG1 Sustain', 'AEG1 Rel', 'OSC1 Semi', 'F1 Freq', 'Mod_Chain_Pan', 'Mod_Chain_Vol', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'OriginalSimpler':[['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'Transpose', 'Filter Freq', 'Mod_Chain_Pan', 'Mod_Chain_Vol', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'MultiSampler':[['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'Transpose', 'Filter Freq', 'Mod_Chain_Pan', 'Mod_Chain_Vol', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'LoungeLizard':[['M Force', 'F Release', 'F Tone Decay', 'F Tone Vol', 'Semitone', 'P Distance', 'Mod_Chain_Pan', 'Mod_Chain_Vol', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'StringStudio':[['E Pos', 'Exc ForceMassProt', 'Exc FricStiff', 'Exc Velocity', 'Semitone', 'Filter Freq', 'Mod_Chain_Pan', 'Mod_Chain_Vol', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'Collision':[['Noise Attack', 'Noise Decay', 'Noise Sustain', 'Noise Release', 'Res 1 Tune', 'Res 1 Brightness', 'Mod_Chain_Pan', 'Mod_Chain_Vol', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'InstrumentImpulse':[['1 Start', '1 Envelope Decay', '1 Stretch Factor', 'Global Time', 'Global Transpose', '1 Filter Freq', 'Mod_Chain_Pan', 'Mod_Chain_Vol', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'NoDevice':[['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']]}
-
-var SYNTH_STEPPR_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'ModDevice_chord_steps', 'ModDevice_chord_thin', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'DrumGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'ModDevice_chord_steps', 'ModDevice_chord_thin', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'MidiEffectGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'ModDevice_chord_steps', 'ModDevice_chord_thin', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'Operator':[['Osc-A Level', 'Osc-B Level', 'Osc-C Level', 'Osc-D Level', 'Transpose', 'Filter Freq', 'ModDevice_chord_steps', 'ModDevice_chord_thin', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'UltraAnalog':[['AEG1 Attack', 'AEG1 Decay', 'AEG1 Sustain', 'AEG1 Rel', 'OSC1 Semi', 'F1 Freq', 'ModDevice_chord_steps', 'ModDevice_chord_thin', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'OriginalSimpler':[['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'Transpose', 'Filter Freq', 'ModDevice_chord_steps', 'ModDevice_chord_thin', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'MultiSampler':[['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'Transpose', 'Filter Freq', 'ModDevice_chord_steps', 'ModDevice_chord_thin', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'LoungeLizard':[['M Force', 'F Release', 'F Tone Decay', 'F Tone Vol', 'Semitone', 'P Distance', 'ModDevice_chord_steps', 'ModDevice_chord_thin', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'StringStudio':[['E Pos', 'Exc ForceMassProt', 'Exc FricStiff', 'Exc Velocity', 'Semitone', 'Filter Freq', 'ModDevice_chord_steps', 'ModDevice_chord_thin', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'Collision':[['Noise Attack', 'Noise Decay', 'Noise Sustain', 'Noise Release', 'Res 1 Tune', 'Res 1 Brightness', 'ModDevice_chord_steps', 'ModDevice_chord_thin', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'InstrumentImpulse':[['1 Start', '1 Envelope Decay', '1 Stretch Factor', 'Global Time', 'Global Transpose', '1 Filter Freq', 'ModDevice_chord_steps', 'ModDevice_chord_thin', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']],
-			'NoDevice':[['None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_chord_steps', 'ModDevice_chord_thin', 'ModDevice_Repeat', 'ModDevice_Groover', 'ModDevice_Random', 'ModDevice_RotSize']]}
-
-var DEVICE_BANKS = SYNTH ? SYNTH_STEPPR_BANKS : STEPPR_BANKS;
-
 var finder;
 var pns=[];
 var mps=[];
@@ -892,33 +910,24 @@ var seq = 0;
 var repeats = [];
 var grooves = [];
 var randoms = [];
-var error_text="Drum Stepp:r requires a properly configured Drum Rack. Place one on this track then press here to initialize. Press the ? button for more help.";
-var error_rect=[104, 56, 355, 49];
-var count_error_text="Drum Steppr:r requires 16 chains to be present in the Drum Rack. Add more chains and press here to initialize.";
 
 var Encoders = ['Encoder_0', 'Encoder_1', 'Encoder_2', 'Encoder_3', 'Encoder_4', 'Encoder_5', 'Encoder_6', 'Encoder_7', 'Encoder_8', 'Encoder_9', 'Encoder_10', 'Encoder_11'];
-var Dials =	 ['Repeat', 'Groover', 'Random', 'RotSize'];
+
 var Warning = ['No device', 'was found.', 'Place a', 'DrumRack', 'next to', 'this mod', 'and press', '\"Detect',	'DrumRack\"', 'to', 'get', 'started.', ' '];
 var ChainNumbers = {0:12, 1:13, 2:14, 3:15, 4:8, 5:9, 6:10, 7:11, 8:4, 9:5, 10:6, 11:7, 12:0, 13:1, 14:2, 15:3}; 
 // called from init
-
-if(SYNTH){
-	error_text="Synth Stepp:r requires an Instrument. Place one on this track then press here to initialize. Press the ? button for more help.";
-	enc_max = 6; //we only link 6 encoders to the API in synth mode.
-	error_rect=[142, 32, 311, 79];
-}
 
 function callback(){};
 
 function init_device()
 {
-	outlet(0, 'receive_device', 'set_mod_device_type', SYNTH ? 'SynthSteppr' : 'DrumSteppr');
-	outlet(0, 'receive_device', 'set_number_params', 12);
+	mod.Send('receive_device', 'set_mod_device_type', type);
+	mod.Send('receive_device', 'set_number_params', 12);
 	for(var dev_type in DEVICE_BANKS)
 	{
 		for(var bank_num in DEVICE_BANKS[dev_type])
 		{
-			outlet(0, 'send_explicit', 'receive_device_proxy', 'set_bank_dict_entry', dev_type, bank_num, DEVICE_BANKS[dev_type][bank_num]);
+			mod.SendDirect('receive_device_proxy', 'set_bank_dict_entry', dev_type, bank_num, DEVICE_BANKS[dev_type][bank_num]);
 		}
 		//mod.Send('receive_device_proxy', 'update_parameters');
 	}
@@ -942,6 +951,7 @@ function init_device()
 		mps[Encoders[i+8]]=this.patcher.getnamed('mp'+(i+9));
 		mps[Encoders[i+8]].message('text', ' ');
 		dials[Encoders[i+8]]=this.patcher.getnamed(Dials[i]);
+		debug('setting dial:', Encoders[i+8], this.patcher.getnamed(Dials[i]), Dials[i]);
 		dials[Encoders[i+8]].message('set', 0);
 	}
 	if(SYNTH)
@@ -963,16 +973,18 @@ function init_device()
 		}
 	}
 	live = 1;
-	if(!SYNTH)
+	/*if(!SYNTH)
 	{
 		detect_devices();
 	}
 	else
 	{
 		_detect_devices();
-	}
+	}*/
+	detect_devices();
 }
 
+/*
 //find the drumrack
 function detect_devices()
 {
@@ -1056,6 +1068,7 @@ function _detect_devices()
 		report_drumrack_id();
 	}
 }
+*/
 
 //sort calls to the internal LCD
 function lcd(obj, type, val)
@@ -1097,7 +1110,7 @@ function encoder(num, val)
 	{
 		if(num<8)
 		{
-			outlet(0, 'receive_device', 'set_mod_parameter_value', num, val);
+			mod.Send('receive_device', 'set_mod_parameter_value', num, val);
 		}				 
 		else
 		{
@@ -1120,20 +1133,22 @@ function encoder(num, val)
 }
 
 //send the drumrack id to mod.js
+/*
 function report_drumrack_id()
 {
 	if(SYNTH==0)
 	{
-		//outlet(0, 'set_device_parent', found_device);
-		outlet(0, 'send_explicit', 'receive_device', 'set_mod_device_parent', 'id', found_device);
+		//mod.Send('set_device_parent', found_device);
+		mod.Send('send_explicit', 'receive_device', 'set_mod_device_parent', 'id', found_device);
 		select_chain(chain);
 	}
 	else
 	{
-		outlet(0, 'send_explicit', 'receive_device', 'set_mod_device', 'id', found_device);
-		//outlet(0, 'set_device', found_device);
+		mod.Send('send_explicit', 'receive_device', 'set_mod_device', 'id', found_device);
+		//mod.Send('set_device', found_device);
 	}
 }
+*/
 
 //send the current chain assignment to mod.js
 function select_chain(chain_num)
@@ -1144,11 +1159,11 @@ function select_chain(chain_num)
 	debug('new seq =', seq);
 	if(live>0)
 	{
-		//outlet(0, 'set_device_chain', Math.max(0, Math.min(chain_num + global_offset, 127)));
-		//outlet(0, 'send_explicit', 'receive_device', 'set_mod_device_parent', 'id', devices[selected.channel]);
+		//mod.Send('set_device_chain', Math.max(0, Math.min(chain_num + global_offset, 127)));
+		//mod.Send('send_explicit', 'receive_device', 'set_mod_device_parent', 'id', devices[selected.channel]);
 		if(!SYNTH){
-			outlet(0, 'receive_device', 'set_mod_drum_pad', chain_num + 36);
-			//outlet(0, 'receive_device', 'set_mod_device_chain', Math.max(0, Math.min(chain_num + global_offset, 127)));
+			mod.Send('receive_device', 'set_mod_drum_pad', chain_num + 36);
+			//mod.Send('receive_device', 'set_mod_device_chain', Math.max(0, Math.min(chain_num + global_offset, 127)));
 		}
 		dials.Encoder_8.message('set', repeats[seq].getvalueof());
 		dials.Encoder_9.message('set', grooves[seq].getvalueof());
@@ -1214,7 +1229,7 @@ function update_lcd()
 	api_links(chain);
 }
 
-if(SYNTH){script.detect_devices = script._detect_devices;}
+//if(SYNTH){script.detect_devices = script._detect_devices;}
 
 function mask()
 {
@@ -1223,10 +1238,10 @@ function mask()
 	switch(args[0])
 	{
 		case 'key':
-			outlet(0, 'receive_translation', args[1]<16 ? 'keys_'+(args[1]%16) : 'keys2_'+(args[1]%16), 'mask', args[2]);
+			mod.Send('receive_translation', args[1]<16 ? 'keys_'+(args[1]%16) : 'keys2_'+(args[1]%16), 'mask', args[2]);
 			break;
 		case 'grid':
-			outlet(0, 'receive_translation', 'pads_'+(args[1] + (args[2]*4)), args[3]);
+			mod.Send('receive_translation', 'pads_'+(args[1] + (args[2]*4)), args[3]);
 			break;
 	}
 }

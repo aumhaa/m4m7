@@ -8,8 +8,8 @@ for(var i in util)
 }
 
 
-DEBUG = true;
-debug = DEBUG && Debug ? Debug : function(){}
+LOCAL_DEBUG = false;
+lcl_debug = LOCAL_DEBUG && Debug ? Debug : function(){}
 
 NOTE_TYPE = 'NOTE_TYPE';
 CC_TYPE = 'CC_TYPE';
@@ -123,7 +123,7 @@ Scales = function(parameters)
 					if(!select_only){button.set_translation(note%127);}
 					else{button._translation = note%127}  //you slimy bastard....
 					self._noteMap[note%127].push(button);
-					//debug('note', note, 'keyoffset', keyoffset, note == keyoffset, note === keyoffset);
+					//lcl_debug('note', note, 'keyoffset', keyoffset, note == keyoffset, note === keyoffset);
 					button.scale_color = notes_in_step[note%127] ? this.colors.GREEN : note == selected ? this.colors.WHITE : KEYCOLORS[((note%12) in WHITEKEYS) + (((note_pos%scale_len)==0)*2)];// + ((notes_in_step[note%127])*4)];
 					button.send(button.scale_color);
 				}
@@ -159,14 +159,14 @@ Bindable.prototype._mixin_bound_properties = [];
 
 Bindable.prototype.add_bound_properties = function(instance, properties)
 {
-	//debug('adding bound properties to:', instance._name, '\n original props:', instance._bound_properties, '\nnew props:', properties);
+	//lcl_debug('adding bound properties to:', instance._name, '\n original props:', instance._bound_properties, '\nnew props:', properties);
 	var old_props = instance._bound_properties ? instance._bound_properties : [];
 	instance._bound_properties = old_props.concat(properties);
 }
 
 Bindable.prototype.bind_properties = function(instance)
 {
-	//debug('binding properties for:', instance._name, '\nprops are:', instance._bound_properties)
+	//lcl_debug('binding properties for:', instance._name, '\nprops are:', instance._bound_properties)
 	//bind_properties(instance, instance._bound_properties);
 	if(instance._bound_properties)
 	{
@@ -176,7 +176,7 @@ Bindable.prototype.bind_properties = function(instance)
 			var prop = prop_list[index];
 			if(instance.constructor.prototype[prop])
 			{
-				//debug('has prop:', prop);
+				//lcl_debug('has prop:', prop);
 				instance[prop] = instance.constructor.prototype[prop].bind(instance);
 			}
 		}
@@ -195,7 +195,7 @@ exports.Bindable = Bindable;
 NotifierClass = function(name, args)
 {
 	this.add_bound_properties(this, ['add_listener', 'remove_listener', 'set_target', 'get_target', 'clear_targets', 'remove_target', 'notify', 'set_enabled']);
-	//debug('making notifier:', name, this._bound_properties);
+	//lcl_debug('making notifier:', name, this._bound_properties);
 	this._value = -1;
 	this._listeners = [];
 	this._target_heap = [];
@@ -219,13 +219,13 @@ NotifierClass.prototype.set_target = function(target)
 	{
 		if (target in this._target_heap)
 		{
-			//debug('target was present for' + this._name, 'placing at front');
+			//lcl_debug('target was present for' + this._name, 'placing at front');
 			this._target_heap.unshift(this._target_heap.splice(this._target_heap.indexOf(target), 1));
 		}
 		else
 		{
 			this._target_heap.unshift(target);
-			//debug('target added to heap for ' + this._name);
+			//lcl_debug('target added to heap for ' + this._name);
 		}
 	}
 	else
@@ -264,7 +264,7 @@ NotifierClass.prototype.add_listener = function(callback)
 	//{
 	//	this._listeners.unshift(callback);
 	//}
-	//debug('add listener:', this, this._name);
+	//lcl_debug('add listener:', this, this._name);
 	var add = true;
 	if (callback)
 	{
@@ -304,7 +304,7 @@ NotifierClass.prototype.notify = function(obj)
 	{
 		var obj = this;
 	}
-	//debug('notify', this._name, obj._name);
+	//lcl_debug('notify', this._name, obj._name);
 	if(this._target_heap[0])
 	{
 		var cb = this._target_heap[0];
@@ -314,12 +314,12 @@ NotifierClass.prototype.notify = function(obj)
 		}
 		catch(err)
 		{
-			debug('target callback exception:', err.message, err.name);
+			lcl_debug('target callback exception:', err.message, err.name);
 			//for(var i in err)
 			//{
-			//	debug('err:', i);
+			//	lcl_debug('err:', i);
 			//}
-			debug('-> for', this._name,' : callback->', cb.toString());
+			lcl_debug('-> for', this._name,' : callback->', cb.toString());
 		}
 	}
 	for (var i in this._listeners)
@@ -331,8 +331,8 @@ NotifierClass.prototype.notify = function(obj)
 		}
 		catch(err)
 		{
-			debug('listener callback exception:', err);
-			debug('-> for', this._name,' : callback ->', cb.toString());
+			lcl_debug('listener callback exception:', err);
+			lcl_debug('-> for', this._name,' : callback ->', cb.toString());
 		}
 	}
 	if(this._display_value>0)
@@ -363,7 +363,7 @@ inherits(GUI_Element, NotifierClass);
 
 GUI_Element.prototype.receive = function(value)
 {
-	//debug('receive:', self._name, value);
+	//lcl_debug('receive:', self._name, value);
 	if(this._enabled)
 	{
 		this._value = value;
@@ -403,7 +403,7 @@ exports.GUI_Element = GUI_Element;
 ControlClass = function(identifier, name, args)
 {
 	this.add_bound_properties(this, ['receive', 'receive_notifier', '_x', '_y', '_send', 'send']);
-	//debug('making control:', name, this._bound_properties);
+	//lcl_debug('making control:', name, this._bound_properties);
 	this._type = NONE_TYPE;
 	this._id = identifier;
 	this._channel = CHANNEL;
@@ -416,7 +416,7 @@ inherits(ControlClass, NotifierClass);
 
 ControlClass.prototype.receive = function(value)
 {
-	//debug('receive:', self._name, value);
+	//lcl_debug('receive:', self._name, value);
 	if(this._enabled)
 	{
 		this._value = value;
@@ -453,7 +453,7 @@ exports.ControlClass = ControlClass;
 
 ButtonClass = function(identifier, name, _send, args)
 {
-	//debug('making buton:', name, this._bound_properties);
+	//lcl_debug('making buton:', name, this._bound_properties);
 	this.add_bound_properties(this, ['set_send_function', 'pressed', 'turn_on', 'turn_off', 'set_on_off_values', 'set_translation', 'flash', 'get_coords']);
 	this._type = NOTE_TYPE;
 	this._onValue = 127;
@@ -462,7 +462,7 @@ ButtonClass = function(identifier, name, _send, args)
 	this._flash = false;
 	this._grid = [];
 	ButtonClass.super_.call(this, identifier, name, args);
-	this._send = !_send ? function(){debug('No _send function assigned for:', self._name);} : _send;
+	this._send = !_send ? function(){lcl_debug('No _send function assigned for:', self._name);} : _send;
 	//register_control(this);
 }
 
@@ -504,7 +504,7 @@ ButtonClass.prototype.set_on_off_values = function(onValue, offValue)
 
 ButtonClass.prototype.set_translation = function(newID)
 {
-	//debug(this._name, 'set translation', this._id, newID);
+	//lcl_debug(this._name, 'set translation', this._id, newID);
 	this._translation = newID;
 	//Note_Translation_Table[this._id] = this._translation;
 	//recalculate_translation_map = true;
@@ -567,7 +567,7 @@ GUIButton.prototype.send = function(value, flash)
 	this._send(value);
 }
 
-GUIButton.prototype._send = function(value){debug('Haven\'t defined _send for GUIButton:', this._name)}
+GUIButton.prototype._send = function(value){lcl_debug('Haven\'t defined _send for GUIButton:', this._name)}
 
 GUIButton.prototype.turn_on = function()
 {
@@ -587,7 +587,7 @@ GUIButton.prototype.set_on_off_values = function(onValue, offValue)
 
 GUIButton.prototype.set_translation = function(newID)
 {
-	//debug(this._name, 'set translation', this._id, newID);
+	//lcl_debug(this._name, 'set translation', this._id, newID);
 	this._translation = newID;
 	//Note_Translation_Table[this._id] = this._translation;
 	//recalculate_translation_map = true;
@@ -626,7 +626,7 @@ exports.GUIButton = GUIButton;
 GridClass = function(width, height, name, args)
 {
 	this.add_bound_properties(this, ['add_control', 'controls', 'receive', 'get_button', 'reset', 'clear_buttons', 'sub_grid', 'clear_translations', 'button_coords']);
-	//debug('making GridClass:', width, height, name, args, this._bound_properties);
+	//lcl_debug('making GridClass:', width, height, name, args, this._bound_properties);
 	//this._bound_properties = ['receive'];
 	var contents = [];
 	for(var i = 0; i < width; i++)
@@ -740,7 +740,7 @@ GridClass.prototype.sub_grid = function(subject, x_start, x_end, y_start, y_end)
 		for(var y=0;y<(y_end-y_start);y++)
 		{
 			var button = subject.get_button(x+x_start, y+y_start);
-			//debug('adding button', button._name);
+			//lcl_debug('adding button', button._name);
 			this.add_control(x, y, button);
 		}
 	}
@@ -805,7 +805,7 @@ ModeClass.prototype.mode_cycle_value = function(button)
 
 ModeClass.prototype.mode_value = function(button)
 {
-	//debug('mode value', this._name, ':', button, button.pressed());
+	//lcl_debug('mode value', this._name, ':', button, button.pressed());
 	if(button.pressed())
 	{
 		this.change_mode(this.mode_buttons.indexOf(button));
@@ -842,7 +842,7 @@ ModeClass.prototype.update = function()
 		}
 		catch(err)
 		{
-			debug('callback error:', err, 'for mode index', this._value,'for', this._name, 'mode component');
+			lcl_debug('callback error:', err, 'for mode index', this._value,'for', this._name, 'mode component');
 		}
 	}
 	for(var i in this.mode_buttons)
@@ -869,7 +869,7 @@ ModeClass.prototype.add_mode = function(mode, callback)
 
 ModeClass.prototype.set_mode_buttons = function(buttons)
 {
-	//debug('set_mode_buttons:', buttons ? 'buttons length:' + buttons.length : 'incoming buttons undefined', this._mode_callbacks.length); 
+	//lcl_debug('set_mode_buttons:', buttons ? 'buttons length:' + buttons.length : 'incoming buttons undefined', this._mode_callbacks.length); 
 	if (((buttons == undefined)||(buttons.length == this._mode_callbacks.length))&&(buttons != this.mode_buttons))
 	{
 		for (var i in this.mode_buttons)
@@ -888,7 +888,7 @@ ModeClass.prototype.set_mode_buttons = function(buttons)
 			buttons[i].set_target(this.mode_value);
 			i == this._value ? buttons[i].turn_on() : buttons[i].turn_off();
 		}
-		debug('mode buttons length: ' + this._name + ' ' + this.mode_buttons.length)
+		lcl_debug('mode buttons length: ' + this._name + ' ' + this.mode_buttons.length)
 	}
 }
 
@@ -920,7 +920,7 @@ PageStack = function(number_of_modes, name, args)
 {
 	this.add_bound_properties(this, ['current_page', 'restore_mode']);
 
-	//debug('making pagestack', number_of_modes, name, args);
+	//lcl_debug('making pagestack', number_of_modes, name, args);
 	this._pages = new Array(number_of_modes);
 	PageStack.super_.call(this, number_of_modes, name, args);
 	this._value = -1;
@@ -933,22 +933,22 @@ PageStack.prototype.add_mode = function(mode, page)
 	if ((page instanceof Page) && (mode < this._mode_callbacks.length))
 	{
 		this._pages[mode] = page;
-		//debug('adding page:', page, this._pages);
+		//lcl_debug('adding page:', page, this._pages);
 	}
 	else
 	{
-		debug('Invalid add_mode assignment for', this._name, mode, ':', page);
+		lcl_debug('Invalid add_mode assignment for', this._name, mode, ':', page);
 	}
 }
 
 PageStack.prototype.change_mode = function(value, force)
 {
-	//debug('change_mode:', value, '#callbacks:', this._mode_callbacks.length);
+	//lcl_debug('change_mode:', value, '#callbacks:', this._mode_callbacks.length);
 	if((-1 < value)&&(value < this._mode_callbacks.length))
 	{
 		if((this._value != value)||(force))
 		{
-			//debug('changing mode, old mode:', this._value, 'new mode:', value);
+			//lcl_debug('changing mode, old mode:', this._value, 'new mode:', value);
 			this._pages[this._value]&&this._pages[this._value].exit_mode();
 			this._value = value;
 			this._pages[this._value]&&this._pages[this._value].enter_mode();
@@ -1063,7 +1063,7 @@ inherits(ArrayParameter, ParameterClass);
 
 ArrayParameter.prototype.receive = function(value)
 {
-	//debug('array change', arguments, arrayfromargs(arguments));
+	//lcl_debug('array change', arguments, arrayfromargs(arguments));
 	if(arguments.length>1)
 	{
 		this._value = arrayfromargs(arguments);
@@ -1123,7 +1123,7 @@ RangedParameter.prototype._Callback = function(obj)
 	{
 		if(this._javaObj)
 		{
-			//debug('Callback', self._name, obj._value);
+			//lcl_debug('Callback', self._name, obj._value);
 			this._javaObj.set(obj._value, this._range);
 		}
 		else
@@ -1153,12 +1153,12 @@ RangedButtonParameter.prototype._Callback = function(obj)
 	{
 		if(this._javaObj)
 		{
-			//debug('Callback', this._name, obj._value);
+			//lcl_debug('Callback', this._name, obj._value);
 			this._javaObj.set(obj._value, this._range);
 		}
 		else
 		{
-			debug('Callback', this._name, obj._value, (this._value+1)%this._range);
+			lcl_debug('Callback', this._name, obj._value, (this._value+1)%this._range);
 			this.receive(this._value+1%this._range);
 		}
 	}
@@ -1170,9 +1170,9 @@ RangedButtonParameter.prototype.update_control = function()
 	{
 		for(var c in this.colors)
 		{
-			debug(c, 'color:', this.colors[c]);
+			lcl_debug(c, 'color:', this.colors[c]);
 		}
-		debug('update_control:', this._name, this._value, this.colors.length, this.colors[this._value%(this.colors.length)]);
+		lcl_debug('update_control:', this._name, this._value, this.colors.length, this.colors[this._value%(this.colors.length)]);
 		this._control.send(this.colors[this._value%(this.colors.length)]);
 	}
 }
@@ -1435,7 +1435,7 @@ RadioComponent.prototype.set_controls = function(control)
 		{
 			if(this._buttons[i])
 			{
-				//debug('assigning radio:', this._buttons[i]._name);
+				//lcl_debug('assigning radio:', this._buttons[i]._name);
 				this._buttons[i].set_target(this._Callback);
 			}
 		}
@@ -1602,7 +1602,7 @@ Page.prototype.controlInput = function(control){this.control_input(control);}
 
 Page.prototype._shiftValue = function(obj)
 {
-	debug('old shiftValue');
+	lcl_debug('old shiftValue');
 	var new_shift = false;
 	if(obj)
 	{
@@ -1617,17 +1617,17 @@ Page.prototype._shiftValue = function(obj)
 
 Page.prototype.enter_mode = function()
 {
-	debug(this._name, ' entered!');
+	lcl_debug(this._name, ' entered!');
 }
 
 Page.prototype.exit_mode = function()
 {
-	debug(this._name, ' exited!');
+	lcl_debug(this._name, ' exited!');
 }
 
 Page.prototype.update_mode = function()
 {
-	debug(this._name, ' updated!');
+	lcl_debug(this._name, ' updated!');
 }
 
 Page.prototype.refresh_mode = function()
@@ -1656,7 +1656,7 @@ Page.prototype.set_shift_button = function(button)
 
 Page.prototype.control_input = function(control)
 {
-	debug('Page: ', this._name, 'recieved control input ', control._name);
+	lcl_debug('Page: ', this._name, 'recieved control input ', control._name);
 	if(control in this._controls)
 	{
 		this._controls[control](control);
@@ -1672,22 +1672,22 @@ Page.prototype.register_control = function(control, target)
 		{
 			this._controls[grid_controls[index]] = target;
 		}
-		debug('grid added to ', this._name, 's control dict');
+		lcl_debug('grid added to ', this._name, 's control dict');
 	}
 	else if(control instanceof FaderBank)
 	{
-		debug('faderbank found......');
+		lcl_debug('faderbank found......');
 		var faderbank_controls = control.controls();
 		for(index in faderbank_controls)
 		{
 			this._controls[faderbank_controls[index]] = target;
 		}
-		debug('faderbank added to ', this._name, 's control dict');
+		lcl_debug('faderbank added to ', this._name, 's control dict');
 	}
 	else if(control instanceof ControlClass)
 	{
 		this._controls[control] = target;
-		debug('control: ', control._name, ' added to ', this._name, 's control dict');
+		lcl_debug('control: ', control._name, ' added to ', this._name, 's control dict');
 	}
 }
 
@@ -1707,7 +1707,7 @@ TaskServer = function(script, interval)
 		for(var index in self._queue)
 		{
 			var task = self._queue[index];
-			//debug('run...', index, task);
+			//lcl_debug('run...', index, task);
 			if(task.ticks == task.interval)
 			{
 				if(!task.repeat)
@@ -1732,7 +1732,7 @@ TaskServer = function(script, interval)
 
 TaskServer.prototype.addTask = function(callback, arguments, interval, repeat, name)
 {
-//	debug('addTask', arguments, interval, repeat, name);
+//	lcl_debug('addTask', arguments, interval, repeat, name);
 	if(typeof(callback)==='function')
 	{
 		interval = interval||1;
@@ -1744,7 +1744,7 @@ TaskServer.prototype.addTask = function(callback, arguments, interval, repeat, n
 
 TaskServer.prototype.removeTask = function(callback, arguments, name)
 {
-	debug('removing task:', name);
+	lcl_debug('removing task:', name);
 	if(name)
 	{
 		if(this._queue[name])
@@ -1807,14 +1807,14 @@ NotificationDisplayComponent.prototype._display_messages = function()
 	for(var item in this._scheduled_messages)
 	{
 		var entry = this._subjects[this._scheduled_messages[item]];
-		//debug('entry is', self._scheduled_messages[item], entry.display_name, entry.priority);
+		//lcl_debug('entry is', self._scheduled_messages[item], entry.display_name, entry.priority);
 		if(entry.priority>=priority)
 		{
 			entry_name = this._scheduled_messages[item];
 			priority = entry.priority;
 		}
 	}
-	//debug('display_message', entry_name);
+	//lcl_debug('display_message', entry_name);
 	var message = [];
 	if(entry_name in this._subjects)
 	{
@@ -1921,7 +1921,7 @@ NotificationDisplayComponent.prototype.set_priority = function(priority)
 
 NotificationDisplayComponent.prototype.Send_Message = function(message)
 {
-	debug('NotificationDisplayComponent.prototype.Send_Message is abstract, no override provided.\nMessage to be displayed:', message);
+	lcl_debug('NotificationDisplayComponent.prototype.Send_Message is abstract, no override provided.\nMessage to be displayed:', message);
 }
 
 exports.NotificationDisplayComponent = NotificationDisplayComponent;
@@ -1929,19 +1929,19 @@ exports.NotificationDisplayComponent = NotificationDisplayComponent;
 
 ControlRegistry = function(name)
 {
-	//debug('making ControlRegistry');
+	//lcl_debug('making ControlRegistry');
 	var self = this;
 	this._name = !name ? 'ControlRegistry' : name;
 	this.registry = {};
 	this.register_control = function(id, control)
 	{
-		//debug('register_control:', id, control);
+		//lcl_debug('register_control:', id, control);
 		self.registry[id] = control;
 	}
 	this.receive = function(id, value)
 	{
 		try{self.registry[id].receive(value);}
-		catch(err){debug(err, 'id:', id, 'not registerd in registry:', self._name);}
+		catch(err){lcl_debug(err, 'id:', id, 'not registerd in registry:', self._name);}
 	}
 	return this;
 }

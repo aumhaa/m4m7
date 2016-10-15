@@ -13,11 +13,10 @@ setoutletassist(0, 'dump output');
 
 var script = this;
 
-var DEBUG = false;
-var debug = (DEBUG&&Debug) ? Debug : function(){};
-
+aumhaa = require('_base');
 var FORCELOAD = false;
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
+var DEBUG = false;
+aumhaa.init(this);
 
 
 var patch_type = jsarguments[1];

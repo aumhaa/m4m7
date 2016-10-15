@@ -11,14 +11,15 @@ var unique = jsarguments[1];
 
 var script = this;
 
+aumhaa = require('_base');
 var FORCELOAD = false;
 var DEBUG = false;
+aumhaa.init(this);
+
 var DEBUGLCD = false;
 var SHOW_STORAGE = 0;
 
-var debug = (DEBUG&&Debug) ? Debug : function(){};
 var debuglcd = (DEBUGLCD&&Debug) ? Debug : function(){};
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
 
 var modColor=6;
 
@@ -121,6 +122,7 @@ function alive(val)
 
 function initialize()
 {
+	debug('Initializing endcoders....');
 	setup_translations();
 	mod.Send('code_encoder_grid', 'local', 0);
 	mod.Send('create_alt_device_proxy', '_codec_device_proxy');

@@ -12,11 +12,10 @@ var space=new RegExp(/^\S/);
 var xquads = [{'X':0, 'Y':0}, {'X':8, 'Y':0}, {'X':0, 'Y':8}, {'X':8, 'Y':8}];
 var yquads = [{'X':0, 'Y':0}, {'X':0, 'Y':8}, {'X':8, 'Y':0}, {'X':8, 'Y':8}];
 
+aumhaa = require('_base');
 var FORCELOAD = false;
 var DEBUG = false;
-
-var debug = (DEBUG&&Debug) ? Debug : function(){};
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
+aumhaa.init(this);
 
 var colors = {'Aumpad': ['fill',  127],
 				'Launchpad': ['fill', 127],

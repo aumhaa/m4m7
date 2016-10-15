@@ -5,11 +5,10 @@ outlets = 2;
 
 var script = this;
 
-var FORCELOAD = false;
-var DEBUG = false;
-
-var debug = (DEBUG&&Debug) ? Debug : function(){};
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
+aumhaa = require('_base');
+var FORCELOAD = true;
+var DEBUG = true;
+aumhaa.init(this);
 
 var finder;
 var mod;

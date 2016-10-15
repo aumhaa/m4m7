@@ -1,28 +1,162 @@
 autowatch = 1;
 
+
+function Grid(name, call, width, height)
+{
+	var self = this;
+	this._name = name;
+	this.width = function(){return width;}
+	this.height = function(){return height;}
+	this.button = [];
+	this.controls = [];
+	for(var x=0;x<width;x++)
+	{
+		this.button[x] = [];
+		for(var y=0;y<height;y++)
+		{
+			this.button[x][y] = new Button(name + '_Cell_'+x+'_'+y, call, x, y, this);
+			this.controls.unshift(this.button[x][y]);
+		}
+	}
+	this.send = function(val)
+	{
+		mod.Send( call, 'all', val);
+		//viewer_matrix.message('clear');
+		for(var i in self.controls)
+		{
+			self.controls[i]._value = val;
+			self.controls[i]._mask = val;
+		}
+		
+	}
+	this.mask = function(val)
+	{
+		mod.Send( call, 'mask', 'all', val);
+		//viewer_matrix.message('clear');
+		for(var i in self.button)
+		{
+			self.button[i]._mask = val;
+		}
+	}
+
+}
+
+function Button(name, call, x, y, parent)
+{
+	var self = this;
+	this._name = name;
+	this._parent = parent;
+	this._value = 0;
+	this._mask = 0;
+	this._x = x;
+	this._y = y;
+	this._num = x + (y*16) + 1;
+	this.pressed = false;
+	this.send = function(val, force)
+	{
+		if(force||(val!=self._val)||(val!=self._mask))
+		{
+			mod.Send( call, 'value', self._x, self._y, val);
+			//viewer_matrix.message(self._x, self._y, val);
+			self._mask = val;
+			self._value = val;
+		}
+	}
+	this.mask = function(val, force)
+	{
+		if(force||(val != self._mask))
+		{
+			mod.Send( call, 'mask', self._x, self._y, val);
+			var v = val==-1 ? self._value : val;
+			//viewer_matrix.message(self._x, self._y, v);
+			self._mask = val;
+		}
+	}	
+
+}
+
+function Keys(name, call, width)
+{
+	var self = this;
+	this._name = name;
+	this.width = function(){return width;}
+	this.button = [];
+	for(var x=0;x<width;x++)
+	{
+		this.button[x] = new Key(name + '_Cell_'+x, call,  x, this);
+	}
+	this.send = function(val)
+	{
+		mod.Send( call, 'all', val);
+		for(var i in self.button)
+		{
+			self.button[i]._value = val;
+			self.button[i]._mask = val;
+		}
+	}
+	this.mask = function(val)
+	{
+		mod.Send( call, 'mask', 'all', val);
+		for(var i in self.button)
+		{
+			self.button[i]._mask = val;
+		}
+	}
+
+}
+
+function Key(name, call, x, parent)
+{
+	var self = this;
+	this._name = name;
+	this._parent = parent;
+	this._value = 0;
+	this._mask = 0;
+	this._x = x;
+	this._num = x;
+	this.pressed = false;
+	this.send = function(val, force)
+	{
+		if(force||(val!=self._val)||(val!=self._mask))
+		{
+			mod.Send( call, 'value', self._x, val);
+			self._mask = val;
+			self._value = val;
+		}
+	}
+	this.mask = function(val)
+	{
+		if(force||(val != self._mask))
+		{
+			mod.Send( 'key', 'mask', self._x, val);
+			self._mask = val;
+		}
+	}	
+
+}
+
 var storage;
 var s_offset = [0, 0];
 var alted = false;
 var rotated = false;
 var preset = 1;
 var slotlist = [];
-var matrix = new Grid('Grid', 'grid', 16, 16);
-var keys = new Keys('Keys', 'key', 8);
+var matrix;
+var keys;
 var WIKI = 'boinngg';
-
-
-var DEBUG = true;
-var debug = (DEBUG&&Debug) ? Debug : function(){};
 
 function initialize_instance()
 {
+	matrix = new Grid('Grid', 'grid', 16, 16);
+	keys = new Keys('Keys', 'key', 8);
 	mod.Send('set_legacy', 1);
 	storage = this.patcher.getnamed('boinngg');
 	storage.message('recall', 1);
 	storage.message('getslotlist');
+	output = rotated ? rotate_out : normal_out;
 }
 
-function alt(v)
+function _alt(v)
 {
 	debug('alt:', value)
 	alted = value>0;
@@ -37,7 +171,7 @@ function surface_offset(x, y)
 	s_offset = [x, y];
 }
 
-function grid(x, y, val)
+function _grid(x, y, val)
 {
 	debug('grid', x, y, val);
 	val = val ? 1 : 0;
@@ -69,28 +203,28 @@ function anything()
 	debug("anything:", arrayfromargs(messagename, arguments));
 }
 
-function key(x, val)
+function _key(x, val)
 {
 	debug('key in', x, val);
 	messnamed(unique+'key', x, val>0);
 }
 
-function key_output(x, val)
+function _key_output(x, val)
 {
 	keys.button[x].send(val);
 }
 
-function output(x, y, val)
+function _output(x, y, val)
 {
 	debug('output:', x, y, val);
 }
 
-function normal_out(x, y, val)
+function _normal_out(x, y, val)
 {
 	!alted && matrix.button[x][y].send(val);
 }
 
-function rotate_out(x, y, val)
+function _rotate_out(x, y, val)
 {
 	!alted && matrix.button[y][x].send(val);
 }
@@ -142,9 +276,6 @@ function _clear_surface()
 	mod.Send('grid', 'clear');
 }
 
-output = rotated ? rotate_out : normal_out;
-
-
 function _grid_out(x, y, val)
 {
 	debug('_grid_out', x, y, val);
@@ -153,6 +284,10 @@ function _grid_out(x, y, val)
 
 function _key_out(x, val)
 {
-	debug('_key_out', x, y, val):
+	//debug('_key_out', x, val):
 	mod.Send('key', 'value', x, val);
 }
+
+//output = rotated ? rotate_out : normal_out;
+
+

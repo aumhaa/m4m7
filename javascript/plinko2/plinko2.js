@@ -5,13 +5,12 @@ inlets = 1;
 
 var script = this;
 
-
+aumhaa = require('_base');
+var FORCELOAD = false;
 var DEBUG = false;
-var SHOW_STORAGE = false;
-var FORCELOAD = false ;
+aumhaa.init(this);
 
-var debug = (DEBUG&&Debug) ? Debug : function(){};
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
+var SHOW_STORAGE = false;
 
 var finder;
 var mod;

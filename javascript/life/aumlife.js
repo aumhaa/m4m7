@@ -5,11 +5,10 @@ outlets = 4;
 
 var script = this;
 
-var DEBUG = false;
+aumhaa = require('_base');
 var FORCELOAD = false;
-
-var debug = (DEBUG&&Debug) ? Debug : function(){};
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
+var DEBUG = false;
+aumhaa.init(this);
 
 var finder;
 var mod;
@@ -204,7 +203,7 @@ function key(num, val)
 	messnamed(unique+'key', num, val);
 }
 
-function key_out(keyword, num, val)
+function _key_out(keyword, num, val)
 {
 	debug('key_out', num, val);
 	mod.Send('key', 'value', num, val);

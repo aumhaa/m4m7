@@ -124,6 +124,20 @@ exports.flatten1 = flatten1;
 //Setup in js by:
 //debug = (DEBUG&&Debug) ? Debug : function(){};
 
+function assign_jsarg_attributes()
+{
+	for(var i=0;i<jsarguments.length;i++)
+	{
+		if(jsarguments[i].toString().charAt(0) == '@')
+		{
+			var new_att = jsarguments[i].slice(1).toString();
+			script[new_att] = jsarguments[i+1];
+		}
+	}
+}
+
+exports.assign_jsarg_attributes = assign_jsarg_attributes;
+
 function deprivatize_script_functions(script)
 {
 	for(var i in script)
@@ -196,7 +210,6 @@ exports.Forceload = Forceload;
 }*/
 
 //MyClass.prototype = clone(AnotherClass.prototype);
-
 
 function startsWith(str, search)
 {

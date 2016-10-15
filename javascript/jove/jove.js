@@ -7,11 +7,10 @@ var prefix = jsarguments[1];
 var max_time = jsarguments[2];
 var Alive = false;
 
-var DEBUG = false;
-var debug = (DEBUG&&Debug) ? Debug : function(){};
-
+aumhaa = require('_base');
 var FORCELOAD = false;
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
+var DEBUG = false;
+aumhaa.init(this);
 
 
 var buffer_loop = prefix+'loop';

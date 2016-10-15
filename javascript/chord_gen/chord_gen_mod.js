@@ -9,11 +9,11 @@ var mod_finder;
 
 var unique = jsarguments[1];
 
-var FORCELOAD = true;
-var DEBUG = true;
+aumhaa = require('_base');
+var FORCELOAD = false;
+var DEBUG = false;
+aumhaa.init(this);
 
-var debug = (DEBUG&&Debug) ? Debug : function(){};
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
 
 var Mod = ModComponent.bind(script);
 
@@ -57,6 +57,7 @@ function initialize()
 		mod.Send('receive_translation', 'grid_'+i, 'identifier', -1);
 		mod.Send('receive_translation', 'grid_'+i, 'channel', -1);
 	}
+	deprivatize_script_functions(this);
 	debug('chord_gen initialized!')
 }
 
@@ -74,7 +75,7 @@ function setup_colors()
 	mod.Send( 'fill_color_map', 'Monochrome', 0, 1, 1, 1, 8, 1);
 }
 
-function base_grid(x, y, value)
+function _base_grid(x, y, value)
 {
 	debug('base_grid:', x, y, value);
 	var note = x + (y*8);
@@ -85,8 +86,16 @@ function base_grid(x, y, value)
 	}
 }
 
-
-
+function _grid(x, y, value)
+{
+	debug('grid:', x, y, value);
+	var note = x + (y*8);
+	mod.Send('receive_translation', 'grid_'+note, 'value', value ? 5 : KEY_COLORS[note%12])
+	if(value)
+	{
+		outlet(0, 36+note);
+	}
+}
 
 
 

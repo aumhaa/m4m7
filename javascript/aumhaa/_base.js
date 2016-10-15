@@ -4,7 +4,7 @@ exports.mod = require('mod');
 exports.notifiers = require('notifiers');
 exports.util = require('util');
 
-DEBUG = true;
+DEBUG = false;
 debug = DEBUG&&exports.util.Debug?exports.util.Debug:function(){};
 
 exports.init = function(script)

@@ -1,6 +1,6 @@
 autowatch = 1;
 
-/*exports.Push = function(mod)
+exports.Push = function(mod)
 { 
 	//Ohm stuff:
 	for(var i = 0;i < 16; i++)
@@ -23,6 +23,7 @@ autowatch = 1;
 	mod.Send( 'add_translation', 'extras_batch', 'grid', 'ohm_extras', 7);
 }
 
+/*
 exports.Base = function(mod)
 {
 	//Base stuff:
