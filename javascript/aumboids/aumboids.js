@@ -2,6 +2,14 @@ autowatch = 1;
 
 outlets = 6;
 
+var script = this;
+
+aumhaa = require('_base');
+var FORCELOAD = false;
+var DEBUG = false;
+aumhaa.init(this);
+
+
 var timer = 0;
 var modes = [];
 for(var i=0;i<8;i++)
@@ -38,13 +46,6 @@ var mygravpoint_y = 0.;
 var myslip = 0.;
 var mywind = 0.;
 var myagentcount = 0;
-
-var DEBUG = false;
-var debug = (DEBUG&&Debug) ? Debug : function(){};
-
-var FORCELOAD = false;
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
-
 
 function init()
 {

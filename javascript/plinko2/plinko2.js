@@ -412,7 +412,7 @@ function Display()
 		{
 			for(var obj in this.layers[this.layer])
 			{
-				post('obj', obj, '\n');
+				//debug('obj', obj, '\n');
 				var object = this.layers[this.layer][obj];
 				for(var prop in object)
 				{

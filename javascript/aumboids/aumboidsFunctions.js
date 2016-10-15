@@ -4,11 +4,6 @@ var alt_val = 0;
 var ccmutes=[];
 var leader;
 
-
-var DEBUG = true;
-var debug = (DEBUG&&Debug) ? Debug : function(){};
-
-
 function initialize_instance()
 {
 	for(var i=0;i<8;i++)
@@ -22,7 +17,7 @@ function initialize_instance()
 	outlet(0, 'init');
 }
 
-function alt(v)
+function _alt(v)
 {
 	debug('alt in', v);
 	alt_val = v;
@@ -51,7 +46,7 @@ function update_display(v)
 }
 
 
-function grid(x, y, val)
+function _grid(x, y, val)
 {
 	debug('grid', x, y, val);
 	if(val> 0)
@@ -75,14 +70,13 @@ function grid(x, y, val)
 	}
 }
 
-function key(num, val)
+function _key(num, val)
 {
 	if(val)
 	{
 		messnamed(unique+'key', num);
 	}
 }
-
 
 function _grid_in(x, y, val)
 {

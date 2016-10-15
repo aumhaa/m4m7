@@ -6,8 +6,8 @@ outlets = 2;
 var script = this;
 
 aumhaa = require('_base');
-var FORCELOAD = true;
-var DEBUG = true;
+var FORCELOAD = false;
+var DEBUG = false;
 aumhaa.init(this);
 
 var finder;

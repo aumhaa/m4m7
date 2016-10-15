@@ -24,7 +24,7 @@ var FORCELOAD = false;
 var DEBUG = false;
 aumhaa.init(this);
 
-var DEBUG = false;
+var NEW_DEBUG = false;
 var DEBUG_LCD = false;
 var DEBUG_PTR = false;
 var DEBUG_STEP = false;
