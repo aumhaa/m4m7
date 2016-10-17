@@ -697,6 +697,7 @@ class ModHandler(CompoundComponent):
 		self._alt_value.subject and self._alt_value.subject.send_value(2 + self.is_alted()*7)
 	
 
+
 	def set_mod_nav_buttons(self, buttons):
 		self._mod_nav_buttons = buttons
 		self._on_mod_nav_button_value.replace_subjects(buttons)
@@ -741,6 +742,7 @@ class ModHandler(CompoundComponent):
 				self.song.view.select_device(device)
 				self.select_mod(new_mod)
 	
+
 
 	def show_mod_in_live(self):
 		if isinstance(self.active_mod(), Live.Device.Device):
@@ -834,6 +836,7 @@ class ModHandler(CompoundComponent):
 			self._active_mod.send('shift', value)
 		self.update()
 	
+
 
 	def set_alt_button(self, button):
 		self._alt_value.subject = button
@@ -2208,6 +2211,7 @@ class ModDeviceProvider(EventObject):
 		super(ModDeviceProvider, self).__init__(*a, **k)
 		self._device = None
 		self._locked_to_device = False
+		self._modhandler = None
 		self.song = song
 		self.__on_appointed_device_changed.subject = song
 		self.__on_selected_track_changed.subject = song.view
@@ -2296,12 +2300,15 @@ class ModDeviceProvider(EventObject):
 	
 
 	def mod_device_from_device(self, device):
-		modrouter = get_modrouter()
-		if modrouter:
-			mod_device = modrouter.is_mod(device)
-			if mod_device:
-				device = mod_device._device_proxy
-		return device
+		if not self._modhandler is None and self._modhandler.is_locked() and self._modhandler.active_mod():
+			return self._modhandler.active_mod()._device_proxy
+		else:
+			modrouter = get_modrouter()
+			if modrouter:
+				mod_device = modrouter.is_mod(device)
+				if mod_device:
+					device = mod_device._device_proxy
+			return device
 	
 
 	def update_device_selection(self):
@@ -2322,6 +2329,11 @@ class ModDeviceProvider(EventObject):
 		else:
 			self.song.appointed_device = None
 			self.device = None
+	
+
+	def set_modhandler(self, modhandler):
+		if isinstance(modhandler, ModHandler):
+			self._modhandler = modhandler
 	
 
 

@@ -3,13 +3,13 @@
 		"fileversion" : 1,
 		"appversion" : 		{
 			"major" : 7,
-			"minor" : 0,
-			"revision" : 2,
-			"architecture" : "x86",
+			"minor" : 3,
+			"revision" : 0,
+			"architecture" : "x64",
 			"modernui" : 1
 		}
 ,
-		"rect" : [ 251.0, 313.0, 298.0, 105.0 ],
+		"rect" : [ 251.0, 313.0, 299.0, 103.0 ],
 		"bgcolor" : [ 0.168627, 0.168627, 0.168627, 1.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 1,
@@ -66,41 +66,6 @@
 			}
 , 			{
 				"box" : 				{
-					"fontname" : "Arial",
-					"fontsize" : 9.0,
-					"id" : "obj-7",
-					"maxclass" : "newobj",
-					"numinlets" : 1,
-					"numoutlets" : 3,
-					"outlettype" : [ "", "", "" ],
-					"patching_rect" : [ 937.5, 421.0, 46.0, 19.0 ],
-					"saved_attribute_attributes" : 					{
-						"valueof" : 						{
-							"parameter_initial" : [ "Off" ],
-							"parameter_initial_enable" : 1,
-							"parameter_invisible" : 1,
-							"parameter_linknames" : 1,
-							"parameter_longname" : "inport",
-							"parameter_shortname" : "inport",
-							"parameter_type" : 3
-						}
-
-					}
-,
-					"saved_object_attributes" : 					{
-						"annotation_name" : "",
-						"initial" : [ "Off" ],
-						"parameter_enable" : 1
-					}
-,
-					"style" : "",
-					"text" : "pattr",
-					"varname" : "u753000715"
-				}
-
-			}
-, 			{
-				"box" : 				{
 					"fontface" : 0,
 					"fontname" : "Arial",
 					"fontsize" : 9.0,
@@ -119,16 +84,26 @@
 				"box" : 				{
 					"fontsize" : 10.0,
 					"id" : "obj-33",
-					"items" : [ "IAC Bus Bus 1", ",", "Ableton Push Live Port", ",", "Ableton Push User Port", ",", "from Max 1", ",", "from Max 2", ",", "<none>" ],
+					"items" : [ "IAC Driver Bus 1", ",", "Ableton Push 2 Live Port", ",", "Ableton Push 2 User Port", ",", "from Max 1", ",", "from Max 2", ",", "<none>" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
 					"outlettype" : [ "int", "", "" ],
-					"parameter_enable" : 0,
+					"parameter_enable" : 1,
 					"patching_rect" : [ 951.0, 458.0, 100.0, 20.0 ],
 					"pattrmode" : 1,
 					"presentation" : 1,
 					"presentation_rect" : [ 9.0, 49.5, 85.0, 20.0 ],
+					"saved_attribute_attributes" : 					{
+						"valueof" : 						{
+							"parameter_longname" : "external_input_port",
+							"parameter_shortname" : "external_input_port",
+							"parameter_type" : 3,
+							"parameter_invisible" : 1
+						}
+
+					}
+,
 					"style" : "",
 					"varname" : "external_input_port"
 				}
@@ -144,41 +119,6 @@
 					"patching_rect" : [ 603.0, 403.0, 66.0, 19.0 ],
 					"style" : "",
 					"text" : "prepend send"
-				}
-
-			}
-, 			{
-				"box" : 				{
-					"fontname" : "Arial",
-					"fontsize" : 9.0,
-					"id" : "obj-10",
-					"maxclass" : "newobj",
-					"numinlets" : 1,
-					"numoutlets" : 3,
-					"outlettype" : [ "", "", "" ],
-					"patching_rect" : [ 787.0, 421.0, 46.0, 19.0 ],
-					"saved_attribute_attributes" : 					{
-						"valueof" : 						{
-							"parameter_initial" : [ "Off" ],
-							"parameter_initial_enable" : 1,
-							"parameter_invisible" : 1,
-							"parameter_linknames" : 1,
-							"parameter_longname" : "outport",
-							"parameter_shortname" : "outport",
-							"parameter_type" : 3
-						}
-
-					}
-,
-					"saved_object_attributes" : 					{
-						"annotation_name" : "",
-						"initial" : [ "Off" ],
-						"parameter_enable" : 1
-					}
-,
-					"style" : "",
-					"text" : "pattr",
-					"varname" : "u120000720"
 				}
 
 			}
@@ -395,8 +335,8 @@
 					"id" : "obj-119",
 					"maxclass" : "newobj",
 					"numinlets" : 1,
-					"numoutlets" : 7,
-					"outlettype" : [ "", "", "", "int", "int", "int", "int" ],
+					"numoutlets" : 8,
+					"outlettype" : [ "", "", "", "int", "int", "", "int", "" ],
 					"patching_rect" : [ 762.0, 279.0, 100.0, 19.0 ],
 					"style" : "",
 					"text" : "midiparse"
@@ -455,8 +395,8 @@
 					"id" : "obj-115",
 					"maxclass" : "newobj",
 					"numinlets" : 1,
-					"numoutlets" : 7,
-					"outlettype" : [ "", "", "", "int", "int", "int", "int" ],
+					"numoutlets" : 8,
+					"outlettype" : [ "", "", "", "int", "int", "", "int", "" ],
 					"patching_rect" : [ 573.0, 278.0, 100.0, 19.0 ],
 					"style" : "",
 					"text" : "midiparse"
@@ -530,8 +470,8 @@
 					"id" : "obj-107",
 					"maxclass" : "newobj",
 					"numinlets" : 7,
-					"numoutlets" : 1,
-					"outlettype" : [ "int" ],
+					"numoutlets" : 2,
+					"outlettype" : [ "int", "" ],
 					"patching_rect" : [ 787.0, 179.0, 115.0, 19.0 ],
 					"style" : "",
 					"text" : "midiformat"
@@ -753,16 +693,26 @@
 				"box" : 				{
 					"fontsize" : 10.0,
 					"id" : "obj-78",
-					"items" : [ "IAC Bus Bus 1", ",", "Ableton Push Live Port", ",", "Ableton Push User Port", ",", "to Max 1", ",", "to Max 2", ",", "<none>" ],
+					"items" : [ "IAC Driver Bus 1", ",", "Ableton Push 2 Live Port", ",", "Ableton Push 2 User Port", ",", "to Max 1", ",", "to Max 2", ",", "<none>" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
 					"outlettype" : [ "int", "", "" ],
-					"parameter_enable" : 0,
+					"parameter_enable" : 1,
 					"patching_rect" : [ 800.5, 458.0, 100.0, 20.0 ],
 					"pattrmode" : 1,
 					"presentation" : 1,
 					"presentation_rect" : [ 205.0, 49.5, 84.0, 20.0 ],
+					"saved_attribute_attributes" : 					{
+						"valueof" : 						{
+							"parameter_longname" : "external_output_port",
+							"parameter_shortname" : "external_output_port",
+							"parameter_type" : 3,
+							"parameter_invisible" : 1
+						}
+
+					}
+,
 					"style" : "",
 					"varname" : "external_output_port"
 				}
@@ -971,8 +921,8 @@
 					"id" : "obj-22",
 					"maxclass" : "newobj",
 					"numinlets" : 7,
-					"numoutlets" : 1,
-					"outlettype" : [ "int" ],
+					"numoutlets" : 2,
+					"outlettype" : [ "int", "" ],
 					"patching_rect" : [ 95.0, 204.0, 100.0, 19.0 ],
 					"style" : "",
 					"text" : "midiformat 1"
@@ -1260,9 +1210,9 @@
 						"fileversion" : 1,
 						"appversion" : 						{
 							"major" : 7,
-							"minor" : 0,
-							"revision" : 2,
-							"architecture" : "x86",
+							"minor" : 3,
+							"revision" : 0,
+							"architecture" : "x64",
 							"modernui" : 1
 						}
 ,
@@ -2810,15 +2760,6 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-78", 0 ],
-					"disabled" : 0,
-					"hidden" : 0,
-					"source" : [ "obj-10", 1 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
 					"destination" : [ "obj-72", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
@@ -2991,7 +2932,7 @@
 					"destination" : [ "obj-116", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
-					"midpoints" : [ 609.5, 300.0, 582.5, 300.0 ],
+					"midpoints" : [ 605.642857, 300.0, 582.5, 300.0 ],
 					"source" : [ "obj-115", 2 ]
 				}
 
@@ -3272,7 +3213,7 @@
 					"destination" : [ "obj-43", 2 ],
 					"disabled" : 0,
 					"hidden" : 0,
-					"midpoints" : [ 80.5, 245.0, 218.833328, 245.0 ],
+					"midpoints" : [ 80.5, 245.0, 218.833333, 245.0 ],
 					"source" : [ "obj-32", 0 ]
 				}
 
@@ -3505,15 +3446,6 @@
 					"disabled" : 0,
 					"hidden" : 0,
 					"source" : [ "obj-69", 1 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-33", 0 ],
-					"disabled" : 0,
-					"hidden" : 0,
-					"source" : [ "obj-7", 1 ]
 				}
 
 			}
@@ -3856,7 +3788,34 @@
 				}
 
 			}
- ]
+ ],
+		"parameters" : 		{
+			"obj-80" : [ "swing[2]", "swing", 3 ],
+			"obj-33" : [ "external_input_port", "external_input_port", 0 ],
+			"obj-61" : [ "out_channel", "out_channel", 100 ],
+			"obj-40" : [ "midi_thru", "midi_thru", 411 ],
+			"obj-83::obj-143" : [ "timing[2]", "timing", 2 ],
+			"obj-187" : [ "timing_master", "timing_master", 415 ],
+			"obj-58" : [ "midi_output_menu", "midi_output_menu", 100 ],
+			"obj-44" : [ "midi_input_menu", "midi_input_menu", 409 ],
+			"obj-78" : [ "external_output_port", "external_output_port", 0 ],
+			"obj-28" : [ "start", "start", 414 ],
+			"obj-159" : [ "beat", "beat", 416 ],
+			"obj-29" : [ "in_channel", "in_channel", 406 ]
+		}
+,
+		"dependency_cache" : [ 			{
+				"name" : "timing_b992.maxpat",
+				"bootpath" : "~/Documents/Max 7/Packages/m4m7/javascript/common",
+				"type" : "JSON",
+				"implicit" : 1
+			}
+, 			{
+				"name" : "midi4l.mxo",
+				"type" : "iLaX"
+			}
+ ],
+		"autosave" : 0
 	}
 
 }

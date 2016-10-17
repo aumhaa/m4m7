@@ -365,7 +365,8 @@ class AumPush2(Push2):
 		with inject(register_component = const(self._register_component), song = const(self.song)).everywhere():
 			self.modhandler = PushModHandler(self) ## song = self.song, register_component = self._register_component)
 		self.modhandler.name = 'ModHandler'
-		self.modhandler.layer = Layer( priority = 6, lock_button = self.elements.note_mode_button, grid = self.elements.matrix, 
+		self.modhandler.layer = Layer( priority = 6, grid = self.elements.matrix, 
+																			lock_button = self.elements.note_mode_button,
 																			nav_up_button = self.elements.octave_up_button, 
 																			nav_down_button = self.elements.octave_down_button, 
 																			nav_left_button = self.elements.in_button, 
@@ -373,7 +374,7 @@ class AumPush2(Push2):
 																			key_buttons = self.elements.side_buttons,
 																			)
 		self.modhandler.alt_shift_layer = AddLayerMode( self.modhandler, Layer(Shift_button = self.elements.shift_button,
-																			Alt_button = self.elements.select_button))
+																			Alt_button = self.elements.select_button,))
 		self.modhandler.legacy_shift_layer = AddLayerMode( self.modhandler, Layer(priority = 7, 
 																			device_selector_matrix = self.elements.matrix.submatrix[:, :1],
 																			channel_buttons = self.elements.matrix.submatrix[:, 1:2], 
@@ -388,6 +389,7 @@ class AumPush2(Push2):
 																			))
 																			#key_buttons = self.elements.select_buttons))
 																			#key_buttons = self.elements.track_state_buttons))
+		self._device_provider.set_modhandler(self.modhandler)
 		self._device_provider.restart_mod()
 	
 
@@ -471,7 +473,7 @@ class AumPush2(Push2):
 
 		self._troll_modes = ModesComponent()
 		self._troll_modes.add_mode('disabled', [], cycle_mode_button_color = 'DefaultButton.Off')
-		self._troll_modes.add_mode('enabled', [static_modes, tuple([self._grab_track_mode, self._release_track_mode, ])], cycle_mode_button_color = 'DefaultButton.Alert')
+		self._troll_modes.add_mode('enabled', [static_modes, tuple([self._grab_track_mode, self._release_track_mode,])], cycle_mode_button_color = 'DefaultButton.Alert')
 		self._troll_modes.layer = Layer(cycle_mode_button = 'master_select_button')
 		self._troll_modes.selected_mode = 'disabled'
 	
@@ -495,6 +497,7 @@ class AumPush2(Push2):
 			self._main_modes.push_mode('device')
 		self._device_component._update_parameters()"""
 		
+		self._main_modes.selected_mode = 'mix'
 		self._track_mixer_control._mode_on_troll_entrance = self._mix_modes.selected_mode
 		self._track_mixer_control._main_offset = self._track_mixer_control.scroll_offset
 		self._track_mixer_control._scroll_offset = self._track_mixer_control._troll_offset
@@ -510,6 +513,7 @@ class AumPush2(Push2):
 			self._main_modes.pop_mode('device')
 		self._device_component._update_parameters()"""
 		
+
 		self._track_mixer_control._troll_offset = self._track_mixer_control.scroll_offset
 		self._track_mixer_control._scroll_offset = self._track_mixer_control._main_offset
 		if self._main_modes.selected_mode is 'mix':
@@ -618,10 +622,10 @@ class AumPush2(Push2):
 		self._slicing_component.set_simpler(sliced_simpler)
 		debug('select_note_mode: ', self.modhandler.is_locked(), self.modhandler.active_mod(), len(track.devices))
 		if not (self._note_modes.selected_mode is 'mod' and self.modhandler.is_locked()):
-			if track == None or track.is_foldable or track in self.song.return_tracks or track == self.song.master_track or track.is_frozen:
-				self._note_modes.selected_mode = 'disabled'
-			elif self.modhandler.active_mod():
+			if self.modhandler.active_mod():
 				self._note_modes.selected_mode = 'mod'
+			elif track == None or track.is_foldable or track in self.song.return_tracks or track == self.song.master_track or track.is_frozen:
+				self._note_modes.selected_mode = 'disabled'
 			elif track and track.has_audio_input:
 				self._note_modes.selected_mode = 'looperhack'
 			elif drum_device:
@@ -708,6 +712,7 @@ class PushModHandler(ModHandler):
 
 	Shift_button = ButtonControl()
 	Alt_button = ButtonControl()
+	Lock_button = ButtonControl()
 
 	def __init__(self, *a, **k):
 		self._color_type = 'Push'
@@ -852,6 +857,12 @@ class PushModHandler(ModHandler):
 		self.update()
 	
 
+	@Lock_button.pressed
+	def Lock_button(self, button):
+		if value>0:
+			self.set_lock(not self.is_locked())
+	
+
 	def update(self, *a, **k):
 		mod = self.active_mod()
 		if not mod is None:
@@ -861,6 +872,7 @@ class PushModHandler(ModHandler):
 				self._grid_value.subject.reset()
 			if not self._keys_value.subject is None:
 				self._keys_value.subject.reset()
+		self._on_lock_value.subject and self._on_lock_value.subject.set_light('Mod.LockOn' if self.is_locked() else 'Mod.LockOff')
 	
 
 

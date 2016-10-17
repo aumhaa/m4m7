@@ -103,7 +103,7 @@ function mod_callback(args)
 {
 	if((args[0]=='value')&&(args[1]!='bang'))
 	{
-		//debug('mod callback:', args);
+		debug('mod callback:', args);
 		if(args[1] in script)
 		{
 			script[args[1]].apply(script, args.slice(2));
@@ -280,7 +280,7 @@ function initialize()
 	select_row(0);
 	load_preset();
 	storage.message('getslotlist');
-	debug('initialize endcoders');
+	debug('Endcoders initialized!');
 }
 
 function setup_translations()
@@ -346,7 +346,7 @@ function setup_translations()
 function slotlist()
 {
 	args = arrayfromargs(arguments);
-	post('slotlist', args, '\n');
+	debug('slotlist', args, '\n');
 	for(var i=0;i<16;i++)
 	{
 		var found = 0;
@@ -360,7 +360,6 @@ function slotlist()
 		//outlet(0, 'cntrlr_key', 'value', i, found*127);
 		if(i<8)
 		{
-			//outlet(0, 'key', 'value', i, found);
 			mod.Send('trans', 'key_'+i, 'value', found);
 		}
 	}
@@ -369,7 +368,6 @@ function slotlist()
 		//outlet(0, 'cntrlr_key', 'value', active_preset-1, 5);
 		if(active_preset<8)
 		{
-			//outlet(0, 'key', 'value', active_preset-1, 8);
 			mod.Send('trans', 'key_'+(active_preset-1), 'value', 8);
 		}
 	}
@@ -455,24 +453,42 @@ function _button(x, y, val)
 		{
 			if(rows[0].pressed>0)
 			{
-				for(var i=0;i<24;i++)
+				if(is_alted)
 				{
-					set_breakpoint(i);
+					select_knob(x);
+					this.patcher.getnamed('breakpoints').message('wclose');
+					this.patcher.getnamed('breakpoints').message('open', x+1);
+				}
+				else
+				{
+					for(var i=0;i<24;i++)
+					{
+						set_breakpoint(i);
+					}
 				}
 			}
 			else if(rows[1].pressed>0)
 			{
-				for(var i=0;i<24;i++)
+				if(is_alted)
 				{
-					clear_breakpoint(i);
+					for(var i=0;i<24;i++)
+					{
+						selected[i].breakpoint.message('clear');
+					}
+				}
+				else
+				{
+					for(var i=0;i<24;i++)
+					{
+						clear_breakpoint(i);
+					}
 				}
 			}
 			else if(is_alted)
 			{
-				for(var i=0;i<24;i++)
-				{
-					set_breakpoint(i);
-				}
+				select_knob(x);
+				this.patcher.getnamed('breakpoints').message('wclose');
+				this.patcher.getnamed('breakpoints').message('open', x+1);
 			}
 			else if(is_shifted)
 			{
@@ -494,17 +510,42 @@ function _button(x, y, val)
 			}
 			else if(rows[1].pressed>0)
 			{
-				//select_parameter(((y-1)*8)+x);
-				clear_breakpoint(((y-1)*8)+x);
+				if(is_alted)
+				{
+					selected[((y-1)*8)+x].breakpoint.message('clear');
+				}
+				else
+				{
+					//select_parameter(((y-1)*8)+x);
+					clear_breakpoint(((y-1)*8)+x);
+				}
 			}
-			//else if(is_shifted)
+			else if(is_shifted)
+			{
+				if(is_alted)
+				{
+					selected[((y-1)*8)+x].breakpoint.message('clear');
+				}
+				else
+				{
+					set_breakpoint(((y-1)*8)+x);
+				}
+			}
 			else if(assign_mode_enabled)
 			{
-				select_parameter(((y-1)*8)+x);
+				if(is_alted)
+				{
+					clear_parameter(((y-1)*8)+x);
+				}
+				else
+				{
+					select_parameter(((y-1)*8)+x);
+				}
 			}
 			else if(is_alted)
 			{
-				set_breakpoint(((y-1)*8)+x);
+				//set_breakpoint(((y-1)*8)+x);
+				select_parameter(((y-1)*8)+x);
 			}
 			else
 			{
@@ -666,6 +707,7 @@ function _c_button(x, y, val)
 	}
 }
 
+/*
 function _grid(x, y, val)
 {
 	var num = x+(y*8);
@@ -732,6 +774,7 @@ function _grid(x, y, val)
 		}
 	}
 }
+*/
 
 function _grid(x, y, val)
 {
@@ -779,20 +822,27 @@ function _alt(value)
 	is_alted = value>0;
 	debug('alt', is_alted);
 }
-
+	
 function set_breakpoint(num)
 {
 	var param = selected[num].parameter
 	if(param.id != 0)
 	{
 		finder.id = param.id;
-		var max = finder.get('max');
-		var min = finder.get('min');
-		var val = finder.get('value');
-		var new_val = (val-min/(max-min))*100;
+		var max = parseFloat(finder.get('max'));
+		var min = parseFloat(finder.get('min'));
+		var val = parseFloat(finder.get('value'));
+		var new_val = ((val-min)/(max-min))*100;
 		debug('val is:', new_val, 'max', max, 'min', min, 'val', val);
 		debug('set_breakpoint', num, selected.val, new_val);
-		selected[num].breakpoint.message('list', selected.val, new_val);
+		if(-1<new_val<101)
+		{
+			selected[num].breakpoint.message('list', selected.val, new_val);
+		}
+		else
+		{
+			debug('set_breakpoint: resulting value is out of range (0-100),', new_val);
+		}
 	}
 }
 
@@ -921,6 +971,20 @@ function select_parameter(num)
 			set_active(num, 1);
 		}
 	}
+}
+
+function clear_parameter(num)
+{
+	debug('clear_parameter:', num);
+	var new_parameter_id = 0;
+	mod.Send('send_explicit', 'receive_alt_device_proxy', '_codec_device_proxy', 'set_custom_parameter', num+(selected.num*24), 'id', new_parameter_id);
+	mod.Send('send_explicit', 'receive_device', 'set_custom_parameter', num+(selected.num*24), 'id', new_parameter_id);
+	debug('receive_device', 'set_custom_parameter', num+(selected.num*24), 'id', new_parameter_id);
+	selected[num].parameter.id = new_parameter_id;
+	selected.id_numbers[num] = new_parameter_id;
+	selected.assignment.message('list', selected.id_numbers);
+	selected[num]._title.message('set', '');
+	selected[num].gui_select.message('outlinecolor', .35, .35, .35, 1.);
 }
 
 function set_active(num, state)
