@@ -1,8 +1,12 @@
 autowatch = 1;
 
-var DEBUG = false;
-
 var script = this;
+
+aumhaa = require('_base');
+var FORCELOAD = false;
+var DEBUG = true;
+aumhaa.init(this);
+
 var BIG = [96, 64, 32, 0];
 var ALPHA = [' ', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 
 				'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 
@@ -79,15 +83,15 @@ for(var i in cntl_funcs)
 function list()
 {
     var args = arrayfromargs(arguments);
-    //post(args.length, args);
+    debug('list:', args.length, args);
 	if((args.length == 193)&&(sysex.length > 0))
 	{
-		//post('dump: checking....\n');
+		debug('dump: checking....\n');
 		for(var i=24;i<40;i++)
 		{
 			if(args[i] != sysex[i])
 			{
-				post('item', i, 'changed, old:', sysex[i], 'new:', args[i], '\n');
+				debug('item', i, 'changed, old:', sysex[i], 'new:', args[i], '\n');
 			}
 		}
 		decode_pgm(args);
@@ -412,7 +416,7 @@ function modamnt(args)
 
 function cntl_in(num, val)
 {
-	if(DEBUG){post('cntl_in', num, val, '\n');}
+	debug('cntl_in', num, val, '\n')
 	if(cntls[num]!='none')
 	{
 		this.patcher.getnamed(cntls[num][0]).set(script[cntls[num][1]](val));
