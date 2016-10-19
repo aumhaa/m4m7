@@ -1,11 +1,11 @@
 mod ===
 
-monomodular b996+
+monomodular b997+
 
 How to make this work:
 
-1) You MUST be using the most current version of Live! (as of this writing, version 9.6.2). You should also
-install the latest version of Max (7.24).
+1) You MUST be using the most current version of Live! (as of this writing, version 9.7). You should also
+install the latest version of Max (7.3).
 
 2) Download this repository, preferably with a github client as I’m making frequent changes and it will be
 easier to update for you if you find bugs that I can quickly fix. Put the “m4m7” or “m4m7-master” folder
@@ -34,11 +34,11 @@ github commits to try and find a compatible version to the last working build.  
 works for the v2 scripts (including the DrumSteppr/SynthSteppr mods), but I will not be developing those 
 scripts further beyond commissioned work.  
 
-It’s a good idea to keep a separate copy of Live for the new scripts just so you don’t mess with your
-older installation (if you have one). On OSX, you can do this simply by making a new copy of your Live.app
+It’s a good idea to keep a separate copy of Live for the new scripts just so you don’t fubar your
+working installation (if you have one). On OSX, you can do this simply by making a new copy of your Live.app
 bundle and naming it something different (option + drag and drop). If that doesn't work for you, just back
 up your old Mod/Livid Python scripts, _Mono_Framework folder (for pre v2 scripts) or aumhaa folder (for 
-any of the newest scripts) in MIDI Remote Scripts.
+any of the newest scripts) in MIDI Remote Scripts (or simply archive the entire MIDI Remote Scripts folder somewhere).
 
 If there are features or fixes that you need for something, I'm happy to consider making them on a commissioned
 basis, drop me some mail and we can discuss.  I generally stay very busy, but often times small changes can happen
