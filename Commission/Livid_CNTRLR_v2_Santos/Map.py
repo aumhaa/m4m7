@@ -41,8 +41,8 @@ FOLLOW = True		#this sets whether or not the last selected device on a track is 
 
 COLOR_MAP = [2, 64, 4, 8, 16, 127, 32]
 
-from _Framework.ButtonElement import Color
-from _Mono_Framework.LividColors import *
+from ableton.v2.control_surface.elements.color import Color
+from aumhaa.v2.livid.colors import *
 
 class Colors:
   BLACK = 0

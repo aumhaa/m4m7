@@ -178,7 +178,7 @@ class ToggleDeviceEnabledComponent(DeviceSelectorComponent):
 	def __init__(self, *a, **k):
 		self._primary_devices = [None for index in range(8)]
 		self._device_registry = [[] for index in range(8)]
-		self._colors = [[1, 5], [1, 4], [1, 6], [1, 3], [1, 5], [1, 4], [1, 6], [1, 3]]
+		self._colors = [[1, 5], [1, 4], [1, 6], [1, 7], [1, 5], [1, 4], [1, 6], [1, 7]]
 		super(ToggleDeviceEnabledComponent, self).__init__(*a, **k)
 	
 
@@ -381,6 +381,8 @@ class Cntrlr(Base_Cntrlr):
 		self._mixer.santos_buttons_layer = AddLayerMode(self._mixer, Layer(priority = 4,
 											arming_track_select_buttons = self._key_matrix.submatrix[:4, 1:],))
 
+		super(Cntrlr, self)._setup_modes()
+
 		common = CompoundMode(self._mixer,
 									self._session_ring)
 		main_buttons=CompoundMode(self._mixer.main_buttons_layer, 
@@ -411,9 +413,60 @@ class Cntrlr(Base_Cntrlr):
 									self._device_navigator.select_dial_layer,
 									self.encoder_navigation_on)
 
-		super(Cntrlr, self)._setup_modes()
 
-		self._main_modes.add_mode('SantosMode', [self._mixer, self._mixer.main_faders_layer, self._device_toggle, self._translations2, self._instrument, self._instrument.shift_button_layer, self._mixer.santos_buttons_layer, self._device, self._device_navigator, self._session_ring, DelayMode(self._update_session_position, delay = .1)], )
+
+		self._main_modes = ModesComponent(name = 'MainModes')
+		self._main_modes.add_mode('disabled', [self._background])
+		self._main_modes.add_mode('MixMode', [common, 
+													self._instrument, 
+													self._instrument.shift_button_layer,
+													self._mixer,
+													main_faders, 
+													self._mixer.main_knobs_layer,
+													self._device,
+													self._device_navigator,
+													self._device_navigator.main_layer,],
+													behaviour = DefaultedBehaviour(default_mode = 'SantosMode',color = 'ModeButtons.DeviceSelector', off_color = 'ModeButtons.DeviceSelectorDisabled'))
+		self._main_modes.add_mode('ModSwitcher', [common,
+													main_faders, 
+													main_dials, 
+													self._mixer.main_knobs_layer, 
+													self._session_navigation.select_dial_layer, 
+													self._view_control,
+													self._view_control.main_layer, 
+													self._device_navigator.select_dial_layer, 
+													self.encoder_navigation_on, self._modswitcher, 
+													DelayMode(self._update_modswitcher, delay = .1)], 
+													behaviour = ColoredCancellableBehaviourWithRelease(color = 'ModeButtons.ModSwitcher', off_color = 'ModeButtons.ModSwitcherDisabled'))
+		self._main_modes.add_mode('Translations', [common, 
+													main_faders, 
+													main_dials,
+													self._mixer.main_knobs_layer, 
+													self._translations, 
+													DelayMode(self._translations.selector_layer, delay = .1)], 
+													behaviour = DefaultedBehaviour(default_mode = 'SantosMode', color = 'ModeButtons.Translations', off_color = 'ModeButtons.TranslationsDisabled'))
+		self._main_modes.add_mode('DeviceSelector', [common,
+													self._device_selector,
+													DelayMode(self._device_selector.select_layer, delay = .1),
+													DelayMode(self.modhandler.lock_layer, delay = .1),
+													DelayMode(self._device_selector.assign_layer, delay = .5), 
+													main_buttons, 
+													main_dials, 
+													main_faders, 
+													self._mixer.main_knobs_layer, 
+													self._device,
+													self._device_navigator], 
+													behaviour = ColoredCancellableBehaviourWithRelease(color = 'ModeButtons.DeviceSelector', off_color = 'ModeButtons.DeviceSelectorDisabled'))
+		self._main_modes.add_mode('SantosMode', [self._mixer, 
+													self._mixer.main_faders_layer, 
+													self._device_toggle, 
+													self._translations2, 
+													self._instrument, 
+													self._instrument.shift_button_layer, 
+													self._mixer.santos_buttons_layer, 
+													self._device, self._device_navigator, 
+													self._session_ring, 
+													DelayMode(self._update_session_position, delay = .1)], )
 
 		self._main_modes.layer = Layer(priority = 4, ModSwitcher_button = self._encoder_button[2], MixMode_button = self._encoder_button[0], Translations_button = self._encoder_button[3]) #, 
 		self._main_modes.selected_mode = 'disabled'
