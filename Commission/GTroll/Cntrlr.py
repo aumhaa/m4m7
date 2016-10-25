@@ -93,6 +93,8 @@ class Cntrlr(BaseCntrlr):
 									page_up_button = self._button[23],
 									page_left_button = self._button[20],
 									page_right_button = self._button[21]))
+		self._session.G_layer = AddLayerMode(self._session, Layer(priority = 4,
+									scene_launch_buttons = self._key_matrix.submatrix[4:8, 0]))
 		self._session.stop_clips_layer = AddLayerMode(self._session, Layer(priority = 4,
 									stop_all_clips_button = self._button[29],))
 	
@@ -150,6 +152,9 @@ class Cntrlr(BaseCntrlr):
 											next_button = self._encoder_button[9], 
 											exit_button = self._encoder_button[10], 
 											enter_button = self._encoder_button[11],))
+		self._device_navigator.G_layer = AddLayerMode(self._device_navigator, Layer(priority = 4,
+											prev_button = self._button[28], 
+											next_button = self._button[29],))
 	
 
 	def _setup_instrument(self):
@@ -186,7 +191,6 @@ class Cntrlr(BaseCntrlr):
 																										keypad_matrix = self._matrix.submatrix[:,:],))
 		self._instrument._keypad.sequencer_shift_layer = LayerMode(self._instrument._keypad, Layer(priority = 5, 
 																										keypad_matrix = self._matrix.submatrix[:,:], 
-																										loop_selector_matrix = self._key_matrix.submatrix[4:8, 0], 
 																										quantization_buttons = self._key_matrix.submatrix[:7, 1], 
 																										follow_button = self._button[23]))
 		self._instrument._keypad.sequencer_session_layer = LayerMode(self._instrument._keypad, Layer(priority = 5, 
@@ -194,7 +198,6 @@ class Cntrlr(BaseCntrlr):
 		self._instrument._keypad.split_session_layer = LayerMode(self._instrument._keypad, Layer(priority = 5, 
 																										split_matrix = self._key_matrix.submatrix[:16,:1]))
 		self._instrument._keypad.sequencer_session_shift_layer = LayerMode(self._instrument._keypad, Layer(priority = 5,
-																										loop_selector_matrix = self._key_matrix.submatrix[4:8, :1], 
 																										quantization_buttons = self._key_matrix.submatrix[:7, 1:], 
 																										follow_button = self._button[23]))
 
@@ -206,7 +209,6 @@ class Cntrlr(BaseCntrlr):
 																										split_matrix = self._key_matrix.submatrix[:16,:1]))
 		self._instrument._drumpad.sequencer_shift_layer = LayerMode(self._instrument._drumpad, Layer(priority = 5, 
 																										drumpad_matrix = self._matrix.submatrix[:,:], 
-																										loop_selector_matrix = self._key_matrix.submatrix[4:8, :1], 
 																										quantization_buttons = self._key_matrix.submatrix[:7, 1:], 
 																										follow_button = self._button[23]))
 		self._instrument._drumpad.sequencer_session_layer = LayerMode(self._instrument._drumpad, Layer(priority = 5, 
@@ -214,7 +216,6 @@ class Cntrlr(BaseCntrlr):
 		self._instrument._drumpad.split_session_layer = LayerMode(self._instrument._drumpad, Layer(priority = 5, 
 																										split_matrix = self._key_matrix.submatrix[:16,:1]))
 		self._instrument._drumpad.sequencer_session_shift_layer = LayerMode(self._instrument._drumpad, Layer(priority = 5, 
-																										loop_selector_matrix = self._key_matrix.submatrix[4:8, :1], 
 																										quantization_buttons = self._key_matrix.submatrix[:7, 1:], 
 																										follow_button = self._button[23]))
 
@@ -238,12 +239,15 @@ class Cntrlr(BaseCntrlr):
 									self._recorder, 
 									self._recorder.shift_layer,
 									self._session,
-									self._session.scene_launch_layer,
+									self._session.G_layer,
 									self._session.stop_clips_layer,
 									self._transport,
 									self._device,
-									self._device.button_layer)
-		main_faders=CompoundMode(self._G_mixer.main_faders_layer, 
+									self._device.button_layer,
+									self._device_navigator,
+									self._device_navigator.G_layer)
+		main_faders=CompoundMode(self._G_mixer,
+									self._G_mixer.main_faders_layer, 
 									self._G_mixer.master_fader_layer)
 		main_dials=CompoundMode(self._view_control,
 									self._view_control.main_layer,
