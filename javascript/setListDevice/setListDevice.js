@@ -25,7 +25,7 @@ var TEMPO_FADE = 1500;  //ms
 var xFaderValue = 0;
 var xFades = [];
 var device_ids = [0, 0, 0, 0, 0, 0, 0, 0, 0];
-
+var autotrigger_deck = undefined;
 
 var mod_finder;
 
@@ -436,7 +436,22 @@ function tempo_callback(args)
 	}
 }
 
+function begin_autotrigger(bars, deck)
+{
+	debug('begin_autotrigger');
+	autotrigger_deck = deck;
+	messnamed(unique+'autotime', bars);
+	messnamed(unique+'autotrigger', 'bang');
+} 
 
+function _autotrigger()
+{
+	debug('autotrigger!');
+	if(autotrigger_deck!=undefined)
+	{
+		autotrigger_deck.play_next_song({'_value':1});
+	}
+}
 
 function DecksComponent(name, name, args)
 {
@@ -533,11 +548,17 @@ DecksComponent.prototype.currentSlot_callback = function(obj)
 
 DecksComponent.prototype.fire_scene = function(data, clip_id)
 {
+	autotrigger_deck = undefined;
 	if((data.s)&&(data.bpm)&&(clip_id))
 	{
+		//active_deck.set_current_clip_data(data.n);
 		var active_deck = clip_id == this.deck_a._api_next_clip.id ? this.deck_a : clip_id == this.deck_b._api_next_clip.id ? this.deck_b : this._last_deck == -1 ? this.deck_a : this._last_deck == 0 ? this.deck_b : this.deck_a;
 		if(active_deck.decks[data.bpm-1])
 		{
+			if(data.auto!=undefined)
+			{
+				begin_autotrigger(data.auto, active_deck == this.deck_a ?  this.deck_b : this.deck_a);
+			}
 			//song
 			//active_deck.group.call('stop_all_clips');
 			finder.id = Math.floor(active_deck.decks[data.bpm-1].id);
@@ -564,8 +585,6 @@ DecksComponent.prototype.fire_scene = function(data, clip_id)
 					}
 				}
 			}
-			
-			//active_deck.set_current_clip_data(data.n);
 			finder.call('fire');
 
 			//acappella
