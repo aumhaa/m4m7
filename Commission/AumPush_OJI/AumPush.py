@@ -120,6 +120,10 @@ class AumPush(Push):
 				self._user.settings = settings
 	
 
+	def _init_value_components(self):
+		debug('init value components')
+	
+
 	def _setup_mod(self):
 
 		self.monomodular = get_monomodular(self)
@@ -134,6 +138,7 @@ class AumPush(Push):
 																			Shift_button = self.elements.shift_button,
 																			Alt_button = self.elements.select_button,
 																			detent_dial = self.elements.tempo_control,
+																			master_dial = self.elements.master_volume_control,
 																			name_display_line = self.elements.display_line3,
 																			value_display_line = self.elements.display_line4 )
 		self.modhandler.legacy_shift_layer = AddLayerMode( self.modhandler, Layer(priority = 6, 
@@ -396,8 +401,12 @@ class PushModHandler(ModHandler):
 
 	def set_detent_dial(self, dial):
 		self._detent_dial_value.subject = dial
-		#if self._active_mod:
-		#	self._active_mod.send('detent_dial', value)
+		#if self.active_mod():
+		#	self.active_mod.send('detent_dial', value)
+	
+
+	def set_master_dial(self, dial):
+		self._master_dial_value.subject = dial
 	
 
 	def _receive_detent_dial(self, value):
@@ -410,6 +419,11 @@ class PushModHandler(ModHandler):
 		debug('_detent_dial_value', value)
 		if self._active_mod:
 			self._active_mod.send('detent_dial', value)
+	
+
+	@listens('value')
+	def _master_dial_value(self, value, *a, **k):
+		pass
 	
 
 	def update_device(self):
