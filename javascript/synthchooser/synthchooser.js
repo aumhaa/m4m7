@@ -25,10 +25,10 @@ var ksliders  = [];
 var kslider;
 var synth_tab;
 var lines = [];
-var presets = [{'synth':1, 'lo':0, 'hi':24, 'atouch':0, 'program':0},
-				{'synth':2, 'lo':25, 'hi':36, 'atouch':0, 'program':0},
-				{'synth':3, 'lo':37, 'hi':48, 'atouch':0, 'program':0},
-				{'synth':4, 'lo':49, 'hi':61, 'atouch':0, 'program':0}];
+var presets = [{'synth':1, 'lo':0, 'hi':24, 'atouch':0, 'program':0, 'pb':0},
+				{'synth':2, 'lo':25, 'hi':36, 'atouch':0, 'program':0, 'pb':0},
+				{'synth':3, 'lo':37, 'hi':48, 'atouch':0, 'program':0, 'pb':0},
+				{'synth':4, 'lo':49, 'hi':61, 'atouch':0, 'program':0, 'pb':0}];
 
 var chosen_synth = 4;
 var synth_track_names = ['Synth1', 'Synth2', 'Synth3', 'Synth4'];
@@ -168,6 +168,8 @@ function setup_controls()
 	sub4.sub_grid(Grid, 0, 4, 3, 4);
 }
 
+
+//must setup patcher objects here so they don't need to be grabbed each time we send them values.
 function setup_patcher()
 {
 	for(var i=0;i<4;i++)
@@ -175,6 +177,7 @@ function setup_patcher()
 		synth_track_names[i] = this.patcher.getnamed('s'+(i+1)+'_name').getvalueof()[0];
 	}
 	//debug('synth_track_names:', synth_track_names);
+
 	for(var i=0;i<4;i++)
 	{
 		presets[i].synth = this.patcher.getnamed('synth'+(i+1)).getvalueof();
@@ -182,6 +185,7 @@ function setup_patcher()
 		presets[i].hi = this.patcher.getnamed('hi'+(i+1)).getvalueof();
 		presets[i].atouch = this.patcher.getnamed('touch'+(i+1)).getvalueof();
 		presets[i].program = this.patcher.getnamed('prog'+(i+1)).getvalueof();
+		presets[i].pb = this.patcher.getnamed('pb'+(i+1)).getvalueof();
 	}
 	storage = this.patcher.getnamed('synthchooser_storage');
 	kslider = this.patcher.getnamed('kslider');
@@ -481,12 +485,12 @@ function _synth_chooser(num, val)
 	}
 }
 
-function _change(track, synth, lo, hi, atouch, program)
+function _change(track, synth, lo, hi, atouch, program, pb)
 {
 	var old_preset = presets[track];
 	var do_keysplit_update = (old_preset.hi!=hi)||(old_preset.lo!=lo);
 	var do_device_update = presets[track].synth != synth;
-	presets[track] = {'synth':synth, 'lo':lo, 'hi':hi, 'atouch':atouch, 'program':program};
+	presets[track] = {'synth':synth, 'lo':lo, 'hi':hi, 'atouch':atouch, 'program':program, 'pb':pb};
 	if(do_device_update&&chain_selectors[track]!=undefined)
 	{
 		chain_selectors[track].set('value', synth-1);
@@ -803,6 +807,7 @@ function sub_preset(val)
 			storage.message('recall', 'lo'+i, sub);
 			storage.message('recall', 'hi'+i, sub);
 			storage.message('recall', 'touch'+i, sub);
+			storage.message('recall', 'pb'+i, sub);
 		}
 	}
 }
@@ -835,6 +840,7 @@ function preset(val)
 				storage.message('store', 'lo'+i, sub);
 				storage.message('store', 'hi'+i, sub);
 				storage.message('store', 'touch'+i, sub);
+				storage.message('store', 'pb'+i, sub);
 			}
 		}
 	}
