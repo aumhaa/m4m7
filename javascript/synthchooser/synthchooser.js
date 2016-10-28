@@ -783,13 +783,21 @@ function octave_component()
 	HexModule.super_.call(this, 'HexModule');
 }
 
-function sc_pset(num, val)
+function sc_pset(num, val, sub)
 {
 	debug('receive sc_pset', num, val);
 	if(num==pset_id)
 	{
-		debug('updating preset to:', val);
-		script.patcher.getnamed('preset_number').message(Math.floor(val));
+		if(val == 'sub')
+		{
+			debug('receive sub:', sub);
+			sub_preset(sub);
+		}
+		else
+		{
+			debug('updating preset to:', val);
+			script.patcher.getnamed('preset_number').message(Math.floor(val));
+		}
 	}
 
 }

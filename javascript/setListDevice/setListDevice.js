@@ -4,7 +4,7 @@ outlets = 2;
 
 aumhaa = require('_base');
 var FORCELOAD = false;
-var DEBUG = true;
+var DEBUG = false;
 aumhaa.init(this);
 var script = this;
 
@@ -278,6 +278,11 @@ function setup_notifiers()
 	xFadeC = new MomentaryParameter('xFadeC', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&set_xFadeC();}});
 	xFadeC.update_control = function(){if(this._control){this._control.send(Math.floor(xFaderValue==0)+1);}}
 	xFades = [xFadeA, xFadeB, xFadeC];
+
+	sub1 = new MomentaryParameter('sub1', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_subPset(0);}});
+	sub2 = new MomentaryParameter('sub2', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_subPset(1);}});
+	sub3 = new MomentaryParameter('sub3', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_subPset(2);}});
+	sub4 = new MomentaryParameter('sub4', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_subPset(3);}});
 }
 
 function setup_modes()
@@ -306,6 +311,10 @@ function setup_modes()
 		decks.deck_b.resetParams.set_control(KeyButtons[2]);
 		decks.acap_nextSong.set_control(GridButtons[3][0]);
 		decks.acap_stopSong.set_control(GridButtons[3][1]);
+		sub1.set_control(GridButtons[4][7]);
+		sub2.set_control(GridButtons[5][7]);
+		sub3.set_control(GridButtons[6][7]);
+		sub4.set_control(GridButtons[7][7]);
 	}
 	main_Page.exit_mode = function()
 	{
@@ -388,6 +397,11 @@ function set_start_marker(id, val)
 	finder.id = id;
 	debug('path:', finder.path);
 	finder.set('start_marker', val);
+}
+
+function send_subPset(val)
+{
+	outlet(0, 'sc_pset', 2, 'sub', val);
 }
 
 function sc_pset(num, val)
