@@ -168,6 +168,11 @@ function setup_controls()
 		Key2ControlRegistry.register_control(id, Key2Buttons[id]);
 		Key2Grid.add_control(id, 0, Key2Buttons[id]);
 	}
+
+	noteGrid = new GridClass(4, 4, 'NoteGrid');
+	noteGrid.sub_grid(Grid, 4, 8, 0, 4);
+
+
 	script['_grid'] = function(x, y, val)
 	{
 		GridControlRegistry.receive(x+(y*8), val);
@@ -283,6 +288,8 @@ function setup_notifiers()
 	sub2 = new MomentaryParameter('sub2', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_subPset(1);}});
 	sub3 = new MomentaryParameter('sub3', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_subPset(2);}});
 	sub4 = new MomentaryParameter('sub4', {'onValue':1, 'offValue':3, 'value':0, 'initial':0, 'callback':function(obj){obj._value&&send_subPset(3);}});
+
+        sampleTrigger = new NoteGridClass('sampleTrigger');
 }
 
 function setup_modes()
@@ -315,6 +322,7 @@ function setup_modes()
 		sub2.set_control(GridButtons[5][7]);
 		sub3.set_control(GridButtons[6][7]);
 		sub4.set_control(GridButtons[7][7]);
+		sampleTrigger.set_grid(noteGrid);
 	}
 	main_Page.exit_mode = function()
 	{
@@ -390,6 +398,13 @@ function make_gui_send_function(patcher_object, message_header)
 	return func;
 }
 
+
+function _send_note_output(note, val)
+{
+	//debug('send_note_output:', obj._name ? [obj._name, obj._value] : obj);
+	debug('_send_note_output', note, val);
+	outlet(1, 'send', 159, note, val);
+}
 
 function set_start_marker(id, val)
 {
@@ -1024,6 +1039,46 @@ DeckLoaderComponent.prototype.update_deck = function(current_playing_id)
 }
 
 
+NoteGridClass= function(name, args)
+{
+	var self = this;
+	this._grid;
+	this._controls = [];
+	this.add_bound_properties(this, ['set_controls', 'Callback']);
+	NoteGridClass.super_.call(this, name, args);
+}
+
+inherits(NoteGridClass, Bindable);
+
+NoteGridClass.prototype.set_grid= function(grid)
+{
+	this._grid = grid;
+	debug('NoteGrid._grid = ', this._grid);
+	var controls = grid instanceof GridClass ? grid.controls() : grid instanceof Array ? grid : grid instanceof NotifierClass ? [grid] : [];
+	for(var i in this._controls)
+	{
+		this._controls[i].remove_target(this.Callback);
+	}
+	this._controls = controls;
+	debug('NoteGrid._controls = ', this._controls);
+	for(var i in this._controls)
+	{
+		debug('control is:', this._controls[i]);
+		this._controls[i].set_target(this.Callback);
+		this._controls[i].send(30);
+	}
+}
+
+NoteGridClass.prototype.Callback = function(obj)
+{
+	debug('Callback:', obj ? [obj._name, obj._value] : obj);
+	var coords = this._grid.button_coords(obj);
+	debug('coords:', coords);
+	var x = coords[0];
+	var y = coords[1];
+	this._grid.send(x, y, obj._value ? 1 : 30);
+	_send_note_output(x + (Math.abs(y-4)*4) + 36, obj._value);
+}
 
 
 forceload(this);
