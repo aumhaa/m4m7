@@ -25,6 +25,16 @@ var colors = {'Aumpad': ['fill',  127],
 
 var Mod = ModComponent.bind(script);
 
+function send_color(val)
+{
+	mod.Send('grid', 'value', 0, 0, val);
+}
+
+function setup_colors()
+{
+	mod.Send( 'fill_color_map', 'Push', 0, 49, 49, 49, 49, 57, 57, 57, 57, 50, 50, 50, 51, 51, 51, 1);
+}
+
 function loadbang()
 {
 	this.patcher.getnamed('service').message('name', 'modlink_'+unique);
@@ -33,12 +43,13 @@ function loadbang()
 
 function init()
 {
-	debug('init modlink_proto.js');
-	mod = new Mod(script, 'modlink', unique, false);
+	debug('init modlink_proto.js', unique);
+	mod = new Mod(script, 'modlink', unique, true);
 	//mod.debug = debug;
-	//mod.wiki_addy = WIKI;
+	//mod.wiki_addy = 'fuckoff';
 	mod_finder = new LiveAPI(mod_callback, 'this_device');
 	mod.assign_api(mod_finder);
+	//debug('mod.wiki_addy:', mod.patch_type, mod.unique, mod.legacy, mod._type);
 }
 
 function mod_callback(args)
@@ -70,6 +81,7 @@ function initialize(val)
 	debug('init');
 	if(val)
 	{
+		setup_colors();
 		set_prefix(this.patcher.getnamed('prefixbox').getvalueof().toString());
 		set_inport(this.patcher.getnamed('inportbox').getvalueof());
 		set_outport(this.patcher.getnamed('outportbox').getvalueof());
@@ -231,6 +243,46 @@ function anything()
 											}
 										}
 									}
+								case 'level':
+									switch(str[5])
+									{
+										case 'set':
+											mod.Send('grid', 'value', args[0], args[1], args[2]);
+											break;
+										case 'all':
+											mod.Send('grid', 'all', args[0]);
+											break;
+										case 'map':
+											if(args.length == 10)
+											{
+												mod.Send('grid', 'map', args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
+											}
+											break;
+										case 'row':
+											if((args.length > 2)&&(args[0]%8==0))
+											{
+												var xOff = args.shift();
+												var yOff = args.shift();
+												debug('level/row, args length:', args.length, 'args:', args);
+												for(var index=0;index<args.length;index++)
+												{
+													mod.Send('grid', 'value', xOff+index, yOff, args[index]);
+												}
+											}
+											break;
+										case 'col':
+											if((args.length > 2)&&(args[1]%8==0))
+											{
+												var xOff = args.shift();
+												var yOff = args.shift();
+												debug('level/col, args length:', args.length, 'args:', args);
+												for(var index=0;index<args.length;index++)
+												{
+													mod.Send('grid', 'value', xOff, yOff+index, args[index]);
+												}
+											}
+										break;
+									}
 									break;
 							}
 						}
@@ -306,6 +358,32 @@ function grid(x, y, val)
 {
 	debug('grid', x, y, val);
 	outlet(0, outprefix, x, y, val ? 1 : 0);
+}
+
+function host()
+{
+	var args = arrayfromargs(arguments);
+	debug('host:', args);
+	var str=args[0].split("/");
+	for (i in str)
+	{
+		str[i].replace(space, "");
+	}
+	debug('replaced:', str[1], str[2]);
+	switch(str[1])
+	{
+		case 'serialosc':
+			switch(str[2])
+			{
+				case 'list':
+					debug('sending out list...');
+					this.patcher.getnamed('hostout').message('port', args[2]);
+					this.patcher.getnamed('hostout').message('/serialosc/device', unique, 'mod', in_port);
+					break;
+				case 'notify':
+					break;
+			}
+	}
 }
 
 forceload(this);
