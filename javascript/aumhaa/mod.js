@@ -9,14 +9,14 @@ for(var i in util)
 
 var DEBUG_MOD = false;
 
-ModComponent = function(parent, callback, type, unique, legacy, attrs)
+ModComponent = function(parent, type, unique, legacy, attrs)
 {
 	var self = this;
 	this.parent = parent;
 	this.debug = DEBUG_MOD ? Debug : function(){};
-	this.patch_type = type||'info';
-	this.unique = unique||'---';
-	this.legacy = legacy||0;
+	this.patch_type = type ? type : 'info';
+	this.unique = unique ? unique : '---';
+	this.legacy = legacy ? legacy : 0;
 	this.attrs = attrs||[];
 	this.MONOMODULAR=new RegExp(/(monomodular)/);
 	this.FUNCTION = new RegExp(/(function)/);
@@ -28,7 +28,8 @@ ModComponent = function(parent, callback, type, unique, legacy, attrs)
 	this.stored_messages = [];
 	this.control_surface_ids = {0:true};
 	this.restart = new Task(this.init, this);
-	this.wiki_addy = 'http://www.aumhaa.com/wiki/index.php?title=Main_Page';
+	this.wiki_addy = 'http://www.aumhaa.com/wiki/index.php?title='+type;
+	//this.debug('this.wiki_addy:', this.wiki_addy);
 	this.finder = undefined;
 	this.callback = function(args)
 	{
@@ -149,6 +150,7 @@ ModComponent.prototype.init = function()
 						if(this.parent.alive)
 						{
 							this.parent.alive(1);
+							//if(!this.parent.wiki){this.parent.wiki = this.wiki;}
 						}
 						this.send_stored_messages();
 					}
@@ -307,7 +309,7 @@ ModComponent.prototype.Send = function()
 
 ModComponent.prototype.wiki = function()
 {
-	this.max.launchbrowser(this.wiki_addy);
+	max.launchbrowser(this.wiki_addy);
 }
 
 exports.ModComponent = ModComponent;

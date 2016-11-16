@@ -224,3 +224,17 @@ function parse_ids(arr)
 }
 
 exports.parse_ids = parse_ids;
+
+function wiki()
+{
+	if((mod!=undefined)&&(mod.wiki_addy!=undefined))
+	{
+		max.launchbrowser(mod.wiki_addy);
+	}
+	else
+	{
+		max.launchbrowser('http://www.aumhaa.com/wiki/index.php?title=Mainpage');
+	}
+}
+
+exports.wiki = wiki;
