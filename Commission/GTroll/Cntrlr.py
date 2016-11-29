@@ -95,8 +95,8 @@ class Cntrlr(BaseCntrlr):
 									page_right_button = self._button[21]))
 		self._session.G_layer = AddLayerMode(self._session, Layer(priority = 4,
 									scene_launch_buttons = self._key_matrix.submatrix[4:8, 0]))
-		self._session.stop_clips_layer = AddLayerMode(self._session, Layer(priority = 4,
-									stop_all_clips_button = self._button[29],))
+		self._session.stop_clips_layer = AddLayerMode(self._session, Layer(priority = 4,))
+									#stop_all_clips_button = self._button[29],))
 	
 
 	def _setup_session_recording_component(self):
