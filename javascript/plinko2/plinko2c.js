@@ -12,6 +12,8 @@ aumhaa.init(this);
 
 var SHOW_STORAGE = false;
 
+INITIAL_DIR = 64;
+
 var finder;
 var mod;
 var mod_finder;
@@ -21,6 +23,46 @@ var bgcolors = {'OFF': [0, 0, 0, 0], 'WHITE':[1, 1, 1, 1], 'YELLOW':[1, 1, 0, 1]
 				'MAGENTA':[1, 0, 1, 1], 'RED':[1, 0, 0, 1], 'GREEN':[0, 1, 0, 1], 'BLUE':[0, 0, 1, 1],
 				'INVISIBLE':[0, 0, 0, 0]};
 
+
+function ParticleComponent(name, num, poly)
+{
+	var self = this;
+	this._name = name;
+	this._num = num+1;
+	this._poly = poly;
+	this._location = -1;
+	this._status = false;
+	this.obj = {};
+	this._current_node = undefined;
+	for(var item in PartObjs)
+	{
+		if(PartObjs[item].Type === 'list')
+		{
+			this[item] = [0, 0, 0, 0, 0, 0, 0, 0];
+			this.obj[item] = poly.getnamed(item);
+		}
+		else if(PartObjs[item].Type === 'int')
+		{
+			this[item] = 0;
+			this.obj[item] = poly.getnamed(item);
+		}
+	}
+	this.light_node = function(node)
+	{
+		if(this._current_node!=node)
+		{
+			if(this._current_node)
+			{
+				matrix.button[this._current_node._x][this._current_node._y].mask(-1);
+			}
+		}
+		this._current_node = node;
+		if(this._current_node)
+		{
+			matrix.button[this._current_node._x][this._current_node._y].mask(this._status ? colors.PARTICLE_ON : colors.PARTICLE_OFF);
+		}
+	}
+}
 
 function NodeComponent(name, num, poly)
 {
@@ -427,6 +469,7 @@ function Display()
 var unique = jsarguments[1];
 var Alive=0;
 var node = [];
+var part = [];
 var pressed = -1;
 var colors = {NODE_SELECTED:1, NODE_START: 16, NODE_ON_WH: 3, NODE_ON: 6, NODE_WH: 7, NODE_NOTE: 2, 
 				DIRECTION_OFF:3, DIRECTION_ON:7, WORMHOLE_START:1, WORMHOLE_END:7,
@@ -454,7 +497,7 @@ var node;
 //this array contains the scripting names of objects in the top level patcher.	To include an new object to be addressed 
 //in this script, it's only necessary to add its name to this array.  It can then be addressed as a direct variable
 var Vars = ['plinko2', 'storage_defer', 'timingmultiplier', 'program_window', 'restart', 'length', 'midi', 'viewer',
- 			'bank_var', 'voice_var', 'plane_var'];
+ 			'bank_var', 'voice_var', 'plane_var', 'start_cells', 'part_poly'];
 
 var viewer_matrix;
 
@@ -469,6 +512,8 @@ var Objs = {'voice':{'Name':'voice', 'Type':'list', 'pattr':'voice'},
 			'start':{'Name':'start', 'Type':'int', 'pattr':'start'},
 			};
 
+
+var PartObjs = {}
 
 
 function anything()
@@ -529,13 +574,13 @@ function initialize(val)
 			var polynum = i;
 			node[i] = new NodeComponent('Node_'+i, i, this.patcher.getnamed('poly').subpatcher(polynum));
 		}
-		for(var i in script)
+		part = [];
+		for(var i = 0; i<64; i++)
 		{
-			if((/^_/).test(i))
-			{
-				script[i.replace('_', "")] = script[i];
-			}
+			var partnum = i;
+			part[i] = new ParticleComponent('Particle_'+i, i, this.patcher.getnamed('part_poly').subpatcher(polynum));
 		}
+		deprivatize_script_functions(script);
 		display = new Display();
 		Alive = 1;
 		clear_surface();
@@ -607,7 +652,8 @@ function _grid(x, y, val)
 	{
 		if(trigger_mode)								//fire a particle
 		{
-			node[x+(y*16)].trigger();
+			//node[x+(y*16)].trigger();
+			part_poly.message('note', (x+(y*16))+1, INITIAL_DIR, 'new');
 		}
 		else if(keys.button[6].pressed)  				//open the corresponding poly
 		{
@@ -923,12 +969,15 @@ function _pulse()
 	activeParticles = [];
 }
 
-function _particle(num, voice, note, velocity, duration)
+function _pulse(){}
+
+function _particle(particle, num, voice, note, velocity, duration)
 {
-	//debug('display particle:', num, voice, note, velocity, duration);
-	var this_node = node[num-1];
-	this_node._status = voice>0;
-	activeParticles.unshift(this_node);
+	//debug('display particle:', particle, num, voice, note, velocity, duration);
+	var this_node = num ? node[num-1] : undefined;
+	var this_part = part[particle-1];
+	this_part._status = voice>0;
+	this_part.light_node(this_node);
 }
 
 function toggle_viewer()
@@ -966,6 +1015,7 @@ function _storage()
 			preset = args[1];
 			for(var i in node)
 			{
+				//debug('node update:', i);
 				node[i].update();
 			}
 			break;
