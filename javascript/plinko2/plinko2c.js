@@ -6,7 +6,7 @@ inlets = 1;
 var script = this;
 
 aumhaa = require('_base');
-var FORCELOAD = true;
+var FORCELOAD = false;
 var DEBUG = true;
 aumhaa.init(this);
 
@@ -497,7 +497,7 @@ var node;
 //this array contains the scripting names of objects in the top level patcher.	To include an new object to be addressed 
 //in this script, it's only necessary to add its name to this array.  It can then be addressed as a direct variable
 var Vars = ['plinko2', 'storage_defer', 'timingmultiplier', 'program_window', 'restart', 'length', 'midi', 'viewer',
- 			'bank_var', 'voice_var', 'plane_var', 'start_cells', 'part_poly'];
+ 			'bank_var', 'voice_var', 'plane_var', 'part_poly'];
 
 var viewer_matrix;
 
@@ -1013,6 +1013,7 @@ function _storage()
 	{
 		case 'recall':
 			preset = args[1];
+			var start_nodes = [];
 			for(var i in node)
 			{
 				//debug('node update:', i);
