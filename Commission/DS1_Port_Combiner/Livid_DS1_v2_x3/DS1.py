@@ -184,13 +184,31 @@ class DS1(LividControlSurface):
 		self._fader_matrix = ButtonMatrixElement(name = 'FaderMatrix', rows = [self._fader + self._fader2 + self._fader3])
 		self._top_buttons = ButtonMatrixElement(name = 'TopButtonMatrix', rows = [self._button[:8] + self._button2[:8] + self._button3[:8] ])
 		self._bottom_buttons = ButtonMatrixElement(name = 'BottomButtonMatrix', rows = [self._button[8:] + self._button2[8:] + self._button3[8:]])
-		self._dial_matrix = ButtonMatrixElement(name = 'DialMatrix', rows = [self._dial[0] + self._dial2[0] + self._dial3[0], self._dial[1] + self._dial2[1] + self._dial3[1]])
+		self._dial_matrix = ButtonMatrixElement(name = 'DialMatrix', rows = [self._dial[0] + self._dial2[0] + self._dial3[0],
+		 																	self._dial[1] + self._dial2[1] + self._dial3[1],
+																			self._dial[2] + self._dial2[2] + self._dial3[2],
+																			self._dial[3] + self._dial2[3] + self._dial3[3],
+																			self._dial[4] + self._dial2[4] + self._dial3[4]],)
 		self._side_dial_matrix = ButtonMatrixElement(name = 'SideDialMatrix', rows = [self._side_dial])
 		self._encoder_matrix = ButtonMatrixElement(name = 'EncoderMatrix', rows = [self._encoder])
 		self._encoder_button_matrix = ButtonMatrixElement(name = 'EncoderButtonMatrix', rows = [self._encoder_button])
 		self._grid_matrix = ButtonMatrixElement(name = 'GridMatrix', rows = self._grid)
 		self._selected_parameter_controls = ButtonMatrixElement(name = 'SelectedParameterControls', rows = [self._dummy + self._encoder[:1] + self._encoder[2:]])
+
+		self._dknobs = [[MonoEncoderElement(mapping_feedback_delay = -1, msg_type = MIDI_CC_TYPE, channel = 11, identifier = (column + (8*row)), name = 'DoepferDial_' + str(column + (8*row)), script = self, optimized_send_midi = optimized, resource_type = resource) for row in range(8)] for column in range(8)]
+		self._dknobs2 = [[MonoEncoderElement(mapping_feedback_delay = -1, msg_type = MIDI_CC_TYPE, channel = 11, identifier = (column + (8*row) + 64), name = 'DoepferDial2_' + str(column + (8*row)), script = self, optimized_send_midi = optimized, resource_type = resource) for row in range(8)] for column in range(8)]
+		self._dknobs3 = [[MonoEncoderElement(mapping_feedback_delay = -1, msg_type = MIDI_CC_TYPE, channel = 12, identifier = (column + (8*row)), name = 'DoepferDial3_' + str(column + (8*row)), script = self, optimized_send_midi = optimized, resource_type = resource) for row in range(8)] for column in range(8)]
+
+		self._dknob_matrix = ButtonMatrixElement(name = 'DeopferMatrix', rows = [self._dknobs[0] + self._dknobs2[0] + self._dknobs3[0],
+																				self._dknobs[1] + self._dknobs2[1] + self._dknobs3[1],
+																				self._dknobs[2] + self._dknobs2[2] + self._dknobs3[2],
+																				self._dknobs[3] + self._dknobs2[3] + self._dknobs3[3],
+																				self._dknobs[4] + self._dknobs2[4] + self._dknobs3[4],
+																				self._dknobs[5] + self._dknobs2[5] + self._dknobs3[5],
+																				self._dknobs[6] + self._dknobs2[6] + self._dknobs3[6],
+																				self._dknobs[7] + self._dknobs2[7] + self._dknobs3[7]])
 	
+
 
 	def _setup_background(self):
 		self._background = BackgroundComponent(name = 'Background')
@@ -238,9 +256,9 @@ class DS1(LividControlSurface):
 		self._mixer.master_strip().set_volume_control(self._master_fader)
 		self._mixer.set_prehear_volume_control(self._side_dial[3])
 		self._mixer.layer = Layer(volume_controls = self._fader_matrix, track_select_dial = self._encoder[1])
-		self._strip = [self._mixer.channel_strip(index) for index in range(8)]
-		for index in range(8):
-			self._strip[index].layer = Layer(priority = 4, parameter_controls = self._dial_matrix.submatrix[index:index+1, :])
+		self._strip = [self._mixer.channel_strip(index) for index in range(24)]
+		for index in range(24):
+			self._strip[index].layer = Layer(priority = 4, parameter_controls = self._dknob_matrix.submatrix[index, :], send_controls = self._dial_matrix.submatrix[index, :])
 		self._mixer.selected_strip().layer = Layer(priority = 4, parameter_controls = self._selected_parameter_controls)
 		self._mixer.master_strip().layer = Layer(priority = 4, parameter_controls = self._side_dial_matrix.submatrix[:3, :])
 		self._mixer.main_layer = AddLayerMode(self._mixer, Layer(priority = 4, solo_buttons = self._bottom_buttons, mute_buttons = self._top_buttons))
