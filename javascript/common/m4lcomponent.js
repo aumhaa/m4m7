@@ -4,6 +4,7 @@ inlets = 1;
 outlets = 1;
 
 var finder;
+var control_surface;
 var m4lcomp = 0;
 var M4LCOMPONENT=new RegExp(/(M4LInterface)/);
 var control_names = [];
@@ -11,11 +12,13 @@ var controls = {};
 var excluded = ['control', 'control_names', 'done'];
 var control_surface_type = jsarguments[1]||'None';
 
-var DEBUG = false;
-var debug = (DEBUG&&Debug) ? Debug : function(){};
+var script = this;
 
+aumhaa = require('_base');
 var FORCELOAD = false;
-var forceload = (FORCELOAD&&Forceload) ? Forceload : function(){};
+var DEBUG = true;
+aumhaa.init(this);
+
 
 if(typeof(String.prototype.trim) === "undefined")
 {
@@ -25,16 +28,19 @@ if(typeof(String.prototype.trim) === "undefined")
 	}
 }
 
+
 function init()
 {
 	debug('m4lcomponent init');
 	finder = new LiveAPI(callback, 'control_surfaces');
+	control_surface = new LiveAPI(callback, 'control_surfaces');
 	var number_children = parseInt(finder.children[0]);
 	debug('control_surfaces length:', number_children);
 	for(var i=0;i<number_children;i++)
 	{
 		debug('Checking control surface #:', i);
 		finder.goto('control_surfaces', i);
+		control_surface.goto('control_surfaces', i);
 		debug('type is:', finder.type);
 		if(finder.type == control_surface_type)
 		{
@@ -67,6 +73,9 @@ function init()
 						}
 					}
 				}
+				//control_surface.id = finder.id;
+				debug('control_surface is:', control_surface.path);
+				deprivatize_script_functions(script);
 			}
 			outlet(0, 'path', finder.path);
 			return;
@@ -92,7 +101,7 @@ function make_callback(name)
 	return callback;
 }
 
-function grab(name)
+function _grab(name)
 {
 	if(controls[name]!=undefined)
 	{
@@ -112,7 +121,7 @@ function grab(name)
 	}
 }
 
-function release(name)
+function _release(name)
 {
 	if(controls[name]!=undefined)
 	{
@@ -132,7 +141,7 @@ function release(name)
 	}
 }
 
-function send_value()
+function _send_value()
 {
 	var args = arrayfromargs(arguments)
 	var obj = controls[args[0]]
@@ -140,6 +149,21 @@ function send_value()
 	{
 		debug('args', args.slice(1));
 		obj.call('send_value', args[1], args[2], args[3]);
+	}
+}
+
+function _call_function()
+{
+	var args = arrayfromargs(arguments);
+	func = args[0] ? args[0] : undefined;
+	debug('call_function:', func, 'args:', args);
+	try
+	{
+		control_surface.call.apply(control_surface, args);
+	}
+	catch(err)
+	{
+		debug('_call_function error:', err, args);
 	}
 }
 
