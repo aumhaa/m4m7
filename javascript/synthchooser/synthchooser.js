@@ -816,6 +816,7 @@ function sub_preset(val)
 			storage.message('recall', 'hi'+i, sub);
 			storage.message('recall', 'touch'+i, sub);
 			storage.message('recall', 'pb'+i, sub);
+			storage.message('recall', 's'+i+'oct', sub);
 		}
 	}
 }
@@ -849,6 +850,7 @@ function preset(val)
 				storage.message('store', 'hi'+i, sub);
 				storage.message('store', 'touch'+i, sub);
 				storage.message('store', 'pb'+i, sub);
+				storage.message('store', 's'+i+'oct', sub);
 			}
 		}
 	}
