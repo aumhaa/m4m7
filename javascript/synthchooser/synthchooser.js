@@ -825,7 +825,7 @@ function preset(val)
 {
 	debug('preset:', val);
 	//storage.message(val);
-	if(val!='bang')
+	if(val!='store')
 	{
 		current_preset = val;
 		debug('current preset is now:', current_preset);
@@ -860,6 +860,31 @@ function preset_dump()
 {
 	var args = arrayfromargs(arguments);
 	debug('preset_dump:', args);
+}
+
+function looper_functions()
+{
+	var args = arrayfromargs(arguments);
+	debug('looper_function:', args);
+	func = args.shift();
+	switch(func)
+	{
+		case 'NextScene':
+			debug('NextScene:', args);
+			break;
+		case 'ClearAll':
+			debug('ClearAll:', args);
+			break;
+		case 'Redo':
+			debug('Redo:', args);
+			break;
+		case 'MuteAll':
+			debug('MuteAll:', args);
+			break;
+		default:
+			debug('no function found for', func, ':', args);
+			break;
+	}
 }
 
 forceload(this);
