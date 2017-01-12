@@ -2,7 +2,7 @@ autowatch = 1;
 
 aumhaa = require('_base');
 var FORCELOAD = false;
-var DEBUG = true;
+var DEBUG = false;
 var PSET_WINDOWS = false;
 var LOOP_PSET_WINDOWS=false;
 aumhaa.init(this);
@@ -842,7 +842,7 @@ function preset(val)
 {
 	debug('preset:', val);
 	//storage.message(val);
-	if(val!='store')
+	if(val!='Store')
 	{
 		current_preset = val;
 		debug('current preset is now:', current_preset);
