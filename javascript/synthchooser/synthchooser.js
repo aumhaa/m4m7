@@ -2,8 +2,9 @@ autowatch = 1;
 
 aumhaa = require('_base');
 var FORCELOAD = false;
-var DEBUG = false;
+var DEBUG = true;
 var PSET_WINDOWS = false;
+var LOOP_PSET_WINDOWS=false;
 aumhaa.init(this);
 var script = this;
 
@@ -25,6 +26,8 @@ var ksliders  = [];
 var kslider;
 var synth_tab;
 var lines = [];
+var loopers = [];
+var looper_preset = 0;
 var presets = [{'synth':1, 'lo':0, 'hi':24, 'atouch':0, 'program':0, 'pb':0},
 				{'synth':2, 'lo':25, 'hi':36, 'atouch':0, 'program':0, 'pb':0},
 				{'synth':3, 'lo':37, 'hi':48, 'atouch':0, 'program':0, 'pb':0},
@@ -121,6 +124,10 @@ function initialize(val)
 		setup_pset_id();
 		PSET_WINDOWS&&storage.message('clientwindow');
 		PSET_WINDOWS&&storage.message('storagewindow');
+		LOOP_PSET_WINDOWS&&loopers[0].storage.message('storagewindow');
+		LOOP_PSET_WINDOWS&&loopers[1].storage.message('storagewindow');
+		LOOP_PSET_WINDOWS&&loopers[2].storage.message('storagewindow');
+		LOOP_PSET_WINDOWS&&loopers[3].storage.message('storagewindow');
 	}
 }
 
@@ -198,6 +205,16 @@ function setup_patcher()
 	dynamic_gate.message('int', 0);
 	synth_tab = this.patcher.getnamed('synth_tab');
 	synth_tab.message('int', 4);
+	for(var i=0;i<4;i++)
+	{
+		loopers[i] = {'obj':this.patcher.getnamed('midi_looper['+i+']'), 
+						'storage':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('storage'),
+						'mute_obj':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('mute_obj'),
+						'clear_obj':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('clear_obj'),
+						'overdub_obj':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('overdub_obj'),
+						'new_scene_trigger':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('new_scene_trigger'),
+						};
+	}
 }
 
 function setup_device()
@@ -869,17 +886,61 @@ function looper_functions()
 	func = args.shift();
 	switch(func)
 	{
-		case 'NextScene':
-			debug('NextScene:', args);
+		case 'Store':
+			debug('Store:', args);
+			var num = this.patcher.getnamed('looper_scene').getvalueof();
+			//debug('scene number is:', num);
+			for(var i in loopers)
+			{
+				loopers[i].storage.message('store');
+			}
 			break;
-		case 'ClearAll':
-			debug('ClearAll:', args);
+		case 'Next':
+			debug('Next:', args);
+			this.patcher.getnamed('looper_scene').message(Math.max(0, Math.min(5, looper_preset+1)));
 			break;
-		case 'Redo':
-			debug('Redo:', args);
+		case 'Clear':
+			debug('Clear:', args);
+			for(var i in loopers)
+			{
+				loopers[i].clear_obj.message('bang');
+			}
 			break;
-		case 'MuteAll':
-			debug('MuteAll:', args);
+		case 'Overdub':
+			debug('Overdub:', args);
+			for(var i in loopers)
+			{
+				loopers[i].overdub_obj.message(0);
+			}
+			break;
+		case 'Mute':
+			debug('Mute:', args);
+			for(var i in loopers)
+			{
+				loopers[i].mute_obj.message(0);
+			}
+			break;
+		case 'looper_preset':
+			if(args[0]=='Store')
+			{
+				var num = Math.floor(this.patcher.getnamed('looper_scene').getvalueof());
+				debug('Storing:', ((current_preset*6)+num+1));
+				for(var i in loopers)
+				{
+					loopers[i].storage.message('store', 'mute', ((current_preset*6)+num+1));
+					loopers[i].storage.message('store', 'overdub', ((current_preset*6)+num+1));
+					loopers[i].storage.message('store', 'length', ((current_preset*6)+num+1));
+				}
+			}
+			else
+			{
+				looper_preset = args[0];
+				for(var i in loopers)
+				{
+					loopers[i].storage.message('recall', ((current_preset*6)+args[0]+1));
+					loopers[i].new_scene_trigger.message(args[0]+1);
+				}
+			}
 			break;
 		default:
 			debug('no function found for', func, ':', args);
