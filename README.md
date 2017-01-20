@@ -12,10 +12,10 @@ easier to update for you if you find bugs that I can quickly fix. Put the “m4m
 inside Max’s packages folder, which can either be in ~/Documents/Max/packages or
 /Applications/Max/packages (either path will work).
 
-3) Copy all the folders from m4m7/Python Scripts to Live’s MIDI Remote Scripts folder.
+3) Copy all the FOLDERS* from inside the m4m7/Python Scripts/ folder to Live’s MIDI Remote Scripts folder.  
 
-4) If you are using a Livid controller, you'll also want to copy all the folders from 
-m4m7/Livid Python Scripts to Live's MIDI Remote Scripts folder.
+4) If you are using a Livid controller, you'll also want to copy all the FOLDERS* from the 
+m4m7/Livid Python Scripts/ folder to Live's MIDI Remote Scripts folder.
 
 5) If you've commissioned a script from me, it will be in the /Commission folder and I've probably
 given you further specific instructions.
@@ -43,5 +43,7 @@ any of the newest scripts) in MIDI Remote Scripts (or simply archive the entire 
 If there are features or fixes that you need for something, I'm happy to consider making them on a commissioned
 basis, drop me some mail and we can discuss.  I generally stay very busy, but often times small changes can happen
 easily and quickly.  
+
+(* Make sure you copy ALL THE FOLDERS FROM INSIDE the "Python Scripts" and "Livid Python Scripts" folders, not the "Python Scripts" or "Livid Pythons Scripts" folders themselves!)
 
 aumhaa@gmail.com
