@@ -9,7 +9,7 @@
 			"modernui" : 1
 		}
 ,
-		"rect" : [ 30.0, 60.0, 270.0, 60.0 ],
+		"rect" : [ 30.0, 79.0, 270.0, 60.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 1,
 		"default_fontsize" : 12.0,
@@ -52,7 +52,7 @@
 ,
 					"style" : "",
 					"text" : "pattrstorage",
-					"varname" : "storage"
+					"varname" : "u700000377"
 				}
 
 			}
@@ -90,7 +90,6 @@
 					"numoutlets" : 3,
 					"outlettype" : [ "", "", "" ],
 					"patching_rect" : [ 335.0, 450.0, 40.0, 22.0 ],
-					"presentation_rect" : [ 338.0, 447.0, 0.0, 0.0 ],
 					"restore" : [ 0 ],
 					"saved_object_attributes" : 					{
 						"parameter_enable" : 0
@@ -98,7 +97,7 @@
 ,
 					"style" : "",
 					"text" : "pattr",
-					"varname" : "midi_output_port"
+					"varname" : "u234000379"
 				}
 
 			}
@@ -110,7 +109,6 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 268.0, 450.0, 52.0, 22.0 ],
-					"presentation_rect" : [ 271.0, 447.0, 0.0, 0.0 ],
 					"style" : "",
 					"text" : "midiinfo"
 				}
@@ -119,7 +117,7 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-26",
-					"items" : [ "AU DLS Synth 1", ",", "IAC Bus Bus 1", ",", "Network Session 1", ",", "Daemon Output 0", ",", "Daemon Output 1", ",", "Daemon Output 2", ",", "Daemon Output 3", ",", "Daemon Output 4", ",", "Daemon Output 5", ",", "Daemon Output 6", ",", "Daemon Output 7", ",", "FCB3E" ],
+					"items" : [ "AU DLS Synth 1", ",", "IAC Bus Bus 1", ",", "Network Session 1", ",", "Tweaker Port 1", ",", "Tweaker Port 2", ",", "Daemon Output 0", ",", "Daemon Output 1", ",", "Daemon Output 2", ",", "Daemon Output 3", ",", "Daemon Output 4", ",", "Daemon Output 5", ",", "Daemon Output 6", ",", "Daemon Output 7", ",", "from Max 1", ",", "from Max 2" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,
@@ -148,7 +146,7 @@
 ,
 					"style" : "",
 					"text" : "pattr",
-					"varname" : "midi_input_port"
+					"varname" : "u796000382"
 				}
 
 			}
@@ -168,7 +166,7 @@
 , 			{
 				"box" : 				{
 					"id" : "obj-4",
-					"items" : [ "IAC Bus Bus 1", ",", "Network Session 1", ",", "Daemon Input 0", ",", "Daemon Input 1", ",", "Daemon Input 2", ",", "Daemon Input 3", ",", "Daemon Input 4", ",", "Daemon Input 5", ",", "Daemon Input 6", ",", "Daemon Input 7", ",", "FCB3E" ],
+					"items" : [ "IAC Bus Bus 1", ",", "Network Session 1", ",", "Tweaker Port 1", ",", "Tweaker Port 2", ",", "Daemon Input 0", ",", "Daemon Input 1", ",", "Daemon Input 2", ",", "Daemon Input 3", ",", "Daemon Input 4", ",", "Daemon Input 5", ",", "Daemon Input 6", ",", "Daemon Input 7", ",", "to Max 1", ",", "to Max 2" ],
 					"maxclass" : "umenu",
 					"numinlets" : 1,
 					"numoutlets" : 3,

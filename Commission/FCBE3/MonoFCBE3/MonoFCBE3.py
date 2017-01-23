@@ -278,23 +278,26 @@ class MonolooperComponent(CompoundComponent):
 				self._loopers[index].set_device(preset)
 			if self._selected_loop:
 				index = self._loopers.index(self._selected_loop)
+				#debug('engaging translation for looper:', index)
+				self._trans1_button and self._trans1_button.set_identifier(self._trans1_button.original_identifier())
+				self._trans2_button and self._trans2_button.set_identifier(self._trans2_button.original_identifier())
 				self._trans1_button and self._trans1_button.set_channel(index)
 				self._trans2_button and self._trans2_button.set_channel(index)
-				self._trans3_button and self._trans3_button.set_channel(index)
+				#self._trans3_button and self._trans3_button.set_channel(index)
 				#self._script._send_midi(tuple([176, 112, 2]))
 				self._script._send_midi(tuple([176, 108, index+1]))
 			else:
-				self._trans1_button and self._trans1_button.set_channel(0)
-				self._trans2_button and self._trans2_button.set_channel(0)
-				self._trans3_button and self._trans3_button.set_channel(0)
+				#debug('engaging translation for no looper')
 				self._trans1_button and self._trans1_button.set_identifier(100)
 				self._trans2_button and self._trans2_button.set_identifier(101)
-				self._trans3_button and self._trans3_button.set_identifier(102)
+				self._trans1_button and self._trans1_button.set_channel(0)
+				self._trans2_button and self._trans2_button.set_channel(0)
+				#self._trans3_button and self._trans3_button.set_identifier(102)
+				#self._trans3_button and self._trans3_button.set_channel(0)
 				#self._script._send_midi(tuple([176, 109, 13]))
 				#self._script._send_midi(tuple([176, 109, 13]))
 				self._script._send_midi(tuple([176, 108, 0]))
-		
-
+	
 
 	@listens('device')
 	def on_enabled_changed(self):
@@ -731,13 +734,14 @@ class MonoFCBE3(ControlSurface):
 			self._setup_monobridge()
 			self._setup_controls()
 			self._setup_looper()
-			self._setup_autoarm()
+			#self._setup_autoarm()
 			self._setup_viewcontrol()
 			self._setup_session_recording_component()
 			self._setup_mixer()
 			self._setup_modes()
 		#self._on_device_changed.subject = self._device_provider
 		self.schedule_message(1, self._open_log)
+		self._on_device_changed.subject = self._device_provider
 		self._on_selected_track_changed.subject = self.song.view
 		#self._loop_selector.set_enabled(True)
 	
@@ -781,7 +785,6 @@ class MonoFCBE3(ControlSurface):
 		self._reverse_button = self._pedal[3]
 	
 
-
 	def _setup_mixer(self):
 		self._session_ring = SessionRingComponent(name = 'Session_Ring', num_tracks = 0, num_scenes = 0)
 		self._mixer = MonoMixerComponent(name = 'Mixer',tracks_provider = self._session_ring, track_assigner = simple_track_assigner, invert_mute_feedback = True, auto_name = True, enable_skinning = True)
@@ -802,7 +805,7 @@ class MonoFCBE3(ControlSurface):
 
 	def _setup_viewcontrol(self):
 		self._viewcontrol = ViewControlComponent()
-		self._viewcontrol.layer = Layer(priority = 4, prev_track_button = self._pedal[10], next_track_button = self._pedal[11])
+		self._viewcontrol.layer = Layer(priority = 4, prev_track_button = self._pedal[11], next_track_button = self._pedal[10])
 		self._viewcontrol.set_enabled(False)
 	
 
@@ -860,15 +863,43 @@ class MonoFCBE3(ControlSurface):
 	
 
 	def detect_aliased_looper(self):
-		current_track = self.song.view.selected_track
-		#debug('current track is:', current_track)
-		key = str('@l:')
-		looper_number = -1
-		if current_track.name.startswith(key) and len(current_track.name)>4:
-			looper_number = int(current_track.name[3])-1
-		self._looper._select_looper(looper_number)
+		device = self._device_provider.device
+		if device:
+			found = -1
+			for index in range(16):
+				key = str('@loop' + str(index + 1))
+				preset = None
+				if(match(key, str(device.name)) != None):
+					found = index
+					break
+			if found > -1:
+				self._looper._select_looper(index)
+		else:
+			current_track = self.song.view.selected_track
+			#debug('current track is:', current_track)
+			key = str('@l:')
+			looper_number = -1
+			if current_track.name.startswith(key) and len(current_track.name)>4:
+				looper_number = int(current_track.name[3])-1
+			self._looper._select_looper(looper_number)
+		
 	
 
+	@listens('device')
+	def _on_device_changed(self):
+		debug('on device changed')
+		device = self._device_provider.device
+		if device:
+			found = -1
+			for index in range(16):
+				key = str('@loop' + str(index + 1))
+				preset = None
+				if(match(key, str(device.name)) != None):
+					found = index
+					break
+			if found > -1:
+				self._looper._select_looper(index)
+	
 
 
 
