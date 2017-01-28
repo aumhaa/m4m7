@@ -28,6 +28,7 @@ from aumhaa.v2.base.debug import *
 from aumhaa.v2.livid.colors import *
 
 from pushbase.auto_arm_component import AutoArmComponent
+from pushbase.actions import UndoRedoComponent
 
 import logging
 logger = logging.getLogger(__name__)
@@ -734,6 +735,7 @@ class MonoFCBE3(ControlSurface):
 			self._setup_monobridge()
 			self._setup_controls()
 			self._setup_looper()
+			self._setup_undo()
 			#self._setup_autoarm()
 			self._setup_viewcontrol()
 			self._setup_session_recording_component()
@@ -797,10 +799,14 @@ class MonoFCBE3(ControlSurface):
 									overdub_button = self._pedal[1], 
 									mute_button = self._pedal[2],
 									reverse_button = self._pedal[3],
-									clear_button = self._pedal[4],
 									trans1_button = self._pedal[5],
 									trans2_button = self._pedal[6],
 									expression_pedal = self._pedal[12],)
+	
+
+	def _setup_undo(self):
+		self._undo = UndoRedoComponent(name='Undo', is_root=True)
+		self._undo.layer = Layer(undo_button=self._pedal[4])
 	
 
 	def _setup_viewcontrol(self):
