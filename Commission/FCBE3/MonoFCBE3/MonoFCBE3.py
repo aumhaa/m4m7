@@ -28,7 +28,8 @@ from aumhaa.v2.base.debug import *
 from aumhaa.v2.livid.colors import *
 
 from pushbase.auto_arm_component import AutoArmComponent
-from pushbase.actions import UndoRedoComponent
+from pushbase.actions import UndoRedoComponent, DeleteAndReturnToDefaultComponent, DeleteComponent, DeleteSelectedClipComponent, DeleteSelectedSceneComponent
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -735,7 +736,8 @@ class MonoFCBE3(ControlSurface):
 			self._setup_monobridge()
 			self._setup_controls()
 			self._setup_looper()
-			self._setup_undo()
+			#self._setup_undo()
+			self._setup_delete_actions()
 			#self._setup_autoarm()
 			self._setup_viewcontrol()
 			self._setup_session_recording_component()
@@ -807,7 +809,20 @@ class MonoFCBE3(ControlSurface):
 	def _setup_undo(self):
 		self._undo = UndoRedoComponent(name='Undo', is_root=True)
 		self._undo.layer = Layer(undo_button=self._pedal[4])
+		self._undo.set_enabled(False)
 	
+
+	def _setup_delete_actions(self):
+		#self._delete_component = DeleteComponent(name='Deleter', is_root=True)
+		#self._delete_component.layer = Layer(delete_button='delete_button')
+		#self._delete_default_component = DeleteAndReturnToDefaultComponent(name='DeleteAndDefault', is_root=True)
+		#self._delete_default_component.layer = Layer(delete_button='delete_button')
+		self._delete_clip = DeleteSelectedClipComponent(name='Selected_Clip_Deleter')
+		self._delete_clip.layer = Layer(action_button=self._pedal[4])
+		self._delete_clip.set_enabled(False)
+		#self._delete_scene = DeleteSelectedSceneComponent(name='Selected_Scene_Deleter', is_root=True)
+		#self._delete_scene.layer = Layer(action_button=self._with_shift('delete_button'))
+
 
 	def _setup_viewcontrol(self):
 		self._viewcontrol = ViewControlComponent()
@@ -833,7 +848,7 @@ class MonoFCBE3(ControlSurface):
 
 	def _setup_modes(self):
 		self._button_modes = ModesComponent(name='Button_Modes')
-		self._button_modes.add_mode('looper', [self._looper, self._viewcontrol, self._recorder])
+		self._button_modes.add_mode('looper', [self._looper, self._viewcontrol, self._recorder, self._delete_clip])
 		self._button_modes.selected_mode = 'looper'
 		self._button_modes.set_enabled(True)
 	
