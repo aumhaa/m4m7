@@ -208,12 +208,14 @@ function setup_patcher()
 	for(var i=0;i<4;i++)
 	{
 		loopers[i] = {'obj':this.patcher.getnamed('midi_looper['+i+']'), 
-						'storage':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('storage'),
-						'mute_obj':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('mute_obj'),
-						'clear_obj':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('clear_obj'),
-						'overdub_obj':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('overdub_obj'),
-						'new_scene_trigger':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('new_scene_trigger'),
-						};
+					'storage':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('storage'),
+					'mute_obj':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('mute_obj'),
+					'clear_obj':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('clear_obj'),
+					'overdub_obj':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('overdub_obj'),
+					'new_scene_trigger':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('new_scene_trigger'),
+					'rate':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('rate'),
+					'seq':this.patcher.getnamed('midi_looper['+i+']').subpatcher().getnamed('seq')
+					};
 	}
 }
 
@@ -851,6 +853,15 @@ function preset(val)
 			debug('we have a storage handle, proceeding...');
 			storage.message('recall', current_preset*5);
 			this.patcher.getnamed('sub_preset_tab').message('int', 0);
+			looper_preset = -1;
+			for(var i in loopers)
+			{
+				loopers[i].storage.message('recall', 0);
+				loopers[i].new_scene_trigger.message(args[0]+1);
+				loopers[i].seq.message('seq');
+				loopers[i].seq.message('clear');
+				//loopers[i].rate.message('reset');
+			}
 		}
 	}
 	else
@@ -939,6 +950,8 @@ function looper_functions()
 				{
 					loopers[i].storage.message('recall', ((current_preset*6)+args[0]+1));
 					loopers[i].new_scene_trigger.message(args[0]+1);
+					loopers[i].seq.message('seq', 'seqnum'+((current_preset*6)+args[0]+1));
+					//loopers[i].rate.message('reset');
 				}
 			}
 			break;
