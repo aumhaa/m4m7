@@ -4,8 +4,8 @@ monomodular b997+
 
 How to make this work:
 
-1) You MUST be using the most current version of Live! (as of this writing, version 9.7). You should also
-install the latest version of Max (7.3).
+1) You MUST be using the most current version of Live! (as of this writing, version 9.71). You should also
+install the latest version of Max (7.31).
 
 2) Download this repository, preferably with a github client as I’m making frequent changes and it will be
 easier to update for you if you find bugs that I can quickly fix. Put the “m4m7” or “m4m7-master” folder

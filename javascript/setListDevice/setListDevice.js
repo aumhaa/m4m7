@@ -3,7 +3,7 @@ autowatch = 1;
 outlets = 2;
 
 aumhaa = require('_base');
-var FORCELOAD = false;
+var FORCELOAD = true;
 var DEBUG = false;
 aumhaa.init(this);
 var script = this;
@@ -438,6 +438,11 @@ function data_for_name(name)
 	return data;
 }
 
+function _browser_pset(num, val)
+{
+	debug('load_preset:', num);
+	mod.SendDirect('Forward', 'load_preset', num);
+}
 
 function tempo_time(val)
 {
