@@ -38,6 +38,19 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-48",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 21.0, 83.0, 59.0, 22.0 ],
+					"style" : "",
+					"text" : "unpack s"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"id" : "obj-43",
 					"linecount" : 2,
 					"maxclass" : "message",
@@ -52,25 +65,12 @@
 			}
 , 			{
 				"box" : 				{
-					"id" : "obj-20",
-					"maxclass" : "newobj",
-					"numinlets" : 2,
-					"numoutlets" : 2,
-					"outlettype" : [ "", "" ],
-					"patching_rect" : [ 21.0, 78.0, 70.0, 22.0 ],
-					"style" : "",
-					"text" : "route recall"
-				}
-
-			}
-, 			{
-				"box" : 				{
 					"id" : "obj-12",
 					"maxclass" : "newobj",
 					"numinlets" : 2,
 					"numoutlets" : 2,
 					"outlettype" : [ "bang", "" ],
-					"patching_rect" : [ 21.0, 113.400002, 74.0, 22.0 ],
+					"patching_rect" : [ 21.0, 125.0, 74.0, 22.0 ],
 					"style" : "",
 					"text" : "select recall"
 				}
@@ -1986,7 +1986,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-20", 0 ],
+					"destination" : [ "obj-48", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
 					"source" : [ "obj-16", 0 ]
@@ -2019,15 +2019,6 @@
 					"hidden" : 0,
 					"midpoints" : [ 55.5, 598.0, 86.0, 598.0 ],
 					"source" : [ "obj-19", 0 ]
-				}
-
-			}
-, 			{
-				"patchline" : 				{
-					"destination" : [ "obj-12", 0 ],
-					"disabled" : 0,
-					"hidden" : 0,
-					"source" : [ "obj-20", 0 ]
 				}
 
 			}
@@ -2249,6 +2240,15 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-12", 0 ],
+					"disabled" : 0,
+					"hidden" : 0,
+					"source" : [ "obj-48", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-40", 0 ],
 					"disabled" : 0,
 					"hidden" : 0,
@@ -2453,12 +2453,12 @@
 			}
  ],
 		"parameters" : 		{
+			"obj-54" : [ "imprv", "imprv", 0 ],
 			"obj-18" : [ "length", "length", 0 ],
 			"obj-33" : [ "noterelease", "noterelease", 0 ],
 			"obj-14" : [ "clear", "clear", 0 ],
 			"obj-23" : [ "mute", "mute", 0 ],
 			"obj-99" : [ "end", "end", 0 ],
-			"obj-54" : [ "imprv", "imprv", 0 ],
 			"obj-15" : [ "overdub", "overdub", 0 ]
 		}
 ,
