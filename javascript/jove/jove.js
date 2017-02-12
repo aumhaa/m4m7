@@ -8,7 +8,7 @@ var max_time = jsarguments[2];
 var Alive = false;
 
 aumhaa = require('_base');
-var FORCELOAD = false;
+var FORCELOAD = true;
 var DEBUG = false;
 aumhaa.init(this);
 
@@ -45,7 +45,7 @@ for(var i=0;i<16;i++)
 		{
 			cell_fire[i][j][0] = 17;
 		}
-		else if (((i%8)>5)&&((j%8)<6))
+		else if (((i%8)>5)&&((j%8)<5))
 		{
 			cell_fire[i][j][0] = 18 + (i%2);
 			cell_fire[i][j][2] = j;
@@ -54,6 +54,14 @@ for(var i=0;i<16;i++)
 		{
 			cell_fire[i][j][0] = 20 + (j%2);
 			cell_fire[i][j][2] = i;
+		}
+		else if ((i==6)&&(j==5))
+		{
+			cell_fire[i][j][0] = 30;
+		}
+		else if ((i==7)&&(j==5))
+		{
+			cell_fire[i][j][0] = 31;
 		}
 	}
 }
@@ -94,17 +102,47 @@ var POBJ = ['bufferloop', 'bufferundo', 'pokeloop', 'looper',
 			// 'record', 'buffetin', 'bufferin', 'groovelength', 'latency', 'inloop', 'frommaster',
 			//'copybuffer', 'calc_record', 'drivesource', 'buffetloop', 'buffetundo', 
 var TOBJ = ['relativetimer',  'metro'];
-var TRIGGER = ['inlet', 'quantize', 'relative', 'quantization', 'buffer_size'];
+var TRIGGER = ['inlet', 'quantize', 'relative', 'quantization', 'buffer_size', 'master_length'];  // 'quantize_metro', 'relative_metro'];
 var LENGTHS = [1, 2, 4, 8, 16, 32, 64];
 var stored_messages = [];
 
 //var del_chan = new Task(change_poke_channel, this);
 
+if (!Array.prototype.indexOf) {
+  Array.prototype.indexOf = function (obj, fromIndex) {
+    if (fromIndex == null) {
+        fromIndex = 0;
+    } else if (fromIndex < 0) {
+        fromIndex = Math.max(0, this.length + fromIndex);
+    }
+    for (var i = fromIndex, j = this.length; i < j; i++) {
+        if (this[i] === obj)
+            return i;
+    }
+    return -1;
+  };
+}
+
+function inArray(arr,obj) {
+    return (arr.indexOf(obj) != -1);
+}
+
 var Mod = ModComponent.bind(script);
 var mod, modfinder;
 
-var master = new Global('master');
-master.looper = [];
+var glob = new Global('jove_global');
+if(!glob.master_looper)
+{
+	debug('making master...');
+	glob.master_looper = [];
+}
+if(!glob.slave_loopers)
+{
+	debug('making slaves...');
+	glob.slave_loopers = [];
+}
+
+function no_debug(){}
 
 function mod_callback(args)
 {
@@ -147,6 +185,7 @@ function init()
 {
 	debug('init');
 	debug('prefix is:', prefix);
+	setup_tasks();
 	for(var obj in POBJ)
 	{
 		looper[POBJ[obj]] = this.patcher.getnamed(POBJ[obj]);
@@ -198,7 +237,7 @@ function init()
 
 	//mod = new Mod(script, 'jove', prefix, false);
 	mod = new Mod(script, undefined, 'jove', prefix, false);
-	//mod.debug = debug;
+	mod.debug = no_debug;
 	//mod.wiki_addy = WIKI;
 	mod_finder = new LiveAPI(mod_callback, 'live_set', 'this_device');
 	mod.assign_api(mod_finder);
@@ -212,6 +251,11 @@ function init()
 	_set_relative_record(parseInt(val));
 
 	looper.trigger.quantization.message('int', looper.trigger.quantization.getvalueof());
+
+
+	looper.slave.message('int', looper.slave.getvalueof());
+	looper.master.message('int', looper.master.getvalueof());
+
 
 
 }
@@ -235,6 +279,7 @@ function initialize()
 				script[i.replace('_', "")] = script[i];
 			}
 		}
+		mod.Send('set_legacy', 0);
 		setup_translations();
 		//quantizemenu.message('bang');
 		display_position();
@@ -251,6 +296,11 @@ function initialize()
 		_change_speed(speed);
 		_change_inertia(inertia);
 	}
+}
+
+function setup_tasks()
+{
+	script['tasks'] = new TaskServer(script, 100);
 }
 
 function detect_instance(this_device)
@@ -289,6 +339,13 @@ function update_state()
 function trigger_end(val)
 {
 	loop_end = val;
+	if(glob.master_looper == script)
+	{
+		for(var i in glob.slave_loopers)
+		{
+			glob.slave_loopers[i].set_master_length(loop_end);
+		}
+	}
 }
 
 //begin or end loop recording, depending on current state
@@ -556,7 +613,7 @@ function _set_quantize_record(val)
 	{
 		looper.quantizerecord.message('set', 0);
 	}
-	mod.Send('receive_translation', 'quantize', 'value', ((quantize_record.enabled*6)+2));
+	mod.Send('receive_translation', 'quantize', 'value', ((quantize_record.enabled*7)+2));
 }
 
 //turn on/off relative quantization	
@@ -572,6 +629,7 @@ function _set_relative_record(val)
 	{
 		looper.relativerecord.message('set', 0);
 	}
+	mod.Send('receive_translation', 'relative', 'value', ((quantize_record.relative*7)+3));
 }
 
 //set the predefined loop creation size
@@ -647,34 +705,93 @@ function change_state(val)
 
 function set_master(val)
 {
+	debug('set_master:', val);
 	if(val)
 	{
-		if('set_master' in master.looper)
+		if(slave)
 		{
-			master.looper.set_master(0);
+			looper.slave.message('int', 0);
 		}
-		master.looper = script;
+		if('set_master' in glob.master_looper)
+		{
+			glob.master_looper.set_master(0);
+		}
+		glob.master_looper = script;
+		for(var i in glob.slave_loopers)
+		{
+			glob.slave_loopers[i].set_master_length(loop_end);
+		}
 	}
 	else
 	{
-		if(master.looper == script)
+		if(glob.master_looper == script)
 		{
-			master.looper = [];
+			glob.master_looper = [];
 		}
 	}
-	this.patcher.getnamed('master').message('int', master.looper == script);
+	//this.patcher.getnamed('master').message('int', glob.master_looper == script);
+	mod.Send('receive_translation', 'master',  'value', 5 + ((script == glob.master_looper)*7));
+	tasks.addTask(looper.master.message, ['set', glob.master_looper == script], 0);
+	tasks.addTask(set_master_gui, [glob.master_looper == script], 0);
+}
+
+function set_master_gui(val)
+{
+	looper.master.message('set', val);
 }
 
 function set_slave(val)
 {
-	if(master.looper == script)
+	debug('set_slave:', val);
+	if(glob.master_looper == script)
 	{
 		slave = false;
-		this.patcher.getnamed('slave').message('int', 0);
 	}
 	else
 	{
 		slave = val>0;
+	}
+	var index = glob.slave_loopers.indexOf(script);
+	if(slave)
+	{
+		if(index<0)
+		{
+			glob.slave_loopers.push(script);
+			if(glob.master_looper!=[])
+			{
+				set_master_length(glob.master_looper.loop_end);
+			}
+		}
+	}
+	else
+	{
+		if(index>-1)
+		{
+			glob.slave_loopers.splice(index, 1);
+			looper.trigger.quantize.message('bang');
+		}
+	}
+	//looper.slave.setvalueof(0);
+	debug('length of slaves.loopers are now:', glob.slave_loopers.length, slave);
+	mod.Send('receive_translation', 'slave',  'value', 7 + (slave*7));
+	tasks.addTask(set_slave, [slave], 0);
+	//looper.slave.message('set', slave);
+	//tasks.addTask(looper.slave.message, ['set', slave], 0);
+	
+}
+
+function set_slave_gui(val)
+{
+	looper.slave.message('set', val);
+}
+
+function set_master_length(length)
+{
+	debug('set_master_length', length)
+	if(slave == true)
+	{
+		looper.trigger.master_length.message(length);
+		debug('master_length is now:', looper.trigger.master_length.getvalueof());
 	}
 }
 
@@ -716,6 +833,10 @@ function setup_translations()
 	mod.Send('add_translation', 'speed_column_batch', 'grid', 'all', 7);
 	mod.Send('add_translation', 'inertia_column_batch', 'grid', 'all', 6);
 
+	mod.Send('add_translation', 'relative', 'grid', 'all', 5, 6);
+	mod.Send('add_translation', 'slave', 'grid', 'all', 6, 5);
+	mod.Send('add_translation', 'master', 'grid', 'all', 7, 5);
+
 	//Base stuff:
 	for(var i = 0;i < 8;i++)
 	{
@@ -729,6 +850,21 @@ function setup_translations()
 	mod.Send('add_translation', 'clear', 'base_grid', 'all', 4, 3);
 	mod.Send('add_translation', 'quantize', 'base_grid', 'all', 5, 3);
 
+	//Minim stuff:
+	for(var i = 0;i < 4;i++)
+	{
+		mod.Send('add_translation', 'instance_'+i, 'minim_grid', 'instance', i, 0);
+	}
+	mod.Send('add_translation', 'undo', 'minim_grid', 'all', 0, 2);
+	mod.Send('add_translation', 'overdub', 'minim_grid', 'all', 0, 1);
+	mod.Send('add_translation', 'record', 'minim_grid', 'all', 1, 1);
+	mod.Send('add_translation', 'mute', 'minim_grid', 'all', 2, 1);
+	mod.Send('add_translation', 'clear', 'minim_grid', 'all', 3, 1);
+	mod.Send('add_translation', 'quantize', 'minim_grid', 'all', 0, 3);
+	mod.Send('add_translation', 'relative', 'minim_grid', 'all', 1, 3);
+	mod.Send('add_translation', 'slave', 'minim_grid', 'all', 2, 3);
+	mod.Send('add_translation', 'master', 'minim_grid', 'all', 3, 3);
+	
 }
 
 function _push_grid(x, y, z)
@@ -779,13 +915,75 @@ function _base_grid(x, y, z)
 	}
 }
 
+function _minim_grid(x, y, z)
+{
+	if(z)
+	{
+		if((x<4)&&(y<4))
+		{
+			switch(y)
+			{
+				case 0:
+					mod.Send('select_device_from_key', '@loop'+(x+1));
+					break;
+				case 1:
+					switch(x)
+					{
+						case 0:
+							_overdub();
+							break;
+						case 1:
+							_loop();
+							break;
+						case 2:
+							_mute();
+							break;
+						case 3:
+							_clear();
+							break;
+					}
+					break;
+				case 2:
+					switch(x)
+					{
+						case 0:
+							undo();
+							break;
+					}
+					break;
+				case 3:
+					switch(x)
+					{
+						case 0:
+							//set_quantize_record(Math.abs(quantize_record.enabled-1));
+							looper.quantizerecord.message('int', Math.abs(looper.quantizerecord.getvalueof()-1));
+							break;
+						case 1:
+							looper.relativerecord.message('int', Math.abs(looper.relativerecord.getvalueof()-1));
+							//set_relative_record(Math.abs(quantize_record.relative-1));
+							break;
+						case 2:
+							looper.slave.message('int', Math.abs(looper.slave.getvalueof()-1));
+							//set_slave(Math.abs(slave-1));
+							break;
+						case 3:
+							looper.master.message('int', Math.abs(looper.master.getvalueof()-1));
+							//set_master(glob.master_loooper == script ? 0 : 1);
+							break;
+					}
+					break;
+			}
+		}
+	}
+}
+
 function _grid(x, y, z)
 {
-	debug('grid:', x, y, z);
+	//debug('grid:', x, y, z);
 	if((x<8)&&(y<8))
 	{
 		var pos = parseInt(cell_fire[x][y][0]);
-		//post(x, y, z, pos, number, '\n');
+		//debug(x, y, z, pos, number, '\n');
 		if((pos > -1)&&(pos <16)&&(z>0))
 		{
 			looper.looper.message('pos', pos/16);
@@ -823,6 +1021,7 @@ function _grid(x, y, z)
 					_clear();
 					break;
 				case 5:
+					looper.relativerecord.message('int', Math.abs(quantize_record.relative-1));
 					break;
 				case 6:
 					debug('select_device_from_key @loop1');
@@ -845,7 +1044,8 @@ function _grid(x, y, z)
 				switch(x%8)
 				{
 					case 5:
-						set_quantize_record(Math.abs(quantize_record.enabled-1));
+						//set_quantize_record(Math.abs(quantize_record.enabled-1));
+						looper.quantizerecord.message('int', Math.abs(quantize_record.enabled-1));
 						break;
 					case 6:
 						debug('select_device_from_key @loop3');
@@ -857,6 +1057,14 @@ function _grid(x, y, z)
 						break;
 				}
 			}			
+		}
+		else if((pos == 30)&&(z>0))
+		{
+			looper.slave.message('int', Math.abs(looper.slave.getvalueof()-1));
+		}
+		else if((pos == 31)&&(z>0))
+		{
+			looper.master.message('int', Math.abs(looper.master.getvalueof()-1));
 		}
 	}
 }
