@@ -1,8 +1,8 @@
 autowatch = 1;
 
 aumhaa = require('_base');
-var FORCELOAD = false;
-var DEBUG = false;
+var FORCELOAD = true;
+var DEBUG = true;
 var PSET_WINDOWS = false;
 var LOOP_PSET_WINDOWS=false;
 aumhaa.init(this);
@@ -27,7 +27,7 @@ var kslider;
 var synth_tab;
 var lines = [];
 var loopers = [];
-var looper_preset = 0;
+var looper_preset_num = 0;
 var presets = [{'synth':1, 'lo':0, 'hi':24, 'atouch':0, 'program':0, 'pb':0},
 				{'synth':2, 'lo':25, 'hi':36, 'atouch':0, 'program':0, 'pb':0},
 				{'synth':3, 'lo':37, 'hi':48, 'atouch':0, 'program':0, 'pb':0},
@@ -54,6 +54,8 @@ var super_bank = 0;
 
 var synth_param_ids = [[], [], [], []];
 var raw_synth_param_ids = [[], [], [], []];
+
+var muted = false;
 
 var SYNTHCHOOSER_BANKS = {'NoDevice':[['ModDevice_s1_mod', 'ModDevice_s2_mod', 'ModDevice_s3_mod', 'ModDevice_s4_mod', 'CustomParameter_32', 'CustomParameter_33', 'CustomParameter_34', 'CustomParameter_35', 'CustomParameter_36', 'CustomParameter_37', 'CustomParameter_38', 'CustomParameter_39', 'CustomParameter_40', 'CustomParameter_41', 'CustomParameter_42', 'CustomParameter_43'],
 										['CustomParameter_0', 'CustomParameter_1', 'CustomParameter_2', 'CustomParameter_3', 'CustomParameter_4', 'CustomParameter_5', 'CustomParameter_6', 'CustomParameter_7', 'CustomParameter_8', 'CustomParameter_9', 'CustomParameter_10', 'CustomParameter_11', 'CustomParameter_12', 'CustomParameter_13', 'CustomParameter_14', 'CustomParameter_15'],
@@ -194,6 +196,7 @@ function setup_patcher()
 		presets[i].program = this.patcher.getnamed('prog'+(i+1)).getvalueof();
 		presets[i].pb = this.patcher.getnamed('pb'+(i+1)).getvalueof();
 	}
+	//looper_preset_delay = this.patcher.getnamed('looper_preset_delay');
 	storage = this.patcher.getnamed('synthchooser_storage');
 	kslider = this.patcher.getnamed('kslider');
 	for(var i=0;i<4;i++)
@@ -853,7 +856,7 @@ function preset(val)
 			debug('we have a storage handle, proceeding...');
 			storage.message('recall', current_preset*5);
 			this.patcher.getnamed('sub_preset_tab').message('int', 0);
-			looper_preset = -1;
+			looper_preset_num = -1;
 			for(var i in loopers)
 			{
 				loopers[i].storage.message('recall', 0);
@@ -908,7 +911,7 @@ function looper_functions()
 			break;
 		case 'Next':
 			debug('Next:', args);
-			this.patcher.getnamed('looper_scene').message(Math.max(0, Math.min(5, looper_preset+1)));
+			this.patcher.getnamed('looper_scene').message(Math.max(0, Math.min(5, looper_preset_num+1)));
 			break;
 		case 'Clear':
 			debug('Clear:', args);
@@ -945,14 +948,21 @@ function looper_functions()
 			}
 			else
 			{
-				looper_preset = args[0];
-				for(var i in loopers)
-				{
-					loopers[i].storage.message('recall', ((current_preset*6)+args[0]+1));
-					loopers[i].new_scene_trigger.message(args[0]+1);
-					loopers[i].seq.message('seq', 'seqnum'+((current_preset*6)+args[0]+1));
-					//loopers[i].rate.message('reset');
-				}
+				looper_preset_num = args[0];
+				this.patcher.getnamed('looper_preset_delay').message('bang');
+			}
+			break;
+		case 'Go!':
+			for(var i in loopers)
+			{
+				loopers[i].mute_obj.message(0);
+			}
+			break;
+		case 'Stop':
+			for(var i in loopers)
+			{
+				loopers[i].rate.message('reset');
+				loopers[i].mute_obj.message(1);
 			}
 			break;
 		default:
@@ -960,5 +970,18 @@ function looper_functions()
 			break;
 	}
 }
+
+function _looper_preset()
+{
+	this.patcher.getnamed('Stop_button').message('set', 1);
+	for(var i in loopers)
+	{
+		loopers[i].storage.message('recall', ((current_preset*6)+looper_preset_num+1));
+		loopers[i].new_scene_trigger.message(looper_preset_num+1);
+		loopers[i].seq.message('seq', 'seqnum'+((current_preset*6)+looper_preset_num+1));
+		//loopers[i].rate.message('reset');
+	}
+}
+
 
 forceload(this);
