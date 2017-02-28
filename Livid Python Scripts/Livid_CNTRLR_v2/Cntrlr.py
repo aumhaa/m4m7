@@ -808,8 +808,8 @@ class Cntrlr(LividControlSurface):
 													main_faders, 
 													main_dials,
 													self._mixer.main_knobs_layer, 
-													self._translations, 
-													DelayMode(self._translations.selector_layer, delay = .1)], 
+													DelayMode(self._translations, delay = .1),
+													DelayMode(self._translations.selector_layer, delay = .3)], 
 													behaviour = DefaultedBehaviour(default_mode = 'MixMode', color = 'ModeButtons.Translations', off_color = 'ModeButtons.TranslationsDisabled'))
 		self._main_modes.add_mode('DeviceSelector', [common,
 													self._device_selector,

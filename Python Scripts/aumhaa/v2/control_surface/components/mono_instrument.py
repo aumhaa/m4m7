@@ -1,5 +1,5 @@
-# by amounra 0216 : http://www.aumhaa.com
-# written against Live 9.6 release on 021516
+# by amounra 0217 : http://www.aumhaa.com
+# written against Live 9.6 release on 022817
 
 import Live
 from itertools import imap, chain, starmap, ifilter
@@ -29,6 +29,11 @@ from aumhaa.v2.control_surface.instrument_consts import *
 from aumhaa.v2.base import initialize_debug
 
 debug = initialize_debug()
+
+
+def is_triplet_quantization(triplet_factor):
+	return triplet_factor == 0.75
+
 
 
 def song():
@@ -136,6 +141,7 @@ class MonoNoteEditorComponent(NoteEditorComponent):
 
 	"""Custom function for displaying triplets for different grid sizes, called by _visible steps"""
 	_visible_steps_model = lambda self, indices: filter(lambda k: k % 4 != 3, indices)
+	_matrix = None
 
 	"""First we need to reset the state (chan, id) of each button of the matrix that was previously grabbed so that it doesn't display the playhead when it's given to something else"""
 	"""Next we need to override the channel that each control is set to in this function, as it is hardcoded from a header definition in the module"""
@@ -149,12 +155,23 @@ class MonoNoteEditorComponent(NoteEditorComponent):
 				button.set_channel(15)
 	
 
+	def set_matrix(self, matrix):
+		if self._matrix:
+			for button, _ in ifilter(first, self._matrix.iterbuttons()):
+				button.reset_state()
+		self._matrix = matrix
+		super(MonoNoteEditorComponent, self).set_matrix(matrix)
+		if matrix:
+			for button, _ in ifilter(first, matrix.iterbuttons()):
+				button.set_channel(15)
+	
+
 	def _visible_steps(self):
 		first_time = self.page_length * self._page_index
 		steps_per_page = self._get_step_count()
 		step_length = self._get_step_length()
 		indices = range(steps_per_page)
-		if self._is_triplet_quantization():
+		if is_triplet_quantization(self._triplet_factor):
 			indices = self._visible_steps_model(indices)
 		return [ (self._time_step(first_time + k * step_length), index) for k, index in enumerate(indices) ]
 	

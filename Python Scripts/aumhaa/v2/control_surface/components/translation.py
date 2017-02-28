@@ -28,7 +28,7 @@ class TranslationComponent(CompoundComponent):
 	
 
 	def set_channel_selector_buttons(self, buttons):
-		self._on_channel_seletor_button_value.subject = buttons
+		self._on_channel_selector_button_value.subject = buttons
 		self.update_channel_selector_buttons()
 	
 
@@ -48,33 +48,39 @@ class TranslationComponent(CompoundComponent):
 	
 
 	def update_channel_selector_buttons(self):
-		buttons = self._on_channel_seletor_button_value.subject
+		buttons = self._on_channel_selector_button_value.subject
+		#debug('update_channel_selector_buttons:', buttons)
 		if buttons:
+			channel = self._channel - self._user_channel_offset
+			#debug('channel:', channel)
 			for button, coords in buttons.iterbuttons():
+				#debug('coords:', coords)
 				if button:
-					channel = self._channel - self._user_channel_offset
 					selected = coords[0] + (coords[1]*buttons.width())
 					if channel == selected:
 						button.set_light('Translation.SelectorOn')
+						#debug('turning on:', channel, button)
 					else:
 						button.set_light('Translation.SelectorOff')
 	
 
 	@listens('value')
 	def _on_channel_selector_control_value(self, value, *a, **k):
-		chan_range = 14 - self._user_channel_offset
-		channel = int((value*chan_range)/127)+self._user_channel_offset
-		if channel != self._channel:
-			self._channel = channel
-			self.update()
+		if self.is_enabled():
+			chan_range = 14 - self._user_channel_offset
+			channel = int((value*chan_range)/127)+self._user_channel_offset
+			if channel != self._channel:
+				self._channel = channel
+				self.update()
 	
 
 	@listens('value')
-	def _on_channel_seletor_button_value(self, value, x, y, *a, **k):
-		if value:
-			x = x + (y*self._on_channel_seletor_button_value.subject.width())
-			self._channel = min(x+self._user_channel_offset, 14)
-		self.update()
+	def _on_channel_selector_button_value(self, value, x, y, *a, **k):
+		if self.is_enabled():
+			if value:
+				x = x + (y*self._on_channel_selector_button_value.subject.width())
+				self._channel = min(x+self._user_channel_offset, 14)
+			self.update()
 	
 
 	def update(self):
