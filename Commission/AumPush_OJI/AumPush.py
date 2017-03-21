@@ -244,10 +244,10 @@ class AumPush(Push):
 	def load_preset(self, target = None, folder = None, directory = 'defaultPresets'):
 		debug('load_preset()', target, folder, directory)
 		if not target is None:
-			debug('browse_mode:', self.application.view.browse_mode)
+			#debug('browse_mode:', self.application.view.browse_mode)
 			browser = self.application.browser ##if not self.application.view.browse_mode else self.application.browser.hotswap_target
 			#debug('browser:', browser)
-			view = self.application.view
+			#view = self.application.view
 			#view.toggle_browse()
 			user_folders = browser.user_folders
 			for item in user_folders:
@@ -268,6 +268,7 @@ class AumPush(Push):
 									if target < len(inneritems):
 										if inneritems[target].is_loadable:
 											browser.load_item(inneritems[target])
+											break
 										elif inneritems[target].is_folder:
 											debug(inneritems[target], '.is_folder')
 											innertarget = inneritems[target]
@@ -276,10 +277,13 @@ class AumPush(Push):
 											debug('innertargetitems:', innertargetitems)
 											if len(innertargetitems)>0 and innertargetitems[0].is_loadable:
 												browser.load_item(innertargetitems[0])
+												break
 											else:
 												debug(innertargetitems[0], 'item isnt loadable 0')
+												break
 										else:
 											debug(inneritems[target], 'item isnt loadable 1')
+											break
 								else:
 									if inneritem.name == target:
 										if inneritem.is_loadable:
@@ -295,15 +299,18 @@ class AumPush(Push):
 									if target < len(inneritems):
 										if inneritems[target].is_loadable:
 											browser.load_item(inneritems[target])
+											break
 										else:
 											debug(inneritems[target], 'item isnt loadable 3')
+											break
 								else:
 									if inneritem.name == target:
 										if inneritem.is_loadable:
 											browser.load_item(inneritem)
+											break
 										else:
 											debug(inneritem, 'item isnt loadable 4')
-										break
+											break
 	
 
 
