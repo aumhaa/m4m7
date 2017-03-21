@@ -92,7 +92,7 @@ class AumPush(Push):
 		with self.component_guard():
 			self._device_component._alt_pressed = False
 			self.set_feedback_channels(FEEDBACK_CHANNELS)
-		self.log_message('<<<<<<<<<<<<<<<<<<<<<<<< AumPush ' + str(self._monomod_version) + ' log opened >>>>>>>>>>>>>>>>>>>>>>>>') 
+		self.log_message('<<<<<<<<<<<<<<<<<<<<<<<< AumPush ' + str(self._monomod_version) + ' log opened >>>>>>>>>>>>>>>>>>>>>>>>')
 	
 
 	def _create_skin(self):
@@ -223,6 +223,89 @@ class AumPush(Push):
 		return routing == 'Ext: All Ins' or routing == 'All Ins' or routing.startswith('AumPush')
 	
 
+	def test_browser(self):
+		debug('test_browser')
+		browser = self.application.browser
+		debug('browser is:', browser)
+		user_folders = browser.user_folders
+		debug('user_folders are:', user_folders)
+		for item in user_folders:
+			#debug('item is:', item, item.name)
+			if item.name == 'defaultPresets':
+				inneritems = item.iter_children
+				for inneritem in inneritems:
+					debug('inneritem:', inneritem)
+					if inneritem.name == 'Default.aupreset':
+						browser.load_item(inneritem)
+						break
+				
+	
+
+	def load_preset(self, target = None, folder = None, directory = 'defaultPresets'):
+		debug('load_preset()', target, folder, directory)
+		if not target is None:
+			debug('browse_mode:', self.application.view.browse_mode)
+			browser = self.application.browser ##if not self.application.view.browse_mode else self.application.browser.hotswap_target
+			#debug('browser:', browser)
+			view = self.application.view
+			#view.toggle_browse()
+			user_folders = browser.user_folders
+			for item in user_folders:
+				if item.name == directory:
+					if not folder is None:
+						folder_target = None
+						item_iterator = item.iter_children
+						inneritems = [inneritem for inneritem in item_iterator]
+						for inneritem in inneritems:
+							if inneritem.name == folder:
+								folder_target = inneritem
+								break
+						if folder_target:
+							item_iterator = folder_target.iter_children
+							inneritems = [inneritem for inneritem in item_iterator]
+							for inneritem in inneritems:
+								if isinstance(target, int):
+									if target < len(inneritems):
+										if inneritems[target].is_loadable:
+											browser.load_item(inneritems[target])
+										elif inneritems[target].is_folder:
+											debug(inneritems[target], '.is_folder')
+											innertarget = inneritems[target]
+											innertarget_iterator = innertarget.iter_children
+											innertargetitems = [innertargetitem for innertargetitem in innertarget_iterator]
+											debug('innertargetitems:', innertargetitems)
+											if len(innertargetitems)>0 and innertargetitems[0].is_loadable:
+												browser.load_item(innertargetitems[0])
+											else:
+												debug(innertargetitems[0], 'item isnt loadable 0')
+										else:
+											debug(inneritems[target], 'item isnt loadable 1')
+								else:
+									if inneritem.name == target:
+										if inneritem.is_loadable:
+											browser.load_item(inneritem)
+										else:
+											debug(inneritem, 'item isnt loadable 2')
+										break
+					else:
+							item_iterator = item.iter_children
+							inneritems = [inneritem for inneritem in item_iterator]
+							for inneritem in inneritems:
+								if isinstance(target, int):
+									if target < len(inneritems):
+										if inneritems[target].is_loadable:
+											browser.load_item(inneritems[target])
+										else:
+											debug(inneritems[target], 'item isnt loadable 3')
+								else:
+									if inneritem.name == target:
+										if inneritem.is_loadable:
+											browser.load_item(inneritem)
+										else:
+											debug(inneritem, 'item isnt loadable 4')
+										break
+	
+
 
 class ModDispayComponent(ControlSurfaceComponent):
 
@@ -313,6 +396,12 @@ class PushModHandler(ModHandler):
 		self._script._select_note_mode()
 		self.update()
 		debug('modhandler select mod: ' + str(mod))
+	
+
+	def load_preset(self, value, *a, **k):
+		debug('recieve load preset value:', value)
+		if value > -1:
+			self._script.load_preset(value)
 	
 
 	def _receive_grid(self, x, y, value = -1, identifier = -1, channel = -1, *a, **k):
