@@ -169,4 +169,6 @@ function _call_function()
 
 function callback(args){}
 
+function anything(){}
+
 forceload(this);
