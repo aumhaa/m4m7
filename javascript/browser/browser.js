@@ -6,7 +6,7 @@ inlets = 1;
 var script = this;
 
 aumhaa = require('_base');
-var FORCELOAD = true;
+var FORCELOAD = false;
 var DEBUG = true;
 aumhaa.init(this);
 

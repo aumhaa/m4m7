@@ -420,6 +420,10 @@ function select_voice(num)
 	color.message('set', pads[num-1]._color.getvalueof());
 	Mask.message('set', pads[num-1]._mask.getvalueof());
 	update_keys();
+	if(mod_assign_mode)
+	{
+		refresh_grid();
+	}
 }
 
 
@@ -568,13 +572,14 @@ function _mod_assign(num, val)
 }
 
 
-INFO = "SKIN\n";
+INFO = "SKIN\n\n";
+SETUP_INFO = "Add this device to a MIDI Track, place a DrumRack after it.  Set the input port (top menu in device) to Push's Live port.\n";
 OVERVIEW_INFO = "64 Pads may be divided into 64 different zones.\n\n\n"+
 			"Each zone has its own output note, in addition to three alternate output notes that may be triggered when different zone assigned to modify it is held down.\n\n"+
 			"A zone has several editable parameters:\n\n"+
 			"Color: the displayed color of the zone.\n"+ 
 			"Note: the note that is output when the zone is played.\n"+ 
-			"Mod_A - Mod_C:  the alternate note that is output when another zone is set to trigger a modified on selected zone.\n"+
+			"Mod_A - Mod_C:  the alternate note that is output when another zone is set to trigger a modified output on selected zone.\n"+
 			"Mask Time: adjust to prevent double-triggering of notes within the zone.\n";
 KEY_INFO = "To select a zone for editing, change the first parameter knob to the target zone.\n"+
 			"To assign a grid cell to the zone, press the KEY 8 to toggle ASSIGN mode (ASSIGN mode = RED, PLAY mode = GREEN).\n"+
@@ -589,7 +594,7 @@ function info()
 {
 	debug('info...');
 	info_pcontrol.message('open');
-	info_patcher.subpatcher().getnamed('info_text').message('set', [INFO, OVERVIEW, KEY_INFO]);
+	info_patcher.subpatcher().getnamed('info_text').message('set', [INFO, SETUP_INFO, OVERVIEW_INFO, KEY_INFO]);
 }
 
 
