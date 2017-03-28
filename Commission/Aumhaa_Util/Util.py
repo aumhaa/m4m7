@@ -39,7 +39,7 @@ class Util(ControlSurface):
 	def load_preset(self, target = None, folder = None, directory = 'defaultPresets'):
 		debug('load_preset()', target, folder, directory)
 		if not target is None:
-			browser = self.application.browser ##if not self.application.view.browse_mode else self.application.browser.hotswap_target
+			browser = Live.Application.get_application().browser ##if not self.application.view.browse_mode else self.application.browser.hotswap_target
 			user_folders = browser.user_folders
 			for item in user_folders:
 				if item.name == directory:
