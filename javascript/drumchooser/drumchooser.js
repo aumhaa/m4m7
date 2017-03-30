@@ -19,25 +19,135 @@ var main_modes;
 var trackView;
 var pset_id = 0;
 var name_listener;
+var device_name = '';
 var NOTE_DURATION = '8n';
+var PreInitVars = {'dc_pset':undefined, 'pgm':undefined};
 
 var DRUMCHOOSER_BANKS = {'MultiSampler':[['Transpose', 'Mod_Chain_Vol', 'Filter Freq', 'Filter Res', 'Shaper Amt', 'Filter Type', 'Ve Release', undefined]]};
 									//['Mod_Chain_Vol_0', 'Mod_Chain_Vol_1', 'Mod_Chain_Vol_2', 'Mod_Chain_Vol_3']]};
+
+
+if (!Array.prototype.indexOf) {
+  Array.prototype.indexOf = function (obj, fromIndex) {
+    if (fromIndex == null) {
+        fromIndex = 0;
+    } else if (fromIndex < 0) {
+        fromIndex = Math.max(0, this.length + fromIndex);
+    }
+    for (var i = fromIndex, j = this.length; i < j; i++) {
+        if (this[i] === obj)
+            return i;
+    }
+    return -1;
+  };
+}
+
+function inArray(arr,obj) {
+    return (arr.indexOf(obj) != -1);
+}
 
 
 function init()
 {
 	debug('drumchooser init');
 
-	mod = new Mod(script, 'drumchooser', unique, false);
-	//mod.debug = debug;
-	mod_finder = new LiveAPI(mod_callback, 'this_device');
-	mod.assign_api(mod_finder);
-
-	deprivatize_script_functions(this);
-	Alive = true;
+	if(precheck())
+	{
+		mod = new Mod(script, 'drumchooser', unique, false);
+		//mod.debug = debug;
+		mod_finder = new LiveAPI(mod_callback, 'this_device');
+		mod.assign_api(mod_finder);
+	}
 }
 
+function precheck()
+{
+	var READY = true;
+	var TRANS = [48, 49, 50, 51, 44, 45, 46, 47, 40, 41, 42, 43, 36, 37, 38, 39]
+	if((!finder)||(!finder.id))
+	{
+		finder = new LiveAPI(callback, 'this_device');
+		debug('this set id is', finder.id);
+	}
+	try
+	{
+		if(finder.id!==0)
+		{
+			finder.goto('this_device');
+			var this_device_id = Math.floor(finder.id);
+			finder.goto('canonical_parent');
+			//finder.goto('view');
+			debug('devices:', finder.get('devices'));
+			var device_ids = finder.get('devices').filter(function(element){return element !== 'id';})
+			var this_device_index = device_ids.indexOf(this_device_id);
+			if((this_device_index>-1)&&(device_ids[this_device_index+1]))
+			{
+				var drumpads = [];
+				debug('found drumrack....');
+				finder.goto('devices', this_device_index+1);
+				var root_id = Math.floor(finder.id);
+				//debug('id is:', finder.id);
+				for(var i=0;i<16;i++)
+				{
+					//drumPadCheck(TRANS[i], finder.id, {'index':i});
+					var pad_num = TRANS[i];
+					debug('checking drumpad:', i, pad_num);
+					finder.id = Math.floor(root_id);
+					finder.goto('drum_pads', pad_num);
+					if(finder.id == 0)
+					{
+						post('drumpad', pad_num, 'cannot be found in adjacent device, aborting...');
+						READY = false;
+						break;
+					}
+					finder.id = Math.floor(root_id);
+					finder.goto('chains', 0, 'devices', 0);
+					var device_id = Math.floor(finder.id);
+					if(finder.id == 0)
+					{
+						post('Cannot find device for drumpad', pad_num, ', aborting...');
+						READY = false;
+						break;
+					}
+					finder.goto('view');
+					if(finder.id == 0)
+					{
+						post('Cannot find device.view for drumpad', pad_num, ', aborting...');
+						READY = false;
+						break;
+					}
+					else
+					{
+						//debug('children:', finder.children);
+						var children = finder.children;
+						if(!inArray(children, 'selected_chain'))
+						{
+							post('Drumpad', pad_num, 'cannot lock to the selected_chain property, aborting...');
+							READY = false;
+							break;
+						}
+						finder.id = device_id;
+						if(finder.get('parameters').filter(function(element){return element !== 'id';}).length<2)
+						{
+							post('Drumpad', pad_num, ' device is missing a suitable parameter to lock to for changing voices, aborting...');
+							READY = false;
+						}
+					}
+				}
+			}
+			else
+			{
+				post('No Adjacent DrumRack found.');
+			}
+		}
+	}
+	catch(error)
+	{
+		READY = false;
+	}
+	return READY;
+}
+	
 function mod_callback(args)
 {
 	if((args[0]=='value')&&(args[1]!='bang'))
@@ -57,6 +167,7 @@ function mod_callback(args)
 
 function alive(val)
 {
+	Alive = val>0;
 	initialize(val);
 }
 
@@ -75,6 +186,8 @@ function initialize(val)
 		setup_modes();
 		setup_pset_id();
 		test_stuff();
+		deprivatize_script_functions(this);
+		load_PreInitVars();
 	}
 }
 
@@ -291,8 +404,15 @@ function detect_adjacent_drumrack()
 			//debug('id is:', finder.id);
 			for(var i=0;i<16;i++)
 			{
-				drumpads[i] = new DrumPad(TRANS[i], finder.id, {'index':i});
-				//debug('drumpad id is:',  drumpads[i]._apiDrumpad.id);
+				try
+				{
+					drumpads[i] = new DrumPad(TRANS[i], finder.id, {'index':i});
+				}
+				catch(error)
+				{
+					debug(error, ', couldnt make DrumPad', i, TRANS[i]);
+					//debug('drumpad id is:',  drumpads[i]._apiDrumpad.id);
+				}
 			}
 			drumMatrix = new DrumMatrix(finder.id, drumpads);
 		}
@@ -334,7 +454,7 @@ function name_callback(args)
 
 function viewCallback(){}
 
-function recall()
+function _recall()
 {
 	debug('recall_preset');
 	for(var i in drumMatrix._drumpads)
@@ -343,7 +463,7 @@ function recall()
 	}	
 }
 
-function dc_pset(num, pset)
+function _dc_pset(num, pset)
 {
 	debug('receive dc_pset', num, pset);
 	if(num==pset_id)
@@ -354,14 +474,37 @@ function dc_pset(num, pset)
 
 }
 
-function pgm_in(val)
+function _pgm_in(val)
 {
 	debug('updating preset to:', val+1, 'via pgm_in');
 	script.patcher.getnamed('preset_number').message(Math.floor(val+1));
 }
 
-function anything(){}
+function anything()
+{
+	var args = arrayfromargs(messagename, arguments);
+	switch(args[0])
+	{
+		case 'dc_pset':
+			PreInitVars.dc_pset = [args[1], args[2]];
+			break;
+		case 'pgm_in':
+			PreInitVars.pgm = args[1];
+			break;
+	}
+}
 
+function load_PreInitVars()
+{
+	if(PreInitVars.dc_pset!=undefined)
+	{
+		_dc_pset(PreInitVars.dc_pset[0], PreInitVars.dc_pset[1]);
+	}
+	if(PreInitVars.pgm!=undefined)
+	{
+		_pgm_in(PreInitVars.pgm);
+	}
+}
 
 
 function DrumMatrix(drumrack_id, drumpads, args)
@@ -673,7 +816,7 @@ DrumPad.prototype._callback = function(args)
 
 DrumPad.prototype._view_callback = function(args)
 {
-	debug(this._name, '_view_callback', args);
+	//debug(this._name, '_view_callback', args);
 }
 
 DrumPad.prototype._Callback = function(obj)
