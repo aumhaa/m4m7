@@ -2,7 +2,7 @@ autowatch = 1;
 
 aumhaa = require('_base');
 var FORCELOAD = false;
-var DEBUG = false;
+var DEBUG = true;
 aumhaa.init(this);
 var script = this;
 
@@ -22,6 +22,9 @@ var name_listener;
 var device_name = '';
 var NOTE_DURATION = '8n';
 var PreInitVars = {'dc_pset':undefined, 'pgm':undefined};
+
+var alted = false;
+var shifted = false;
 
 var DRUMCHOOSER_BANKS = {'MultiSampler':[['Transpose', 'Mod_Chain_Vol', 'Filter Freq', 'Filter Res', 'Shaper Amt', 'Filter Type', 'Ve Release', undefined]]};
 									//['Mod_Chain_Vol_0', 'Mod_Chain_Vol_1', 'Mod_Chain_Vol_2', 'Mod_Chain_Vol_3']]};
@@ -152,7 +155,7 @@ function mod_callback(args)
 {
 	if((args[0]=='value')&&(args[1]!='bang'))
 	{
-		//debug('mod callback:', args);
+		debug('mod callback:', args);
 		if(args[1] in script)
 		{
 			//debug(script[args[1]]);
@@ -188,7 +191,14 @@ function initialize(val)
 		test_stuff();
 		deprivatize_script_functions(this);
 		load_PreInitVars();
+		tasks.addTask(init_selection, [], 2);
+		//mod.SendDirect('Forward', 'reevaluate_device');
 	}
+}
+
+function init_selection()
+{
+	drumMatrix.select_pad(drumMatrix._drumpads[12]);
 }
 
 function setup_tasks()
@@ -504,6 +514,18 @@ function load_PreInitVars()
 	{
 		_pgm_in(PreInitVars.pgm);
 	}
+}
+
+function _alt(val)
+{
+	alted = val > 0;
+	debug('alted:', alted);
+}
+
+function _shift(val)
+{
+	shifted = val > 0;
+	debug('shifted:', shifted);
 }
 
 
@@ -843,6 +865,11 @@ DrumPad.prototype.update = function(grid)
 
 		DetentDial.set_target(this._detent_dial_callback.bind(this));
 
+		if(alted)
+		{
+			finder.path = 'live_set view';
+			finder.call('select_device', 'id', Math.floor(this._devices[this._selectedLayer._value].id));
+		}
 		//if(trackView){trackView.set('selected_device', this._devices[this._selectedLayer._value]);}
 		/*for(var i in this._apiView)
 		{

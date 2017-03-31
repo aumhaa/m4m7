@@ -697,7 +697,6 @@ class ModHandler(CompoundComponent):
 		self._alt_value.subject and self._alt_value.subject.send_value(2 + self.is_alted()*7)
 	
 
-
 	def set_mod_nav_buttons(self, buttons):
 		self._mod_nav_buttons = buttons
 		self._on_mod_nav_button_value.replace_subjects(buttons)
@@ -742,7 +741,6 @@ class ModHandler(CompoundComponent):
 				self.song.view.select_device(device)
 				self.select_mod(new_mod)
 	
-
 
 	def show_mod_in_live(self):
 		if isinstance(self.active_mod(), Live.Device.Device):
@@ -836,7 +834,6 @@ class ModHandler(CompoundComponent):
 			self._active_mod.send('shift', value)
 		self.update()
 	
-
 
 	def set_alt_button(self, button):
 		self._alt_value.subject = button
@@ -1932,7 +1929,7 @@ class ModClient(NotifyingControlElement):
 
 	def set_color_map(self, color_type, *color_map):
 		#debug('set color map: ' + str(color_type) + ' ' + str(color_map))
-		if color_type:
+		if not color_type is None:
 			for index in xrange(color_map):
 				self._color_maps[color_type][index] = color_map[index]
 			for handler in self.active_handlers():
@@ -1954,6 +1951,15 @@ class ModClient(NotifyingControlElement):
 	@property
 	def parameters(self):
 		return self._device_proxy.parameters
+	
+
+	def Forward(self, method = None, *value_list):
+		if not method is None:
+			for handler in self.active_handlers():
+				try:
+					getattr(handler, method)(*value_list)
+				except:
+					debug('Forward method exception', method, value_list)
 	
 
 
@@ -2211,7 +2217,6 @@ class ModDeviceProvider(EventObject):
 		super(ModDeviceProvider, self).__init__(*a, **k)
 		self._device = None
 		self._locked_to_device = False
-		self._modhandler = None
 		self.song = song
 		self.__on_appointed_device_changed.subject = song
 		self.__on_selected_track_changed.subject = song.view
@@ -2300,15 +2305,12 @@ class ModDeviceProvider(EventObject):
 	
 
 	def mod_device_from_device(self, device):
-		if not self._modhandler is None and self._modhandler.is_locked() and self._modhandler.active_mod():
-			return self._modhandler.active_mod()._device_proxy
-		else:
-			modrouter = get_modrouter()
-			if modrouter:
-				mod_device = modrouter.is_mod(device)
-				if mod_device:
-					device = mod_device._device_proxy
-			return device
+		modrouter = get_modrouter()
+		if modrouter:
+			mod_device = modrouter.is_mod(device)
+			if mod_device:
+				device = mod_device._device_proxy
+		return device
 	
 
 	def update_device_selection(self):
@@ -2331,11 +2333,15 @@ class ModDeviceProvider(EventObject):
 			self.device = None
 	
 
-	def set_modhandler(self, modhandler):
-		if isinstance(modhandler, ModHandler):
-			self._modhandler = modhandler
+	def reevaluate_device(self):
+		debug('reevaluate_device')
+		if isinstance(self.device, ModDeviceProxy):
+			self.notify_device()
+		else:
+			device = self.mod_device_from_device(self.device)
+			self._device = device
+			self.notify_device()
 	
-
 
 #a
 

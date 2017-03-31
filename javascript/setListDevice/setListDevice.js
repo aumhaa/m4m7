@@ -3,7 +3,7 @@ autowatch = 1;
 outlets = 2;
 
 aumhaa = require('_base');
-var FORCELOAD = true;
+var FORCELOAD = false;
 var DEBUG = false;
 aumhaa.init(this);
 var script = this;

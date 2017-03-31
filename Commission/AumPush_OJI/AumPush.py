@@ -118,6 +118,7 @@ class AumPush(Push):
 				settings = copy(self._settings)
 				del settings['aftertouch_threshold']
 				self._user.settings = settings
+		self._device_provider.reevaluate_device()
 	
 
 	def _init_value_components(self):
@@ -436,7 +437,7 @@ class PushModHandler(ModHandler):
 	
 
 	def _receive_key2(self, x, value):
-		debug('_receive_key2:', x, value)
+		#debug('_receive_key2:', x, value)
 		if not self._keys2_value.subject is None:
 			self._keys2_value.subject.send_value(x, 0, self._push_colors[self._colors[value]], True)
 	
@@ -523,9 +524,10 @@ class PushModHandler(ModHandler):
 	
 
 	def update_device(self):
-		if self.is_enabled() and not self._device_component is None:
-			self._device_component.update()
-			self._device_component._update_parameters()
+		if self.is_enabled() and not self._script._device_component is None:
+			debug('modhandler.update_device')
+			self._script._device_component.update()
+			self._script._device_component._update_parameters()
 	
 
 	@listens('value')
@@ -606,7 +608,9 @@ class PushModHandler(ModHandler):
 				self._keys_value.subject.reset()
 	
 
-
+	def reevaluate_device(self):
+		self._script._device_provider.reevaluate_device()
+	
 
 
 
