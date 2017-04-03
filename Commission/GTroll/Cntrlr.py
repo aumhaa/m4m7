@@ -103,7 +103,7 @@ class Cntrlr(BaseCntrlr):
 		super(Cntrlr, self)._setup_session_recording_component()
 		self._recorder.main_layer = AddLayerMode(self._recorder, Layer(priority = 4))
 		self._recorder.shift_layer = AddLayerMode(self._recorder, Layer(priority = 4, automation_button = self._button[25]))
-
+	
 
 	def _setup_mixer_control(self):
 		super(Cntrlr, self)._setup_mixer_control()
@@ -149,6 +149,7 @@ class Cntrlr(BaseCntrlr):
 
 	def _setup_device_control(self):
 		super(Cntrlr, self)._setup_device_control()
+		self._device.button_layer = AddLayerMode(self._device, Layer(priority = 4,))
 		self._device_navigator.main_layer = AddLayerMode(self._device_navigator, Layer(priority = 4,))
 											#prev_button = self._encoder_button[8],
 											#next_button = self._encoder_button[9],
@@ -239,8 +240,10 @@ class Cntrlr(BaseCntrlr):
 									self._device,
 									self._device.button_layer)
 		shifted_main_buttons=CompoundMode(self._G_mixer.shifted_buttons_layer,
-									self._recorder,
-									self._recorder.shift_layer,
+									self._transport,
+									self._transport.overdub_layer,
+									#self._recorder,
+									#self._recorder.shift_layer,
 									self._session,
 									self._session.G_layer,
 									self._session.stop_clips_layer,
@@ -344,17 +347,17 @@ class Cntrlr(BaseCntrlr):
 		self._instrument._main_modes.add_mode('drumpad_shifted_session', [self._instrument._drumpad.sequencer_session_shift_layer,
 																					self._instrument.drumpad_shift_layer,
 																					main_buttons,
-																					self._session_zoom,
+																					self._session,
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('drumpad_split_shifted_session', [self._instrument._drumpad.split_session_layer,
 																					self._instrument.drumpad_shift_layer,
 																					shifted_main_buttons,
-																					self._session_zoom,
+																					self._session,
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('drumpad_sequencer_shifted_session', [self._instrument._drumpad.sequencer_session_shift_layer,
 																					self._instrument.drumpad_shift_layer,
 																					shifted_main_buttons,
-																					self._session_zoom,
+																					self._session,
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('keypad_session', [self._instrument._keypad.sequencer_session_layer,
 																					main_buttons,
@@ -375,17 +378,17 @@ class Cntrlr(BaseCntrlr):
 		self._instrument._main_modes.add_mode('keypad_shifted_session', [self._instrument._keypad.sequencer_session_shift_layer,
 																					self._instrument.keypad_shift_layer,
 																					shifted_main_buttons,
-																					self._session_zoom,
+																					self._session,
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('keypad_split_shifted_session', [self._instrument._keypad.split_session_layer,
 																					self._instrument.keypad_shift_layer,
 																					shifted_main_buttons,
-																					self._session_zoom,
+																					self._session,
 																					shifted_dials])
 		self._instrument._main_modes.add_mode('keypad_sequencer_shifted_session', [self._instrument._keypad.sequencer_session_shift_layer,
 																					self._instrument.keypad_shift_layer,
 																					shifted_main_buttons,
-																					self._session_zoom,
+																					self._session,
 																					shifted_dials])
 
 		self._instrument._main_modes.add_mode('audioloop', [self._instrument.audioloop_layer,
@@ -395,7 +398,7 @@ class Cntrlr(BaseCntrlr):
 																					DelayMode(self._session.clip_launch_layer, delay = .1)])
 		self._instrument._main_modes.add_mode('audioloop_shifted', [self._instrument.audioloop_layer,
 																					shifted_main_buttons,
-																					self._session_zoom,
+																					self._session,
 																					shifted_dials])
 		#self._instrument._main_modes.add_mode('audioloop_shifted_session', [self._instrument.audioloop_layer, self._session, shifted_main_buttons, main_dials, shifted_dials])
 		self._instrument.register_component(self._instrument._main_modes)
