@@ -225,6 +225,34 @@ function parse_ids(arr)
 
 exports.parse_ids = parse_ids;
 
+function dict_to_jsobj(dict) {
+	if (dict == null) return null;
+	var o = new Object();
+	var keys = dict.getkeys();
+	if (keys == null || keys.length == 0) return null;
+	if (keys instanceof Array) {
+		for (var i = 0; i < keys.length; i++)
+		{
+			var value = dict.get(keys[i]);
+			
+			if (value && value instanceof Dict) {
+				value = dict_to_jsobj(value);
+			}
+			o[keys[i]] = value;
+		}		
+	} else {
+		var value = dict.get(keys);
+		
+		if (value && value instanceof Dict) {
+			value = dict_to_jsobj(value);
+		}
+		o[keys] = value;
+	}
+	return o;
+}
+
+exports.dict_to_jsobj = dict_to_jsobj;
+
 function wiki()
 {
 	if((mod!=undefined)&&(mod.wiki_addy!=undefined))

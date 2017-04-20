@@ -5,14 +5,14 @@ outlets = 2;
 
 var script = this;
 
-script._name = 'skin';
+script._name = 'ROLI_skin';
 
 aumhaa = require('_base');
 var FORCELOAD = false;
 var DEBUG = true;
 aumhaa.init(this);
 
-ROLI = require('ROLI');
+notifiers = require('notifiers');
 
 var SHOW_STORAGE = false;
 var DISPLAY_POLY = false;
@@ -24,36 +24,205 @@ var Mod = ModComponent.bind(script);
 
 var unique = jsarguments[1];
 var ctrlr_type = jsarguments[2];
-var topDict = new Dict('topology');
-var topKeys = [];
-var topology = {};
 var shifted = false;
 var alted = false;
 var cells = [];
 var pads = [];
-var KEYCOLORS = [];
-var PALETTE = ROLI.PALETTE;
+var KEYCOLORS = [];  //[0., 0., 0.], [1., 0., 0.], [0., 1., 0.], [0.,0., 1.], [1., 1., 0.], [0., 1., 1.], [1., 0., 1.], [1., 1., 1.]];
 var current_edit = 1;
 var current_pset = 1;
 var assign_mode = false;
 var follow_mode = false;
 var mod_assign_mode = false;
-var blocks_page_visible = false;
+
+var PALETTE = [];   //[0., 0., 0.], [1., 0., 0.], [0., 1., 0.], [0.,0., 1.], [1., 1., 0.], [0., 1., 1.], [1., 0., 1.], [1., 1., 1.]];
+
+/*RGB_COLOR_TABLE = [0,1973790,8355711,16777215,16731212,16711680,5832704,1638400,16760172,16733184,5840128,2562816,16777036,16776960,5855488,1644800,8978252,5570304,1923328,1321728,5046092,65280,22784,6400,5046110,65305,22797,
+					6402,5046152,6536,522813,7954,5046199,65433,22837,6418,5030911,43519,16722,4121,5015807,22015,7513,2073,5000447,255,89,25,8867071,5505279,1638500,983088,16731391,16711935,5832793,1638425,16731271,16711764,
+					5832733,2228243,16717056,10040576,7950592,4416512,211200,22325,21631,255,17743,2425036,8355711,2105376,16711680,12451629,11529478,6618889,1084160,65415,43519,11007,4129023,7995647,11672189,4202752,16730624,
+					8970502,7536405,65280,3931942,5898097,3735500,5999359,3232198,8880105,13835775,16711773,16744192,12169216,9502464,8609031,3746560,1330192,872504,1381674,1450074,6896668,11010058,14569789,14182940,16769318,
+					10412335,6796559,1973808,14483307,8454077,10131967,9332479,4210752,7697781,14745599,10485760,3473408,1757184,475648,12169216,4141312,11755264,4920578];
+*/
+
+RGB_COLOR_TABLE = [[0, 0, 0],
+ [1, 15865344, 2],
+ [2, 16728114, 4],
+ [3, 16541952, 6],
+ [4, 9331486, 8],
+ [5, 16440379, 10],
+ [6, 16762134, 12],
+ [7, 11992846, 14],
+ [8, 7995160, 16],
+ [9, 3457558, 18],
+ [10, 5212676, 20],
+ [11, 6487893, 22],
+ [12, 2719059, 24],
+ [13, 2843699, 26],
+ [14, 3255807, 28],
+ [15, 3564540, 30],
+ [16, 1717503, 32],
+ [17, 1391001, 34],
+ [18, 1838310, 36],
+ [19, 3749887, 38],
+ [20, 5710591, 40],
+ [21, 9907199, 42],
+ [22, 8724856, 44],
+ [23, 16715826, 46],
+ [24, 11022396, 48],
+ [25, 16722900, 50],
+ [26, 15427065, 52],
+ [27, 10892321, 54],
+ [28, 10049064, 56],
+ [29, 8873728, 58],
+ [30, 9470495, 60],
+ [31, 4884224, 62],
+ [32, 32530, 64],
+ [33, 1594290, 66],
+ [34, 6441901, 68],
+ [35, 7551591, 70],
+ [36, 16301231, 72],
+ [37, 16751478, 74],
+ [38, 16760671, 76],
+ [39, 14266225, 78],
+ [40, 16774272, 80],
+ [41, 12565097, 80],
+ [42, 12373128, 81],
+ [43, 11468697, 81],
+ [44, 8183199, 82],
+ [45, 9024637, 82],
+ [46, 8451071, 83],
+ [47, 8048380, 83],
+ [48, 6857171, 84],
+ [49, 8753090, 85],
+ [50, 12298994, 85],
+ [51, 13482980, 86],
+ [52, 15698864, 86],
+ [53, 8756620, 87],
+ [54, 7042414, 87],
+ [55, 8687771, 88],
+ [56, 6975605, 88],
+ [57, 8947101, 89],
+ [58, 7105141, 90],
+ [59, 10323356, 90],
+ [60, 7629428, 91],
+ [61, 10263941, 91],
+ [62, 7632234, 92],
+ [63, 10323076, 92],
+ [64, 7694954, 93],
+ [65, 6293504, 93],
+ [66, 2032128, 94],
+ [67, 6691092, 94],
+ [68, 2164742, 95],
+ [69, 6564352, 96],
+ [70, 2100480, 96],
+ [71, 4665615, 97],
+ [72, 1839878, 97],
+ [73, 6576151, 98],
+ [74, 2104327, 98],
+ [75, 6704648, 99],
+ [76, 2169090, 99],
+ [77, 4744709, 100],
+ [78, 1515777, 101],
+ [79, 3171849, 101],
+ [80, 991491, 102],
+ [81, 1330440, 102],
+ [82, 399618, 103],
+ [83, 2045697, 103],
+ [84, 659712, 104],
+ [85, 2582050, 104],
+ [86, 794891, 105],
+ [87, 1326633, 106],
+ [88, 530704, 106],
+ [89, 1389081, 107],
+ [90, 529418, 107],
+ [91, 1262950, 108],
+ [92, 398881, 108],
+ [93, 1386340, 109],
+ [94, 461856, 109],
+ [95, 660582, 110],
+ [96, 198177, 110],
+ [97, 662604, 111],
+ [98, 264990, 112],
+ [99, 722012, 112],
+ [100, 196893, 113],
+ [101, 1447526, 113],
+ [102, 460577, 114],
+ [103, 2231654, 114],
+ [104, 721953, 115],
+ [105, 3936614, 115],
+ [106, 1246497, 116],
+ [107, 3476784, 117],
+ [108, 1115151, 117],
+ [109, 6686228, 118],
+ [110, 2163206, 118],
+ [111, 4395800, 119],
+ [112, 1377799, 119],
+ [113, 6689108, 120],
+ [114, 2163995, 120],
+ [115, 6170723, 121],
+ [116, 1969440, 122],
+ [117, 0, 122],
+ [118, 5855577, 123],
+ [119, 1710618, 123],
+ [120, 16777215, 124],
+ [121, 5855577, 124],
+ [122, 13421772, 125],
+ [123, 4210752, 125],
+ [124, 1315860, 126],
+ [125, 255, 126],
+ [126, 65280, 127],
+ [127, 16711680, 127]];
+
+for(var i in RGB_COLOR_TABLE)
+{
+	PALETTE[i] = make_rgb(RGB_COLOR_TABLE[i]);
+}
+
+function make_rgb(raw)
+{
+	
+	//debug('raw:', raw);
+	var r = (raw[1] >> 16)/255;
+	var g = (raw[1] >> 8 & 255)/255;
+	var b = (raw[1] & 255)/255;
+	var a = raw[2]/127;
+	debug('rgb:', r, g, b, a);
+	return [r, g, b, a];
+}
+
+debug('pallete is:', PALETTE);
 
 var this_device_id = -1;
 var current_device;
 
-var Vars = ['assignments', 'matrix', 'push_notes', 'storage', 'poly', 'note', 'mod_A', 'mod_B', 'mod_C', 'selected', 'Mask', 'color', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_patcher', 'blocks_pcontrol'];
+var Vars = ['assignments', 'matrix', 'push_notes', 'storage', 'poly', 'note', 'mod_A', 'mod_B', 'mod_C', 'selected', 'Mask', 'color', 'midiInputGate', 'info_pcontrol', 'info_patcher'];
 
 var PolyVars = ['note_id', 'modA_id', 'modB_id', 'modC_id', 'note_gate', 'modA_gate', 'modB_gate', 'modC_gate', 'color', 'mask', 'modifier_assignments'];
+
+var glob = new Global('skin_global');
+if(!glob.instances)
+{
+	glob.instances = [];
+}
+var found = false;
+for(var i in glob.instances)
+{
+	if(glob.instances[i]==this)
+	{
+		found = true;
+	}
+}
+if(!found){glob.instances.push(this);}
 
 
 CellClass = function(x, y, identifier, name, _send, args)
 {
 	this.add_bound_properties(this, ['_num', 'group', '_push_note', 'update_color']);
 	this._num = (x + (y*8));
+	this._x_off = (x*.2);
+	this._y_off = (y*.2);
 	this.group = 0;
-	this._push_note = (Math.abs(y-7)*8)+(x+36);
+	this._push_note = (Math.abs(y-4)*5)+(x+36);
 	CellClass.super_.call(this, identifier, name, _send, args);
 }
 
@@ -61,8 +230,11 @@ inherits(CellClass, ButtonClass);
 
 CellClass.prototype.update_color = function()
 {
-	this.send(KEYCOLORS[this.group]);
+	this.send(this.group);
+	//outlet(1, 'rectangle', this._x_off, this._y_off, '0.2 0.2, setcolor', 0.9 0.9 0.7, '1, fill, repaint');
 }
+
+//CellClass.prototype.Send = function(
 
 
 
@@ -91,14 +263,16 @@ Pad.prototype.update_mod_assignments = function()
 }
 
 
-function anything(){}
 
 function init()
 {
-	mod = new Mod(script, 'hex', unique, false);
+	debug('init Roli_skin!');
+	//mod = new Mod(script, 'hex', unique, false);
 	//mod.debug = debug;
-	mod_finder = new LiveAPI(mod_callback, 'this_device');
-	mod.assign_api(mod_finder);
+	//mod_finder = new LiveAPI(mod_callback, 'this_device');
+	//mod.assign_api(mod_finder);
+	//alive(1);
+	initialize();
 }
 
 function mod_callback(args)
@@ -125,9 +299,6 @@ function alive(val)
 function initialize()
 {
 	debug('skin init.');
-	outlet(1, 'clear');
-	outlet(1, 'repaint');
-	setup_tasks();
 	setup_translations();
 	setup_colors();
 	setup_patchers();
@@ -148,7 +319,6 @@ function initialize()
 	update_assignment_grid();
 	update_grid();
 	update_keys();
-	blocks_patcher_lock();
 }
 
 function setup_translations(){}
@@ -170,7 +340,6 @@ function setup_patchers()
 	{
 		KEYCOLORS[i] = pads[i]._color.getvalueof();
 	}
-	_update_topology();
 }
 	
 function setup_controls()
@@ -187,47 +356,58 @@ function setup_controls()
 		for(var y=0;y<8;y++)
 		{
 			var id = x+(y*8);
-			cells[x][y] = new CellClass(x, y, id, 'Cell_'+id, make_send_func('grid', 'value', x, y));
+			cells[x][y] = new CellClass(x, y, id, 'Cell_'+id, make_send_func(x, y));
 			GridControlRegistry.register_control(id, cells[x][y]);
 			Grid.add_control(x, y, cells[x][y]);
 		}
 	}
 	for(var id=0;id<8;id++)
 	{
-		KeyButtons[id] = new ButtonClass(id, 'Key_'+id, make_send_func('key', 'value', id));
+		KeyButtons[id] = new ButtonClass(id, 'Key_'+id, make_send_func(id));
 		KeysControlRegistry.register_control(id, KeyButtons[id]);
 		Keys.add_control(id, 0, KeyButtons[id]);
 	}
 }
 
-function setup_tasks()
-{
-	script['tasks'] = new TaskServer(script, 300);
-}
-
 function make_send_func()
 {
 	var args = arrayfromargs(arguments);
-	var pos_fix = [0, .13333, .26666, .4, .5, .63333, .76666, .9];
-	if(args.length == 4)
+	if(args.length == 2)
 	{
 		var func = function(value)
 		{
-			mod.Send(args[0], args[1], args[2], args[3], value);
-			var COLOR = PALETTE[value<0?0:value];
-			outlet(1, "rectangle", pos_fix[args[2]], pos_fix[args[3]], .1, .1);
-			outlet(1, "setcolor", 0, 0, 0, 1);
-			outlet(1, "setcolor", COLOR[0], COLOR[1], COLOR[2], COLOR[3]);
-			outlet(1, "fill");
-			outlet(1, "append");
+			if(value!=undefined)
+			{
+				if(value<0){value=0;}
+				//debug('big value:', args, value);
+				//debug('args:', args, args instanceof Array);
+				//mod.Send(args[0], args[1], args[2], args[3], value);
+				var sendColors = PALETTE[value];
+				outlet(1, "rectangle", args[0]*.2, args[1]*.2, .2, .2);
+				outlet(1, "setcolor", sendColors[0], sendColors[1], sendColors[2], sendColors[3]);
+				debug("setcolor", sendColors[0], sendColors[1], sendColors[2], sendColors[3]);
+				//outlet(1, "setcolor", KEYCOLORS[value], "1.");
+				outlet(1, "fill");
+				outlet(1, "append");
+			}
 		}
 	}
 	else
 	{
 		var func = function(value)
 		{
-			debug('value:', args, value);
-			mod.Send(args[0], args[1], args[2], value);
+			if(value!=undefined)
+			{
+				if(value<0){value=0;}
+				//debug('little value:', args, value);
+				//outlet(1, 'rectangle', (args[0]*.2), '1.6 0.2 0.2, setcolor', KEYCOLORS[value], '1, fill, repaint');
+				//var colors = KEYCOLORS[value];
+				var sendColors = PALETTE[value];
+				outlet(1, "rectangle", args[0]*.2, 1.6, .2, .2);
+				outlet(1, "setcolor", sendColors[0], sendColors[1], sendColors[2], sendColors[3]);
+				outlet(1, "fill");
+				outlet(1, "append");
+			}
 		}
 	}
 	return func;
@@ -249,86 +429,11 @@ function make_gui_send_function(patcher_object, message_header)
 	return func;
 }
 
-function _update_topology()
-{
-	debug('update_topology');
-	topology = dict_to_jsobj(topDict);
-	if((topology)&&(topology.blocks))
-	{
-		debug('blocks index:', topology.blocks.index);
-		debug('blocks order:', topology.blocks.order);
-	}
-	if(blocks_patcher)
-	{
-		var a = blocks_patcher.subpatcher().getnamed('block1_scene').getvalueof();
-		var b = blocks_patcher.subpatcher().getnamed('block2_scene').getvalueof();
-		var c = blocks_patcher.subpatcher().getnamed('block3_scene').getvalueof();
-		var d = blocks_patcher.subpatcher().getnamed('block4_scene').getvalueof();
-		blocks_patcher.subpatcher().getnamed('blocks_pad').message('scene', a, 1, b, 2, c, 3, d, 4);
-	}
-	else
-	{
-		tasks.addTask(_update_topology, [], 4);
-	}
-}
 
-
-function dict_to_jsobj(dict) {
-	if (dict == null) return null;
-	var o = new Object();
-	var keys = dict.getkeys();
-	if (keys == null || keys.length == 0) return null;
-	if (keys instanceof Array) {
-		for (var i = 0; i < keys.length; i++)
-		{
-			var value = dict.get(keys[i]);
-			
-			if (value && value instanceof Dict) {
-				value = dict_to_jsobj(value);
-			}
-			o[keys[i]] = value;
-		}		
-	} else {
-		var value = dict.get(keys);
-		
-		if (value && value instanceof Dict) {
-			value = dict_to_jsobj(value);
-		}
-		o[keys] = value;
-	}
-	return o;
-}
 
 function anything()
 {
 	//post('anything', arrayfromargs(messagename, arguments));
-}
-
-function _blockNote(note, val)
-{
-	var args = arrayfromargs(arguments);
-	//debug('BlockNote', (note-36)%8, Math.abs(Math.floor((note-36)/8)-7), val);
-	//var x = (note-36)%8, y = (note-36)/8;
-	_grid((note-36)%8, Math.abs(Math.floor((note-36)/8)-7), val);
-}
-
-function _blockMode(val)
-{
-	if(val)
-	{
-		if(blocks_page_visible)
-		{
-			blocks_pcontrol.message('close');
-			blocks_page_visible = false;
-			//blocks_patcher.wclose();
-		}
-		else
-		{
-			blocks_pcontrol.message('open');
-			blocks_page_visible = true;
-			//blocks_patcher.open();
-		}
-	}
 }
 
 function _grid(x, y, val){GridControlRegistry.receive(x+(y*8), val);}
@@ -347,6 +452,14 @@ function _ggrid(obj)
 			var pos = (x+(y*8));
 			var old_val = pads[current_edit-1]._mod_assigns[pos];
 			pads[current_edit-1]._modifier_assignments.message(pos, 0, (old_val+1)%4);
+			for(var i in glob.instances)
+			{
+				if(glob.instances[i]!=this)
+				{
+					//glob.instances[i]._kkey(obj);
+					glob.instances[i].pads[current_edit-1]._modifier_assignments.message(pos, 0, (old_val+1)%4);
+				}
+			}
 			update_grid();
 		}
 	}
@@ -362,8 +475,7 @@ function _ggrid(obj)
 				//debug('assignment for:', x, y, 'is', current_edit);
 				push_notes.message(_cell._push_note, current_edit);
 				//mod.Send( 'grid', 'value', x, y, KEYCOLORS[current_edit-1]);
-				//cells[x][y].send(KEYCOLORS[current_edit-1]);
-				update_grid();
+				cells[x][y].send(KEYCOLORS[current_edit-1]);
 			}
 		}
 	}
@@ -385,7 +497,7 @@ function _kkey(obj)
 {
 	var num = obj._id;
 	var val = obj._value;
-	debug('_kkey', num, val, '\n');
+	//debug('_kkey', num, val, '\n');
 	if(val > 0)
 	{
 		switch(num)
@@ -429,41 +541,34 @@ function _kkey(obj)
 		}
 		update_keys();
 	}
-	/*for(var i in glob.instances)
+}
+
+function _blockNote(note, val)
+{
+	var args = arrayfromargs(arguments);
+	debug('BlockNote', (note-36)%5, Math.abs(Math.floor((note-36)/5)-4), val);
+	//var x = (note-36)%8, y = (note-36)/8;
+	_grid((note-36)%5, Math.abs(Math.floor((note-36)/5)-4), val);
+}
+
+function _blockMode(val)
+{
+	if(val)
 	{
-		//debug('name:', glob.instances[i]._name);
-		if(glob.instances[i]!=script)
-		{
-			//debug('not this:', script._name);
-			glob.instances[i]._kkey(obj);
-		}
-	}*/
+		toggle_assign();
+	}
 }
 
 function shift(val)
 {
 	//debug('shift', val);
 	shifted = val>0;
-	/*for(var i in glob.instances)
-	{
-		if(glob.instances[i]!=script)
-		{
-			glob.instances[i].shift(val);
-		}
-	}*/
 }
 
 function alt(val)
 {
 	//debug('alt', val);
 	alted = val>0;
-	/*for(var i in glob.instances)
-	{
-		if(glob.instances[i]!=script)
-		{
-			glob.instances[i].alt(val);
-		}
-	}*/
 }
 
 function active_handlers()
@@ -488,24 +593,21 @@ function update_grid()
 	if(mod_assign_mode)
 	{
 		//var modArray = get_mod_assignments();
-		outlet(1, 'clear');
-		outlet(1, 'repaint');
 		pads[current_edit-1].update_mod_assignments();
-		for(var i=0;i<8;i++)
+		for(var i=0;i<5;i++)
 		{
-			for(var j=0;j<8;j++)
+			for(var j=0;j<5;j++)
 			{
 				//mod.Send( 'grid', 'value', i, j, pads[current_edit-1]._mod_assigns[i+(j*8)]);
 				cells[i][j].send(pads[current_edit-1]._mod_assigns[i+(j*8)]);
 			}
 		}
-		outlet(1, 'repaint');
 	}
 	else
 	{
-		for(var i=0;i<8;i++)
+		for(var i=0;i<5;i++)
 		{
-			for(var j=0;j<8;j++)
+			for(var j=0;j<5;j++)
 			{
 				//mod.Send( 'grid', 'value', i, j, KEYCOLORS[cells[i][j].group-1]);
 				cells[i][j].send(KEYCOLORS[cells[i][j].group-1]);
@@ -516,6 +618,7 @@ function update_grid()
 
 function update_keys()
 {
+	/*
 	mod.Send('key', 'value', 0, pads[current_edit-1]._note_gate.getvalueof());
 	mod.Send('key', 'value', 1, pads[current_edit-1]._modA_gate.getvalueof());
 	mod.Send('key', 'value', 2, pads[current_edit-1]._modB_gate.getvalueof());
@@ -523,6 +626,7 @@ function update_keys()
 	mod.Send('key', 'value', 5, mod_assign_mode?3:0);
 	mod.Send('key', 'value', 6, follow_mode?2:0);
 	mod.Send('key', 'value', 7, assign_mode?5:6);
+	*/
 	/*for(var i=0;i<8;i++)
 	{
 		mod.Send('key', 'value', i, parseInt((current_edit == i)*KEYS[i]));
@@ -535,8 +639,7 @@ function select_voice(num)
 	{
 		if(DISPLAY_POLY){poly.message('wclose');}
 		current_edit = num;
-		//debug('this is fucking line 450');
-		if(selected){selected.message('set', num);}
+		selected.message('set', num);
 	}
 	//post('current_edit', current_edit, '\n');
 
@@ -553,15 +656,7 @@ function select_voice(num)
 	{
 		refresh_grid();
 	}
-	/*for(var i in glob.instances)
-	{
-		if(glob.instances[i]!=script)
-		{
-			glob.instances[i].select_voice(num);
-		}
-	}*/
 }
-
 
 function toggle_mod_assign()
 {
@@ -708,31 +803,6 @@ function _mod_assign(num, val)
 }
 
 
-function blocks_patcher_unlock()
-{
-	blocks_patcher.window('size', 0, 400, 1190, 800);
-	blocks_patcher.window('flags', 'minimize');
-	blocks_patcher.window('flags', 'zoom');
-	blocks_patcher.window('flags', 'close');
-	blocks_patcher.window('flags', 'grow');
-	blocks_patcher.window('flags', 'title');
-	blocks_patcher.window('flags', 'nofloat');
-	blocks_patcher.window('exec');
-}
-
-function blocks_patcher_lock()
-{
-	blocks_patcher.window('size', 80, 80, 375, 400);
-	blocks_patcher.window('flags', 'nominimize');
-	//blocks_patcher.window('flags', 'nozoom');
-	blocks_patcher.window('flags', 'noclose');
-	blocks_patcher.window('flags', 'nogrow');
-	//blocks_patcher.window('flags', 'notitle');
-	blocks_patcher.window('flags', 'float');
-	blocks_patcher.window('exec');
-}
-
-
 INFO = "SKIN\n\n";
 SETUP_INFO = "Add this device to a MIDI Track, place a DrumRack after it.  Set the input port (top menu in device) to Push's Live port.\n";
 OVERVIEW_INFO = "64 Pads may be divided into 64 different zones.\n\n\n"+
@@ -833,7 +903,6 @@ function init_device()
 	detect_drumrack();
 }
 */
-
 
 
 forceload(this);
