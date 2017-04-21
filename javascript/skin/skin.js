@@ -170,7 +170,7 @@ function setup_patchers()
 	{
 		KEYCOLORS[i] = pads[i]._color.getvalueof();
 	}
-	_update_topology();
+	tasks.addTask(_update_topology, [], 4);
 }
 	
 function setup_controls()
@@ -253,11 +253,6 @@ function _update_topology()
 {
 	debug('update_topology');
 	topology = dict_to_jsobj(topDict);
-	if((topology)&&(topology.blocks))
-	{
-		debug('blocks index:', topology.blocks.index);
-		debug('blocks order:', topology.blocks.order);
-	}
 	if(blocks_patcher)
 	{
 		var a = blocks_patcher.subpatcher().getnamed('block1_scene').getvalueof();
@@ -265,6 +260,7 @@ function _update_topology()
 		var c = blocks_patcher.subpatcher().getnamed('block3_scene').getvalueof();
 		var d = blocks_patcher.subpatcher().getnamed('block4_scene').getvalueof();
 		blocks_patcher.subpatcher().getnamed('blocks_pad').message('scene', a, 1, b, 2, c, 3, d, 4);
+		debug('sending scene:', a, 1, b, 2, c, 3, d, 4);
 	}
 	else
 	{
@@ -495,19 +491,18 @@ function update_grid()
 		{
 			for(var j=0;j<8;j++)
 			{
-				//mod.Send( 'grid', 'value', i, j, pads[current_edit-1]._mod_assigns[i+(j*8)]);
 				cells[i][j].send(pads[current_edit-1]._mod_assigns[i+(j*8)]);
 			}
 		}
-		outlet(1, 'repaint');
 	}
 	else
 	{
+		outlet(1, 'clear');
+		outlet(1, 'repaint');
 		for(var i=0;i<8;i++)
 		{
 			for(var j=0;j<8;j++)
 			{
-				//mod.Send( 'grid', 'value', i, j, KEYCOLORS[cells[i][j].group-1]);
 				cells[i][j].send(KEYCOLORS[cells[i][j].group-1]);
 			}
 		}
