@@ -259,8 +259,8 @@ function _update_topology()
 		var b = blocks_patcher.subpatcher().getnamed('block2_scene').getvalueof();
 		var c = blocks_patcher.subpatcher().getnamed('block3_scene').getvalueof();
 		var d = blocks_patcher.subpatcher().getnamed('block4_scene').getvalueof();
-		blocks_patcher.subpatcher().getnamed('blocks_pad').message('scene', a, 1, b, 2, c, 3, d, 4);
-		debug('sending scene:', a, 1, b, 2, c, 3, d, 4);
+		blocks_patcher.subpatcher().getnamed('blocks_pad').message('scene', a-1, 1, b-1, 2, c-1, 3, d-1, 4);
+		debug('sending scene:', a-1, 1, b-1, 2, c-1, 3, d-1, 4);
 	}
 	else
 	{
