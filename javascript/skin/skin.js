@@ -8,7 +8,7 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = true;
+var FORCELOAD = false;
 var DEBUG = true;
 aumhaa.init(this);
 
@@ -43,7 +43,7 @@ var blocks_page_visible = false;
 var this_device_id = -1;
 var current_device;
 
-var Vars = ['assignments', 'matrix', 'push_notes', 'storage', 'poly', 'note', 'mod_A', 'mod_B', 'mod_C', 'selected', 'Mask', 'color', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_patcher', 'blocks_pcontrol'];
+var Vars = ['assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'note', 'mod_A', 'mod_B', 'mod_C', 'selected', 'Mask', 'color', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_patcher', 'blocks_pcontrol'];
 
 var PolyVars = ['note_id', 'modA_id', 'modB_id', 'modC_id', 'note_gate', 'modA_gate', 'modB_gate', 'modC_gate', 'color', 'mask', 'modifier_assignments'];
 
@@ -149,7 +149,6 @@ function initialize()
 	update_grid();
 	update_keys();
 	blocks_patcher_lock();
-	messnamed('skin_pset', 'good?');
 }
 
 function setup_translations(){}
@@ -726,6 +725,13 @@ function blocks_patcher_lock()
 	//blocks_patcher.window('flags', 'notitle');
 	blocks_patcher.window('flags', 'float');
 	blocks_patcher.window('exec');
+}
+
+
+function skin_pset(val)
+{
+	debug('skin_pset received in skin.js:', val);
+	preset.message(val+1);
 }
 
 

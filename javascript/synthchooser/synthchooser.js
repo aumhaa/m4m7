@@ -1,7 +1,7 @@
 autowatch = 1;
 
 aumhaa = require('_base');
-var FORCELOAD = true;
+var FORCELOAD = false;
 var DEBUG = true;
 var PSET_WINDOWS = false;
 var LOOP_PSET_WINDOWS=false;
@@ -46,6 +46,8 @@ var Alive = false;
 var twister_encoder_button_grid;
 var current_preset = 0;
 var current_sub = 0;
+var SendSkinPreset = false;
+
 
 var multi_synths = [0, 1];
 var super_synth = 0;
@@ -841,6 +843,15 @@ function sub_preset(val)
 			storage.message('recall', 's'+i+'oct', sub);
 		}
 	}
+	if(SendSkinPreset)
+	{
+		messnamed('skin_pset', current_sub);
+	}
+}
+
+function send_skin_preset(val)
+{
+	SendSkinPreset = val > 0;
 }
 
 function preset(val)
