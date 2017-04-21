@@ -8,7 +8,7 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = false;
+var FORCELOAD = true;
 var DEBUG = true;
 aumhaa.init(this);
 
@@ -149,6 +149,7 @@ function initialize()
 	update_grid();
 	update_keys();
 	blocks_patcher_lock();
+	messnamed('skin_pset', 'good?');
 }
 
 function setup_translations(){}
