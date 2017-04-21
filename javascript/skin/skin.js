@@ -255,12 +255,12 @@ function _update_topology()
 	topology = dict_to_jsobj(topDict);
 	if(blocks_patcher)
 	{
-		var a = blocks_patcher.subpatcher().getnamed('block1_scene').getvalueof();
-		var b = blocks_patcher.subpatcher().getnamed('block2_scene').getvalueof();
-		var c = blocks_patcher.subpatcher().getnamed('block3_scene').getvalueof();
-		var d = blocks_patcher.subpatcher().getnamed('block4_scene').getvalueof();
-		blocks_patcher.subpatcher().getnamed('blocks_pad').message('scene', a-1, 1, b-1, 2, c-1, 3, d-1, 4);
-		debug('sending scene:', a-1, 1, b-1, 2, c-1, 3, d-1, 4);
+		var a = (blocks_patcher.subpatcher().getnamed('block1_scene').getvalueof())-1;
+		var b = (blocks_patcher.subpatcher().getnamed('block2_scene').getvalueof())-1;
+		var c = (blocks_patcher.subpatcher().getnamed('block3_scene').getvalueof())-1;
+		var d = (blocks_patcher.subpatcher().getnamed('block4_scene').getvalueof())-1;
+		blocks_patcher.subpatcher().getnamed('blocks_pad').message('scene', a, 1, b, 2, c, 3, d, 4);
+		debug('sending scene:', a, 1, b, 2, c, 3, d, 4);
 	}
 	else
 	{
@@ -656,7 +656,10 @@ function post_assignments()
 function set_input_gate(val)
 {
 	debug('set_input_gate', val);
-	midiInputGate.message('int',  val);
+	if(midiInputGate)
+	{
+		midiInputGate.message('int',  val);
+	}
 }
 
 function _mod_assign(num, val)
@@ -717,7 +720,7 @@ function blocks_patcher_unlock()
 
 function blocks_patcher_lock()
 {
-	blocks_patcher.window('size', 80, 80, 375, 400);
+	blocks_patcher.window('size', 80, 80, 375, 600);
 	blocks_patcher.window('flags', 'nominimize');
 	//blocks_patcher.window('flags', 'nozoom');
 	blocks_patcher.window('flags', 'noclose');
