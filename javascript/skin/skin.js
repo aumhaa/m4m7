@@ -170,7 +170,7 @@ function setup_patchers()
 	{
 		KEYCOLORS[i] = pads[i]._color.getvalueof();
 	}
-	tasks.addTask(_update_topology, [], 4);
+	//tasks.addTask(_update_topology, [], 4);
 }
 	
 function setup_controls()
@@ -264,7 +264,7 @@ function _update_topology()
 	}
 	else
 	{
-		tasks.addTask(_update_topology, [], 4);
+		//tasks.addTask(_update_topology, [], 4);
 	}
 }
 
