@@ -43,9 +43,25 @@ var blocks_page_visible = false;
 var this_device_id = -1;
 var current_device;
 
-var Vars = ['assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'note', 'mod_A', 'mod_B', 'mod_C', 'selected', 'Mask', 'color', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_patcher', 'blocks_pcontrol'];
+var Vars = ['assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings'];
 
-var PolyVars = ['note_id', 'modA_id', 'modB_id', 'modC_id', 'note_gate', 'modA_gate', 'modB_gate', 'modC_gate', 'color', 'mask', 'modifier_assignments'];
+var PolyVars = ['note_id', 'modA_id', 'modB_id', 'modC_id', 'note_gate', 'modA_gate', 'modB_gate', 'modC_gate', 'mask', 'modifier_assignments', 'color', 'ctrl_id', 'cc_enable', 'remote_enable', 'target_id', 'scale_lo', 'scale_hi', 'scale_exp'];
+
+var EditorVars = ['note', 'mod_A', 'mod_B', 'mod_C', 'selected', 'color', 'Mask', 'modulation_assignment', 'remote_cc_enable', 'cc_out', 'scale_lo', 'scale_hi', 'scale_exp'];
+
+var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
+			'DrumGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
+			'MidiEffectGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
+			'Other':[['None', 'None', 'None', 'None', 'None', 'None', 'None', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['None', 'None', 'None', 'None', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']],
+			'Operator':[['Osc-A Level', 'Osc-B Level', 'Osc-C Level', 'Osc-D Level', 'Transpose', 'Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime','Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['Osc-A Level', 'Osc-B Level', 'Osc-C Level', 'Osc-D Level', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
+			'UltraAnalog':[['AEG1 Attack', 'AEG1 Decay', 'AEG1 Sustain', 'AEG1 Rel', 'OSC1 Semi', 'F1 Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['AEG1 Attack', 'AEG1 Decay', 'AEG1 Sustain', 'AEG1 Rel', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
+			'OriginalSimpler':[['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'Transpose', 'Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
+			'MultiSampler':[['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'Transpose', 'Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
+			'LoungeLizard':[['M Force', 'F Release', 'F Tone Decay', 'F Tone Vol', 'Semitone', 'P Distance', 'None', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['M Force', 'F Release', 'F Tone Decay', 'F Tone Vol', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
+			'StringStudio':[['E Pos', 'Exc ForceMassProt', 'Exc FricStiff', 'Exc Velocity', 'Semitone', 'Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['E Pos', 'Exc ForceMassProt', 'Exc FricStiff', 'Exc Velocity', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
+			'Collision':[['Noise Attack', 'Noise Decay', 'Noise Sustain', 'Noise Release', 'Res 1 Tune', 'Res 1 Brightness', 'None', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['Noise Attack', 'Noise Decay', 'Noise Sustain', 'Noise Release', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
+			'InstrumentImpulse':[['1 Start', '1 Envelope Decay', '1 Stretch Factor', 'Global Time', 'Global Transpose', '1 Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime','Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['1 Start', '1 Envelope Decay', '1 Stretch Factor', 'Global Time', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
+			'NoDevice':[['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTimev','Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']]}
 
 
 CellClass = function(x, y, identifier, name, _send, args)
@@ -70,7 +86,7 @@ function Pad(num, patcher)
 {
 	var self = this;
 	this._patcher = patcher;
-	for(var i in Vars)
+	for(var i in PolyVars)
 	{
 		this['_'+PolyVars[i]] = this._patcher.getnamed(PolyVars[i]);
 	}
@@ -95,7 +111,7 @@ function anything(){}
 
 function init()
 {
-	mod = new Mod(script, 'hex', unique, false);
+	mod = new Mod(script, 'skin', unique, false);
 	//mod.debug = debug;
 	mod_finder = new LiveAPI(mod_callback, 'this_device');
 	mod.assign_api(mod_finder);
@@ -132,7 +148,7 @@ function initialize()
 	setup_colors();
 	setup_patchers();
 	setup_controls();
-	//init_device();
+	setup_device();
 	deprivatize_script_functions(this);
 
 	if(SHOW_STORAGE)
@@ -149,6 +165,8 @@ function initialize()
 	update_grid();
 	update_keys();
 	blocks_patcher_lock();
+	settings_patcher_lock();
+	select_voice(1);
 }
 
 function setup_translations(){}
@@ -160,6 +178,12 @@ function setup_patchers()
 	for(var i in Vars)
 	{
 		script[Vars[i]] = this.patcher.getnamed(Vars[i]);
+		//debug('Vars:', i, Vars[i], script[Vars[i]]);
+	}
+	for(var i in EditorVars)
+	{
+		script[EditorVars[i]] = this.patcher.getnamed('skin_settings').subpatcher().getnamed(EditorVars[i]);
+		//debug('EditorVars:', i, EditorVars[i], script[EditorVars[i]]);
 	}
 	pads = [];
 	for(var i = 0;i < 64;i++)
@@ -526,28 +550,55 @@ function update_keys()
 
 function select_voice(num)
 {
+	debug('select_voice:', num);
 	if(num != current_edit)
 	{
 		if(DISPLAY_POLY){poly.message('wclose');}
 		current_edit = num;
-		//debug('this is fucking line 450');
 		if(selected){selected.message('set', num);}
 	}
 	//post('current_edit', current_edit, '\n');
 
 	if(DISPLAY_POLY){poly.message('open', num);}
-	debug('value is:', pads[num]._note_id.getvalueof());
-	note.message('set', pads[num-1]._note_id.getvalueof());
+	debug('selected value is:', pads[num]._note_id.getvalueof());
 	mod_A.message('set', pads[num-1]._modA_id.getvalueof());
 	mod_B.message('set', pads[num-1]._modB_id.getvalueof());
 	mod_C.message('set', pads[num-1]._modC_id.getvalueof());
 	color.message('set', pads[num-1]._color.getvalueof());
+	note.message('set', pads[num-1]._note_id.getvalueof());
 	Mask.message('set', pads[num-1]._mask.getvalueof());
+	var target_id = pads[num-1]._target_id.getvalueof();
+	if(target_id>0)
+	{
+		debug('target_id is:', target_id);
+		finder.id = parseInt(target_id);
+		debug('finder is:', finder.path);
+		var lo = finder.get('min');
+		var hi = finder.get('max');
+		scale_lo.message('minimum', lo);
+		scale_lo.message('maximum', hi-1);
+		scale_lo.message('set', pads[num-1]._scale_lo.getvalueof());
+		scale_hi.message('minimum', lo+1);
+		scale_hi.message('maximum', hi);
+		scale_hi.message('set', pads[num-1]._scale_hi.getvalueof());
+		scale_exp.message('set', pads[num-1]._scale_exp.getvalueof());
+		modulation_assignment.message('text', parameter_name_from_id(target_id));
+		scale_lo.message('hidden', 0);
+		scale_hi.message('hidden', 0);
+		scale_exp.message('hidden', 0);
+	}
+	else
+	{
+		scale_lo.message('hidden', 1);
+		scale_hi.message('hidden', 1);
+		scale_exp.message('hidden', 1);
+	}
 	update_keys();
 	if(mod_assign_mode)
 	{
 		refresh_grid();
 	}
+	select_pad_device(pads[num-1]._note_id.getvalueof());
 	/*for(var i in glob.instances)
 	{
 		if(glob.instances[i]!=script)
@@ -556,7 +607,6 @@ function select_voice(num)
 		}
 	}*/
 }
-
 
 function toggle_mod_assign()
 {
@@ -662,9 +712,9 @@ function set_input_gate(val)
 	}
 }
 
-function _mod_assign(num, val)
+function _mod_assign(num, val, val2)
 {
-	debug('mod_assign', num, val);
+	debug('mod_assign', num, val, val2);
 	if(current_edit)
 	{
 		switch(num)
@@ -701,10 +751,42 @@ function _mod_assign(num, val)
 				storage.setstoredvalue('poly.'+(current_edit)+'::color', current_pset, val);
 				update_grid();
 				break;
+			case 7:
+				debug('modulation_enable:', val, 'cc_enable:', val2);
+				pads[current_edit-1]._remote_enable.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::remote_enable', current_pset, val);
+				pads[current_edit-1]._cc_enable.message(val2);
+				storage.setstoredvalue('poly.'+(current_edit)+'::cc_enable', current_pset, val2);
+				break;
+			case 8:
+				debug('assign_modulation_target');
+				select_parameter(current_edit);
+				modulation_assignment.message('text', parameter_name_from_id(pads[current_edit-1]._target_id.getvalueof()));
+				select_voice(current_edit);
+				break;
+			case 9:
+				debug('cc modulation id:', val);
+				pads[current_edit-1]._ctrl_id.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::ctrl_id', current_pset, val);
+				break;
+			case 10:
+				debug('scale_lo:', val);
+				pads[current_edit-1]._scale_lo.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::scale_lo', current_pset, val);
+				break;
+			case 11:
+				debug('scale_hi:', val);
+				pads[current_edit-1]._scale_hi.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::scale_hi', current_pset, val);
+				break;
+			case 12:
+				debug('scale_exp:', val);
+				pads[current_edit-1]._scale_exp.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::scale_exp', current_pset, val);
+				break;
 		}
 	}
 }
-
 
 function blocks_patcher_unlock()
 {
@@ -730,6 +812,29 @@ function blocks_patcher_lock()
 	blocks_patcher.window('exec');
 }
 
+function settings_patcher_unlock()
+{
+	skin_settings.window('size', 0, 400, 1190, 800);
+	skin_settings.window('flags', 'minimize');
+	skin_settings.window('flags', 'zoom');
+	skin_settings.window('flags', 'close');
+	skin_settings.window('flags', 'grow');
+	skin_settings.window('flags', 'title');
+	skin_settings.window('flags', 'nofloat');
+	skin_settings.window('exec');
+}
+
+function settings_patcher_lock()
+{
+	skin_settings.window('size', 40, 40, 660, 100);
+	skin_settings.window('flags', 'nominimize');
+	//blocks_patcher.window('flags', 'nozoom');
+	skin_settings.window('flags', 'noclose');
+	skin_settings.window('flags', 'nogrow');
+	//blocks_patcher.window('flags', 'notitle');
+	skin_settings.window('flags', 'float');
+	skin_settings.window('exec');
+}
 
 function skin_pset(val)
 {
@@ -763,6 +868,18 @@ function info()
 	info_patcher.subpatcher().getnamed('info_text').message('set', [INFO, SETUP_INFO, OVERVIEW_INFO, KEY_INFO]);
 }
 
+function Editor(val)
+{
+	editorVisible = val > 0;
+	if(editorVisible)
+	{
+		skin_settings_pcontrol.open();
+	}
+	else
+	{
+		skin_settings_pcontrol.close();
+	}
+}
 
 /*
 function SkinModule()
@@ -784,61 +901,98 @@ SkinModule.prototype.assign_grid = function(grid)
 	this._grid = grid;
 }
 
+*/
 
-function init_device()
+function DeviceModule()
 {
-	mod.Send('receive_device', 'set_mod_device_type', 'Hex');
+
+}
+
+function setup_device()
+{
+	mod.Send('receive_device', 'set_mod_device_type', 'Skin');
 	mod.Send( 'receive_device', 'set_number_params', 16);
-	for(var dev_type in HEX_BANKS)
+	for(var dev_type in SKIN_BANKS)
 	{
-		for(var bank_num in HEX_BANKS[dev_type])
+		for(var bank_num in SKIN_BANKS[dev_type])
 		{
-			mod.SendDirect('receive_device_proxy', 'set_bank_dict_entry', dev_type, bank_num, HEX_BANKS[dev_type][bank_num]);
+			mod.SendDirect('receive_device_proxy', 'set_bank_dict_entry', dev_type, bank_num, SKIN_BANKS[dev_type][bank_num]);
 		}
 		//mod.Send('receive_device_proxy', 'update_parameters');
 	}
 	//debug('current parameters:', mod.Send('receive_device_proxy', 'current_parameters'));
 	mod.Send('code_encoders_to_device', 'value', 1);
-	mod.Send('create_alt_device_proxy', '_codec_device_proxy');
-	for(var dev_type in CODEC_HEX_BANKS)
-	{
-		for(var bank_num in CODEC_HEX_BANKS[dev_type])
-		{
-			mod.SendDirect('receive_alt_device_proxy', '_codec_device_proxy', 'set_bank_dict_entry', dev_type, bank_num, CODEC_HEX_BANKS[dev_type][bank_num]);
-		}
-	}
-	mod.Send( 'receive_alt_device_proxy', '_codec_device_proxy', 'set_number_params', 32);
-	mod.Send( 'receive_alt_device_proxy', '_codec_device_proxy', 'set_mod_device_bank', 0);
-	mod.Send( 'receive_alt_device_proxy', '_codec_device_proxy', 'fill_parameters_from_device');
-	mod.Send( 'receive_alt_device_proxy', '_codec_device_proxy', 'set_params_report_change', 0);
-	mod.Send( 'receive_alt_device_proxy', '_codec_device_proxy', 'set_params_control_prefix', 'CodecEncoder');
-	//mod.Send( 'receive_alt_device_proxy', '_codec_device_proxy', 'set_mod_device', 'id', );
-	//debug('parameters from client property:', mod.finder.get('parameters'));
-	finder = new LiveAPI(callback, 'this_device');
-	pns['device_name']=this.patcher.getnamed('device_name');
-	for(var i=0;i<12;i++)
-	{
-		pns[Encoders[i]]=this.patcher.getnamed('pn'+(i+1));
-		pns[Encoders[i]].message('text', ' ');
-		mps[Encoders[i]]=this.patcher.getnamed('mp'+(i+1));
-		mps[Encoders[i]].message('text', ' ');
-		params[Encoders[i]]=this.patcher.getnamed(Encoders[i]);
-		params[Encoders[i]].message('set', 0);
-	}
-	for(var i=0;i<8;i++)
-	{
-		params[Speeds[i]] = this.patcher.getnamed(Speeds[i]);
-		params[Speeds[i+8]] = this.patcher.getnamed(Speeds[i+8]);
-	}
-	for(var i=0;i<9;i++)
-	{
-		params[Dials[i]]=this.patcher.getnamed(Dial_Mappings[i]);
-		params[Dials[i]].message('set', 0);
-	}
 	detect_drumrack();
 }
-*/
 
+//send the current chain assignment to mod.js
+function select_pad_device(note)
+{
+	debug('select_pad_device:', note);
+	if(drumrack_id>0)
+	{
+		mod.Send( 'send_explicit', 'receive_device_proxy', 'set_mod_device_parent', 'id', drumrack_id);
+		mod.Send( 'receive_device_proxy', 'set_mod_drum_pad', note);
+	}
+	//update_bank();
+}
+
+function detect_drumrack()
+{
+	if(!finder)
+	{
+		finder = new LiveAPI(function(){}, 'this_device');
+	}
+	debug('detect_drumrack');
+	finder.goto('this_device');
+	var this_id = parseInt(finder.id);
+	finder.goto('canonical_parent');
+	var track_id = parseInt(finder.id);
+	var found_devices = finder.getcount('devices');
+	for (var i=0;i<found_devices;i++)
+	{
+		finder.id = track_id;
+		finder.goto('devices', i);
+		if(finder.get('class_name')=='DrumGroupDevice')
+		{
+			//drumgroup_is_present = true;
+			debug('DrumRack found!');
+			drumrack_id = parseInt(finder.id);
+			debug('DrumRack id:', drumrack_id);
+			break;
+		}
+	}
+}
+
+function select_parameter(poly_num)
+{
+	finder.goto('live_set', 'view', 'selected_parameter');
+	pads[poly_num-1]._target_id.message(parseInt(finder.id));
+	storage.setstoredvalue('poly.'+(poly_num)+'::target_id', current_pset, parseInt(finder.id));
+	pads[poly_num-1]._scale_lo.message(parseInt(finder.get('min')));
+	storage.setstoredvalue('poly.'+(poly_num)+'::scale_lo', current_pset, parseInt(finder.get('min')));
+	pads[poly_num-1]._scale_hi.message(parseInt(finder.get('max')));
+	storage.setstoredvalue('poly.'+(poly_num)+'::scale_hi', current_pset, parseInt(finder.get('max')));
+	
+}
+
+function parameter_name_from_id(id)
+{
+	var new_name = 'None';
+	finder.id = parseInt(id);
+	if(id > 0)
+	{
+		var new_name = [];
+		new_name.unshift(finder.get('name'));
+		finder.goto('canonical_parent');
+		finder.goto('canonical_parent');
+		new_name.unshift(' || ');
+		new_name.unshift(finder.get('name'));
+		new_name = new_name.join('');
+		new_name = new_name.slice(0, 25);
+	}
+	return new_name;
+}
 
 
 forceload(this);
