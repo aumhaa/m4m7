@@ -8,7 +8,7 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = false;
+var FORCELOAD = true;
 var DEBUG = true;
 aumhaa.init(this);
 
@@ -45,9 +45,9 @@ var current_device;
 
 var Vars = ['assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings'];
 
-var PolyVars = ['note_id', 'modA_id', 'modB_id', 'modC_id', 'note_gate', 'modA_gate', 'modB_gate', 'modC_gate', 'mask', 'modifier_assignments', 'color', 'ctrl_id', 'cc_enable', 'remote_enable', 'target_id', 'scale_lo', 'scale_hi', 'scale_exp'];
+var PolyVars = ['note_id', 'modA_id', 'modB_id', 'modC_id', 'note_gate', 'modA_gate', 'modB_gate', 'modC_gate', 'mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp'];
 
-var EditorVars = ['note', 'mod_A', 'mod_B', 'mod_C', 'selected', 'color', 'Mask', 'modulation_assignment', 'remote_cc_enable', 'cc_out', 'scale_lo', 'scale_hi', 'scale_exp'];
+var EditorVars = ['note', 'mod_A', 'mod_B', 'mod_C', 'selected', 'color', 'Mask', 'remote_name', 'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable'];
 
 var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
 			'DrumGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
@@ -561,37 +561,46 @@ function select_voice(num)
 
 	if(DISPLAY_POLY){poly.message('open', num);}
 	debug('selected value is:', pads[num]._note_id.getvalueof());
+	note_enable.message('set', pads[current_edit-1]._note_gate.getvalueof());
+	note.message('set', pads[num-1]._note_id.getvalueof());
+	modA_enable.message('set', pads[num-1]._modA_gate.getvalueof());
 	mod_A.message('set', pads[num-1]._modA_id.getvalueof());
+	modB_enable.message('set', pads[num-1]._modB_gate.getvalueof());
 	mod_B.message('set', pads[num-1]._modB_id.getvalueof());
+	modC_enable.message('set', pads[num-1]._modC_gate.getvalueof());
 	mod_C.message('set', pads[num-1]._modC_id.getvalueof());
 	color.message('set', pads[num-1]._color.getvalueof());
-	note.message('set', pads[num-1]._note_id.getvalueof());
 	Mask.message('set', pads[num-1]._mask.getvalueof());
-	var target_id = pads[num-1]._target_id.getvalueof();
-	if(target_id>0)
+	cc_id.message('set', pads[num-1]._cc_id.getvalueof());
+	cc_enable.message('set', pads[num-1]._cc_enable.getvalueof());
+	cc_scale_lo.message('set', pads[num-1]._cc_scale_lo.getvalueof());
+	cc_scale_hi.message('set', pads[num-1]._cc_scale_hi.getvalueof());
+	cc_scale_exp.message('set', pads[num-1]._cc_scale_exp.getvalueof());
+	var remote_id = pads[num-1]._remote_id.getvalueof();
+	if(remote_id>0)
 	{
-		debug('target_id is:', target_id);
-		finder.id = parseInt(target_id);
-		debug('finder is:', finder.path);
+		debug('remote_id is:', remote_id);
+		finder.id = parseInt(remote_id);
+		//debug('finder is:', finder.path);
 		var lo = finder.get('min');
 		var hi = finder.get('max');
-		scale_lo.message('minimum', lo);
-		scale_lo.message('maximum', hi-1);
-		scale_lo.message('set', pads[num-1]._scale_lo.getvalueof());
-		scale_hi.message('minimum', lo+1);
-		scale_hi.message('maximum', hi);
-		scale_hi.message('set', pads[num-1]._scale_hi.getvalueof());
-		scale_exp.message('set', pads[num-1]._scale_exp.getvalueof());
-		modulation_assignment.message('text', parameter_name_from_id(target_id));
-		scale_lo.message('hidden', 0);
-		scale_hi.message('hidden', 0);
-		scale_exp.message('hidden', 0);
+		remote_scale_lo.message('minimum', lo);
+		remote_scale_lo.message('maximum', hi-1);
+		remote_scale_lo.message('set', pads[num-1]._remote_scale_lo.getvalueof());
+		remote_scale_hi.message('minimum', lo+1);
+		remote_scale_hi.message('maximum', hi);
+		remote_scale_hi.message('set', pads[num-1]._remote_scale_hi.getvalueof());
+		remote_scale_exp.message('set', pads[num-1]._remote_scale_exp.getvalueof());
+		remote_name.message('text', parameter_name_from_id(remote_id));
+		remote_scale_lo.message('hidden', 0);
+		remote_scale_hi.message('hidden', 0);
+		remote_scale_exp.message('hidden', 0);
 	}
 	else
 	{
-		scale_lo.message('hidden', 1);
-		scale_hi.message('hidden', 1);
-		scale_exp.message('hidden', 1);
+		remote_scale_lo.message('hidden', 1);
+		remote_scale_hi.message('hidden', 1);
+		remote_scale_exp.message('hidden', 1);
 	}
 	update_keys();
 	if(mod_assign_mode)
@@ -712,9 +721,9 @@ function set_input_gate(val)
 	}
 }
 
-function _mod_assign(num, val, val2)
+function _mod_assign(num, val)
 {
-	debug('mod_assign', num, val, val2);
+	debug('mod_assign', num, val);
 	if(current_edit)
 	{
 		switch(num)
@@ -724,65 +733,98 @@ function _mod_assign(num, val, val2)
 				storage.setstoredvalue('poly.'+(current_edit)+'::note_id', current_pset, val);
 				break;
 			case 1:
+				pads[current_edit-1]._note_gate.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::note_gate', current_pset, val);
+				break;
+			case 2:
 				pads[current_edit-1]._modA_id.message(val);
 				storage.setstoredvalue('poly.'+(current_edit)+'::modA_id', current_pset, val);
 				break;
-			case 2:
+			case 3:
+				pads[current_edit-1]._modA_gate.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::modA_gate', current_pset, val);
+				break;
+			case 4:
 				pads[current_edit-1]._modB_id.message(val);
 				storage.setstoredvalue('poly.'+(current_edit)+'::modB_id', current_pset, val);
 				break;
-			case 3:
+			case 5:
+				pads[current_edit-1]._modB_gate.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::modB_gate', current_pset, val);
+				break;
+			case 6:
 				pads[current_edit-1]._modC_id.message(val);
 				storage.setstoredvalue('poly.'+(current_edit)+'::modC_id', current_pset, val);
 				break;
-			case 4:
+			case 7:
+				pads[current_edit-1]._modC_gate.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::modC_gate', current_pset, val);
+				break;
+			case 8:
 				debug('Mask', val);
 				pads[current_edit-1]._mask.message(val);
 				storage.setstoredvalue('poly.'+(current_edit)+'::mask', current_pset, val);
 				break;
-			case 5:
+			case 9:
 				debug('selected:', val);
 				select_voice(val);
 				break;
-			case 6:
+			case 10:
 				debug('color:', val);
 				KEYCOLORS[current_edit-1] = val;
 				pads[current_edit-1]._color.message(val);
 				storage.setstoredvalue('poly.'+(current_edit)+'::color', current_pset, val);
 				update_grid();
 				break;
-			case 7:
-				debug('modulation_enable:', val, 'cc_enable:', val2);
-				pads[current_edit-1]._remote_enable.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::remote_enable', current_pset, val);
-				pads[current_edit-1]._cc_enable.message(val2);
-				storage.setstoredvalue('poly.'+(current_edit)+'::cc_enable', current_pset, val2);
-				break;
-			case 8:
+			case 11:
 				debug('assign_modulation_target');
 				select_parameter(current_edit);
-				modulation_assignment.message('text', parameter_name_from_id(pads[current_edit-1]._target_id.getvalueof()));
+				remote_name.message('text', parameter_name_from_id(pads[current_edit-1]._remote_id.getvalueof()));
 				select_voice(current_edit);
 				break;
-			case 9:
-				debug('cc modulation id:', val);
-				pads[current_edit-1]._ctrl_id.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::ctrl_id', current_pset, val);
-				break;
-			case 10:
-				debug('scale_lo:', val);
-				pads[current_edit-1]._scale_lo.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::scale_lo', current_pset, val);
-				break;
-			case 11:
-				debug('scale_hi:', val);
-				pads[current_edit-1]._scale_hi.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::scale_hi', current_pset, val);
-				break;
 			case 12:
-				debug('scale_exp:', val);
+				debug('remote_enable:', val);
+				pads[current_edit-1]._remote_enable.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::remote_enable', current_pset, val);
+			case 13:
+				debug('remote_scale_lo:', val);
+				pads[current_edit-1]._remote_scale_lo.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::remote_scale_lo', current_pset, val);
+				break;
+			case 14:
+				debug('remote_scale_hi:', val);
+				pads[current_edit-1]._remote_scale_hi.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::remote_scale_hi', current_pset, val);
+				break;
+			case 15:
+				debug('remote_scale_exp:', val);
+				pads[current_edit-1]._remote_scale_exp.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::remote_scale_exp', current_pset, val);
+				break;
+			case 16:
+				debug('cc_enable');
+				pads[current_edit-1]._cc_enable.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::cc_enable', current_pset, val2);
+				break;
+			case 17:
+				debug('cc_id:', val);
+				pads[current_edit-1]._cc_id.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::cc_id', current_pset, val);
+				break;
+			case 18:
+				debug('cc_scale_lo:', val);
+				pads[current_edit-1]._scale_lo.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::cc_scale_lo', current_pset, val);
+				break;
+			case 19:
+				debug('cc_scale_hi:', val);
+				pads[current_edit-1]._scale_hi.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::cc_scale_hi', current_pset, val);
+				break;
+			case 20:
+				debug('cc_scale_exp:', val);
 				pads[current_edit-1]._scale_exp.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::scale_exp', current_pset, val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::cc_scale_exp', current_pset, val);
 				break;
 		}
 	}
@@ -826,7 +868,7 @@ function settings_patcher_unlock()
 
 function settings_patcher_lock()
 {
-	skin_settings.window('size', 40, 40, 660, 100);
+	skin_settings.window('size', 40, 40, 400, 280);
 	skin_settings.window('flags', 'nominimize');
 	//blocks_patcher.window('flags', 'nozoom');
 	skin_settings.window('flags', 'noclose');
@@ -967,12 +1009,12 @@ function detect_drumrack()
 function select_parameter(poly_num)
 {
 	finder.goto('live_set', 'view', 'selected_parameter');
-	pads[poly_num-1]._target_id.message(parseInt(finder.id));
-	storage.setstoredvalue('poly.'+(poly_num)+'::target_id', current_pset, parseInt(finder.id));
-	pads[poly_num-1]._scale_lo.message(parseInt(finder.get('min')));
-	storage.setstoredvalue('poly.'+(poly_num)+'::scale_lo', current_pset, parseInt(finder.get('min')));
-	pads[poly_num-1]._scale_hi.message(parseInt(finder.get('max')));
-	storage.setstoredvalue('poly.'+(poly_num)+'::scale_hi', current_pset, parseInt(finder.get('max')));
+	pads[poly_num-1]._remote_id.message(parseInt(finder.id));
+	storage.setstoredvalue('poly.'+(poly_num)+'::remote_id', current_pset, parseInt(finder.id));
+	pads[poly_num-1]._remote_scale_lo.message(parseInt(finder.get('min')));
+	storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_lo', current_pset, parseInt(finder.get('min')));
+	pads[poly_num-1]._remote_scale_hi.message(parseInt(finder.get('max')));
+	storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_hi', current_pset, parseInt(finder.get('max')));
 	
 }
 
