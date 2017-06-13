@@ -590,9 +590,9 @@ function select_voice(num)
 	cc_scale_hi.message('set', pads[num-1]._cc_scale_hi.getvalueof());
 	cc_scale_exp.message('set', pads[num-1]._cc_scale_exp.getvalueof());
 	pads[current_edit-1].update_mod_assignments();
-	mod_target_assignment.message('set', pads[current_edit-1]._mod_assigns[mod_target.getvalueof()]);
+	mod_target_assignment.message('set', pads[current_edit-1]._mod_assigns[parseInt(mod_target.getvalueof())]);
 	var remote_id = pads[num-1]._remote_id.getvalueof();
-	if(remote_id>0)
+	if((remote_id!=undefined)&&(remote_id>0))
 	{
 		debug('remote_id is:', remote_id);
 		finder.id = parseInt(remote_id);
@@ -847,7 +847,8 @@ function _mod_assign(num, val)
 				break;
 			case 21:
 				debug('mod_target_assignment:', val);
-				pads[current_edit-1]._modifier_assignments.message(mod_target.getvalueof()-1, 0, val);
+				pads[current_edit-1]._modifier_assignments.message('list', mod_target.getvalueof()-1, 0, val);
+				debug('mod_target_assignment', 'pad:', current_edit-1, 'mod_target.getvalueof():', mod_target.getvalueof()-1, 'new value:', val, 'new_array:', pads[current_edit-1]._modifier_assignments.getvalueof());
 				storage.setstoredvalue('poly.'+(current_edit)+'::modifier_assignments', current_pset, pads[current_edit-1]._modifier_assignments.getvalueof());
 				pads[current_edit-1].update_mod_assignments();
 				break;
