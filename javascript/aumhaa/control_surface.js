@@ -10,9 +10,11 @@ var control_surface_type = jsarguments[1]||'None';
 var script = this;
 
 aumhaa = require('_base');
-var FORCELOAD = true;
+var FORCELOAD = false;
 var DEBUG = true;
 aumhaa.init(this);
+
+var control_surface_id = undefined;
 
 function init()
 {
@@ -27,23 +29,21 @@ function init()
 		debug('type is:', finder.type);
 		if(finder.type == control_surface_type)
 		{
+			control_surface_id = finder.id;
 			var components = finder.get('components');
 			for (var i in components)
 			{
 				debug('component is:', finder.type);
 				finder.id = components[i];
-				if(M4LCOMPONENT.test(finder.type)>0)
-				{
-					control_surface_id = finder.id;
-					break;
-				}
-			}
-			if(control_surface_id)
-			{
-				outlet(0, 'path', finder.path);
-				deprivatize_script_functions(script);
 			}
 		}
+	}
+	if(control_surface_id!=undefined)
+	{
+		debug('enabled...');
+		//outlet(0, 'path', finder.path);
+		deprivatize_script_functions(script);
+		finder.id = parseInt(control_surface_id);
 	}
 }
 
