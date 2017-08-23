@@ -1,7 +1,7 @@
 autowatch = 1;
 
 inlets = 1;
-outlets = 5;
+outlets = 6;
 
 var held_notes = []; //active sequence of note #'s to be output to coll for use in arp processing
 var held_velocities = [];  //active sequence of velocities to be output to coll for use in arp processing
@@ -15,6 +15,17 @@ var length = 0;   //the length of the overall current arp sequence
 var start = 0;   //starting point of the current arp sequence (theoretically should always be 0)
 var direction = 'up';  //direction of the current arp sequence sent to counter ('up', 'down', 'updown');
 var last_metro = 0;   //last metronome state sent out (to avoid double triggers, which happen when 1 is sent when metro is already running);
+var excl_cycle_trigger = -1;
+var enabled = false;
+
+function enable(val)
+{
+	if(enabled!=(val>0))
+	{
+		enabled = val>0;
+	}
+	recalculate_pattern();
+}
 
 //mode value received from MODE tab
 function mode_in(val)
@@ -58,6 +69,7 @@ function note_in()
 //called whenever something changes in settings or a new note is received
 function recalculate_pattern()
 {
+	excl_cycle_trigger = -1;
 	switch(mode)
 	{
 		case 'up':
@@ -126,9 +138,9 @@ function recalculate_pattern()
 			start = 0;
 			//start = ordered_held_notes.length;
 			direction = 'updown';
-			this.patcher.getnamed('trigger_exclusive').message('in2', length);
+			excl_cycle_trigger = length-1;
 			this.patcher.getnamed('exclusive_start').message('set', 'setmin', 1);
-			this.patcher.getnamed('exclusive_end').message('set', 'max', length-1);
+			this.patcher.getnamed('exclusive_end').message('set', 'max', length-2);
 			break;
 		case 'incl':
 			held_notes = ordered_held_notes.slice();
@@ -204,16 +216,22 @@ function recalculate_pattern()
 function output_held_notes()
 {
 	outlet(1, 'clear');
-	for(var i=0;i<held_notes.length;i++)
+	if(enabled)
 	{
-		outlet(1, i, held_notes[i]);
+		for(var i=0;i<held_notes.length;i++)
+		{
+			outlet(1, i, held_notes[i]);
+		}
 	}
-	outlet(4, 'clear');
-	for(var i=0;i<held_velocities.length;i++)
+	outlet(2, 'clear');
+	if(enabled)
 	{
-		outlet(4, i, held_velocities[i]);
+		for(var i=0;i<held_velocities.length;i++)
+		{
+			outlet(2, i, held_velocities[i]);
+		}
 	}
-	post('held_notes:', held_notes, '\n');
+	//post('held_notes:', held_notes, '\n');
 }
 
 //udpate the counter with the current sequence borders, direction
@@ -224,16 +242,22 @@ function update_counter()
 	outlet(0, 'max', length-1);
 	//outlet(0, 'set', start);
 	outlet(3, length);
+	outlet(5, excl_cycle_trigger);
 }
 
 //update the metronome's active state
 function update_metro()
 {
 	var metro = held_notes.length>0;
-	if(metro!=last_metro)
+	if((metro!=last_metro)&&(enabled))
 	{
-		outlet(2, metro);
+		outlet(4, metro);
 		last_metro = metro;
+	}
+	else if(!enabled)
+	{
+		outlet(4, 0);
+		last_metro = 0;
 	}
 }
 
