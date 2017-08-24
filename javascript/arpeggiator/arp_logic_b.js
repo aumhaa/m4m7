@@ -231,7 +231,7 @@ function output_held_notes()
 			outlet(2, i, held_velocities[i]);
 		}
 	}
-	//post('held_notes:', held_notes, '\n');
+	post('held_notes:', held_notes, '\n');
 }
 
 //udpate the counter with the current sequence borders, direction
