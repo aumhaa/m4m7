@@ -1,7 +1,7 @@
 autowatch = 1;
 
-inlets = 1;
-outlets = 6;
+inlets = 7;
+outlets = 7;
 
 var held_notes = []; //active sequence of note #'s to be output to coll for use in arp processing
 var held_velocities = [];  //active sequence of velocities to be output to coll for use in arp processing
@@ -17,6 +17,64 @@ var direction = 'up';  //direction of the current arp sequence sent to counter (
 var last_metro = 0;   //last metronome state sent out (to avoid double triggers, which happen when 1 is sent when metro is already running);
 var excl_cycle_trigger = -1;
 var enabled = false;
+var spice_enabled = false;
+var dice_enabled = false;
+var fixVel = false;
+var dice_knob_val = 64;
+var spice_knob_val = 64;
+var PB_val = 64;
+
+var statuses = [];
+
+function spice_dial_in(val)
+{
+	spice_val = val;
+}
+
+function dice_dial_in(val)
+{
+	dice_val = val;
+}
+
+function metro_in()
+{
+}
+
+function PB_in(val)
+{
+	PB_val = val;
+}
+
+function spice_enabled_in(val)
+{
+	spice_enabled = val>0;
+}
+
+function dice_enabled_in(val)
+{
+	dice_enabled = val>0;
+}
+
+function randomize_statuses()
+{
+	for(var i=0;i<8;i++)
+	{
+		statuses[i]=[];
+		statuses[i].push(Math.random()>.5);
+		for(var j=0;j<4;j++)
+		{
+			statuses.push(Math.random()*100);
+		}
+	}
+}
+
+function update_statuses()
+{
+	for(var i=0;i<8;i++)
+	{
+		outlet(6, i, statuses[i]);
+	}
+}
 
 function enable(val)
 {
