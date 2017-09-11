@@ -253,6 +253,14 @@ function dict_to_jsobj(dict) {
 
 exports.dict_to_jsobj = dict_to_jsobj;
 
+function objSort(obj)
+{
+	var arr = [];
+	Object.keys(obj).sort().forEach(function(v, i) {debug('sorting:', v, i, obj[v])});
+}
+
+exports.objSort = objSort;
+
 function wiki()
 {
 	if((mod!=undefined)&&(mod.wiki_addy!=undefined))
