@@ -68,7 +68,7 @@ class LividControlSurface(ControlSurface):
 
 	def _check_connection(self):
 		if not self._connected:
-			debug(self._model_name, '_check_connection')
+			#debug(self._model_name, '_check_connection')
 			self._livid_settings.query_surface()
 			#self._connection_routine.restart()
 			self.schedule_message(5, self._check_connection)

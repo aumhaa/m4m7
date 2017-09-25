@@ -951,12 +951,12 @@ class AumPush(Push):
 	
 
 
-class ModDispayComponent(ControlSurfaceComponent):
+class ModDisplayComponent(ControlSurfaceComponent):
 
 
 	def __init__(self, parent, display_strings, value_strings, *a, **k):
 		assert len(display_strings) == len(value_strings)
-		super(ModDispayComponent, self).__init__(*a, **k)
+		super(ModDisplayComponent, self).__init__(*a, **k)
 		self.num_segments = len(display_strings)
 		self._parent = parent
 		self._name_display_line = None
@@ -1029,8 +1029,8 @@ class PushModHandler(ModHandler):
 		self._push_colors[1:8] = [3, 85, 33, 95, 5, 21, 67]
 		self._push_colors[127] = 67
 		self._shifted = False
-		self._shift_display = ModDispayComponent(self, [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '])
-		self._alt_display = ModDispayComponent(self, [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '])
+		self._shift_display = ModDisplayComponent(self, [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '])
+		self._alt_display = ModDisplayComponent(self, [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '])
 	
 
 	def select_mod(self, mod):
