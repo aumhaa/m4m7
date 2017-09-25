@@ -393,47 +393,6 @@ class Cntrlr(Base_Cntrlr):
 		self._translations2.set_enabled(False)
 	
 
-	def _setup_instrument(self):
-		super(Cntrlr, self)._setup_instrument()
-
-		self._instrument.audioloop_layer = AddLayerMode(self._instrument, Layer(priority = 5,))
-
-		self._instrument._keypad.sequencer_layer = LayerMode(self._instrument._keypad, Layer(priority = 5, 
-																										playhead = self._playhead_element,
-		 																								keypad_matrix = self._matrix.submatrix[:,:],
-																										))
-		self._instrument._keypad.split_layer = LayerMode(self._instrument._keypad, Layer(priority = 5, 
-																										keypad_matrix = self._matrix.submatrix[:,:],
-																										))
-		self._instrument._keypad.sequencer_shift_layer = LayerMode(self._instrument._keypad, Layer(priority = 5, 
-																										keypad_select_matrix = self._matrix.submatrix[:,:],
-																										follow_button = self._button[23]))
-		self._instrument._keypad.sequencer_session_layer = LayerMode(self._instrument._keypad, Layer(priority = 5,
-																										))
-		self._instrument._keypad.split_session_layer = LayerMode(self._instrument._keypad, Layer(priority = 5, 
-																										))
-		self._instrument._keypad.sequencer_session_shift_layer = LayerMode(self._instrument._keypad, Layer(priority = 5,
-																										quantization_buttons = self._key_matrix.submatrix[:7, 1:], 
-																										follow_button = self._button[23]))
-
-		self._instrument._drumpad.sequencer_layer = LayerMode(self._instrument._drumpad, Layer(priority = 5,
-																										drumpad_matrix = self._matrix.submatrix[:,:], 
-																										))
-		self._instrument._drumpad.split_layer = LayerMode(self._instrument._drumpad, Layer(priority = 5, 
-																										drumpad_matrix = self._matrix.submatrix[:,:], 
-																										))
-		self._instrument._drumpad.sequencer_shift_layer = LayerMode(self._instrument._drumpad, Layer(priority = 5, 
-																										drumpad_select_matrix = self._matrix.submatrix[:,:], 
-																										quantization_buttons = self._key_matrix.submatrix[:7, 1:], 
-																										follow_button = self._button[23]))
-		self._instrument._drumpad.sequencer_session_layer = LayerMode(self._instrument._drumpad, Layer(priority = 5,))
-		self._instrument._drumpad.split_session_layer = LayerMode(self._instrument._drumpad, Layer(priority = 5,))
-		self._instrument._drumpad.sequencer_session_shift_layer = LayerMode(self._instrument._drumpad, Layer(priority = 5,
-																										quantization_buttons = self._key_matrix.submatrix[:7, 1:], 
-																										follow_button = self._button[23]))
-
-	
-
 	def _setup_modes(self):
 
 		self._setup_device_toggle()
@@ -443,7 +402,7 @@ class Cntrlr(Base_Cntrlr):
 											arming_track_select_buttons = self._key_matrix.submatrix[:4, 1:],
 											solo_buttons = self._key_matrix.submatrix[:4, :1],
 											mute_buttons = self._key_matrix.submatrix[4:8, :1],
-											return_mute_buttons = self._key_matrix.submatrix[8:12, :1]))
+											stop_clip_buttons = self._key_matrix.submatrix[8:12, :1]))
 
 		super(Cntrlr, self)._setup_modes()
 
@@ -478,6 +437,26 @@ class Cntrlr(Base_Cntrlr):
 									self.encoder_navigation_on)
 
 
+		self._session_modes = ModesComponent(name = 'SessionModes')
+		self._session_modes.add_mode('Session', [self._view_control,
+									self._view_control.main_layer, 
+									self._session, 
+									self._session.clip_launch_layer,
+									self.encoder_navigation_on])
+		self._session_modes.add_mode('Zoom', [self._session_zoom,
+									self._session_navigation,
+									self._session_navigation.nav_dial_layer,
+									self.encoder_navigation_on], 
+									behaviour = ColoredCancellableBehaviourWithRelease(color = 'DefaultButton.On', off_color = 'DefaultButton.Off'))
+		self._session_modes.selected_mode = 'Session'
+		self._session_modes.layer = Layer(priority = 4, Zoom_button = self._button[30])
+
+		self._santos_modes = ModesComponent(name = 'SantosModes')
+		self._santos_modes.add_mode('disabled', [self._background])
+		self._santos_modes.add_mode('Main', [self._transport, self._recorder, self._recorder.main_layer])
+		self._santos_modes.add_mode('Shifted', [self._session.scene_launch_layer, self._recorder, self._recorder.shift_layer], behaviour = ColoredCancellableBehaviourWithRelease(color = 'ShiftButtons.SessionOn', off_color = 'ShiftButtons.SessionOff'))
+		self._santos_modes.selected_mode = 'Main'
+		self._santos_modes.layer = Layer(priority = 4, Shifted_button = self._button[31])
 
 		self._main_modes = ModesComponent(name = 'MainModes')
 		self._main_modes.add_mode('disabled', [self._background])
@@ -526,12 +505,11 @@ class Cntrlr(Base_Cntrlr):
 													self._mixer.santos_buttons_layer,
 													self._device_toggle, 
 													self._translations2, 
-													self._instrument, 
-													self._instrument.shift_button_layer,
-													self._recorder,
-													
 													self._device, self._device_navigator, 
-													self._session_ring, 
+													self._session_ring,
+													self._session,
+													self._session_modes,
+													self._santos_modes,
 													DelayMode(self._update_session_position, delay = .1)], )
 
 		self._main_modes.layer = Layer(priority = 4, ModSwitcher_button = self._encoder_button[2], MixMode_button = self._encoder_button[0], Translations_button = self._encoder_button[3]) #, 
