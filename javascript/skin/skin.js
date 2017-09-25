@@ -16,7 +16,7 @@ ROLI = require('ROLI');
 
 var SHOW_STORAGE = false;
 var DISPLAY_POLY = false;
-var BLOCKS_ENABLE = true;
+var BLOCKS_ENABLE = false;
 
 var finder;
 var mod;
@@ -46,9 +46,9 @@ var current_device;
 
 var Vars = ['assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings'];
 
-var PolyVars = ['note_id', 'modA_id', 'modB_id', 'modC_id', 'note_gate', 'modA_gate', 'modB_gate', 'modC_gate', 'mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'remote_id_init_gate', 'breakpoint', 'breakpoint_obj'];
+var PolyVars = ['note_id', 'modA_id', 'modB_id', 'modC_id', 'note_gate', 'modA_gate', 'modB_gate', 'modC_gate', 'note_chord', 'modA_chord', 'modB_chord', 'modC_chord', 'chord_gate', 'chord_modA_gate', 'chord_modB_gate', 'chord_modC_gate', 'chord_channel', 'mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'remote_id_init_gate', 'breakpoint', 'breakpoint_obj'];
 
-var EditorVars = ['note', 'mod_A', 'mod_B', 'mod_C', 'selected', 'color', 'Mask', 'remote_name', 'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable', 'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj'];
+var EditorVars = ['note', 'mod_A', 'mod_B', 'mod_C', 'chord_assignment', 'chord_enable', 'chord_modA_assignment', 'chord_modA_enable', 'chord_modB_assignment', 'chord_modB_enable', 'chord_modC_assignment', 'chord_modC_enable', 'chord_channel', 'selected', 'color', 'Mask', 'remote_name', 'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable', 'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj'];
 
 var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
 			'DrumGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
@@ -590,6 +590,34 @@ function select_voice(num)
 	cc_scale_lo.message('set', pads[num-1]._cc_scale_lo.getvalueof());
 	cc_scale_hi.message('set', pads[num-1]._cc_scale_hi.getvalueof());
 	cc_scale_exp.message('set', pads[num-1]._cc_scale_exp.getvalueof());
+	chord_enable.message('set', pads[current_edit-1]._chord_gate.getvalueof());
+	var assgn = pads[current_edit-1]._note_chord.getvalueof();
+	chord_assignment.message('clear');
+	for(var i in assgn)
+	{
+		chord_assignment.message('set', assgn[i], 127);
+	}
+	chord_modA_enable.message('set', pads[current_edit-1]._chord_modA_gate.getvalueof());
+	assgn = pads[current_edit-1]._modA_chord.getvalueof();
+	chord_modA_assignment.message('clear');
+	for(var i in assgn)
+	{
+		chord_modA_assignment.message('set', assgn[i], 127);
+	}
+	chord_modB_enable.message('set', pads[current_edit-1]._chord_modB_gate.getvalueof());
+	assgn = pads[current_edit-1]._modB_chord.getvalueof();
+	chord_modB_assignment.message('clear');
+	for(var i in assgn)
+	{
+		chord_modB_assignment.message('set', assgn[i], 127);
+	}
+	chord_modC_enable.message('set', pads[current_edit-1]._chord_modC_gate.getvalueof());
+	assgn = pads[current_edit-1]._modC_chord.getvalueof();
+	chord_modC_assignment.message('clear');
+	for(var i in assgn)
+	{
+		chord_modC_assignment.message('set', assgn[i], 127);
+	}
 	pads[current_edit-1].update_mod_assignments();
 	mod_target_assignment.message('set', pads[current_edit-1]._mod_assigns[parseInt(mod_target.getvalueof())]);
 	var remote_id = pads[num-1]._remote_id.getvalueof();
@@ -740,7 +768,7 @@ function set_input_gate(val)
 	}
 }
 
-function _mod_assign(num, val)
+function _mod_assign(num, val, extra)
 {
 	debug('mod_assign', num, val);
 	if(current_edit)
@@ -867,6 +895,38 @@ function _mod_assign(num, val)
 				remote_name.message('text', parameter_name_from_id(pads[current_edit-1]._remote_id.getvalueof()));
 				select_voice(current_edit);
 				break;
+			case 25:
+				debug('chord_channel', val);
+				pads[current_edit-1]._chord_channel.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::chord_channel', current_pset, val);
+				break;
+			case 26:
+				debug('chord_enable', val);
+				pads[current_edit-1]._chord_gate.message(val);
+				storage.setstoredvalue('poly.'+(current_edit)+'::chord_gate', current_pset, val);
+				break;
+			case 27:
+				debug('chord_assign', val, extra);
+				var old = pads[current_edit-1]._note_chord.getvalueof();
+				var index = old.indexOf(val);
+				debug('old:', old, 'index:', index);
+				if((extra>0)&&(index==-1))
+				{
+					debug('here a');
+					old.push(val);
+					pads[current_edit-1]._note_chord.message(old);
+					storage.setstoredvalue('poly.'+(current_edit)+'::note_chord', current_pset, old);
+				}
+				else if((extra==0)&&(index!=-1))
+				{
+					debug('here b');
+					old.splice(index,1);
+					pads[current_edit-1]._note_chord.message(old);
+					storage.setstoredvalue('poly.'+(current_edit)+'::note_chord', current_pset, old);
+				}
+				//pads[current_edit-1].chord_gate.message(val);
+				debug('new value is:', pads[current_edit-1]._note_chord.getvalueof());
+				break;
 			case 'breakpoint':
 				var args = arrayfromargs(arguments);
 				debug('breakpoint:', args);
@@ -923,7 +983,7 @@ function settings_patcher_unlock()
 
 function settings_patcher_lock()
 {
-	skin_settings.window('size', 40, 40, 400, 370);
+	skin_settings.window('size', 40, 40, 470, 580);
 	skin_settings.window('flags', 'nominimize');
 	//blocks_patcher.window('flags', 'nozoom');
 	skin_settings.window('flags', 'noclose');
@@ -976,7 +1036,7 @@ function Editor(val)
 	else
 	{
 		skin_settings_pcontrol.close();
-		BLOCKS_ENABLE&&blocks_pcontrol.close();
+		blocks_pcontrol.close();
 	}
 }
 

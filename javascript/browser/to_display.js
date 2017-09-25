@@ -5,7 +5,7 @@ outlets = 2;
 
 
 aumhaa = require('_base');
-var FORCELOAD = true;
+var FORCELOAD = false;
 var DEBUG = true;
 aumhaa.init(this);
 
