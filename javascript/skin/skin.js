@@ -26,29 +26,34 @@ var Mod = ModComponent.bind(script);
 var unique = jsarguments[1];
 var ctrlr_type = jsarguments[2];
 var topDict = new Dict('topology');
+var cellDict = new Dict('cell_dict');
+//var pushDict = new Dict('push_dict');
 var topKeys = [];
 var topology = {};
-var shifted = false;
-var alted = false;
 var cells = [];
 var pads = [];
 var KEYCOLORS = [];
 var PALETTE = ROLI.PALETTE;
-var current_edit = 1;
 var current_pset = 1;
 var assign_mode = false;
 var follow_mode = false;
 var mod_assign_mode = false;
+var chord_assign_mode = false;
 var blocks_page_visible = false;
 var drumrack_id = 0;
 var this_device_id = -1;
 var current_device;
+var current_chords = [[], [], [], []];
+
+var PRS_DLY = 300;
+var colors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
+var PushColors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
 
 var Vars = ['assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings'];
 
-var PolyVars = ['note_id', 'modA_id', 'modB_id', 'modC_id', 'note_gate', 'modA_gate', 'modB_gate', 'modC_gate', 'note_chord', 'modA_chord', 'modB_chord', 'modC_chord', 'chord_gate', 'chord_modA_gate', 'chord_modB_gate', 'chord_modC_gate', 'chord_channel', 'mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'remote_id_init_gate', 'breakpoint', 'breakpoint_obj'];
+var PolyVars = ['note_id', 'modA_id', 'modB_id', 'modC_id', 'note_gate', 'modA_gate', 'modB_gate', 'modC_gate', 'note_chord', 'modA_chord', 'modB_chord', 'modC_chord', 'chord_gate', 'chord_modA_gate', 'chord_modB_gate', 'chord_modC_gate', 'chord_channel', 'chordA_channel', 'chordB_channel', 'chordC_channel', 'mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'remote_id_init_gate', 'breakpoint', 'breakpoint_obj', 'chord_flush'];
 
-var EditorVars = ['note', 'mod_A', 'mod_B', 'mod_C', 'chord_assignment', 'chord_enable', 'chord_modA_assignment', 'chord_modA_enable', 'chord_modB_assignment', 'chord_modB_enable', 'chord_modC_assignment', 'chord_modC_enable', 'chord_channel', 'selected', 'color', 'Mask', 'remote_name', 'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable', 'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj'];
+var EditorVars = ['note', 'mod_A', 'mod_B', 'mod_C', 'chord_assignment', 'chord_enable', 'chord_modA_assignment', 'chord_modA_enable', 'chord_modB_assignment', 'chord_modB_enable', 'chord_modC_assignment', 'chord_modC_enable', 'chord_channel', 'chordA_channel', 'chordB_channel', 'chordC_channel', 'selected', 'color', 'Mask', 'remote_name', 'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable', 'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj'];
 
 var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
 			'DrumGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
@@ -65,50 +70,13 @@ var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Ma
 			'NoDevice':[['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']]}
 
 
-CellClass = function(x, y, identifier, name, _send, args)
-{
-	this.add_bound_properties(this, ['_num', 'group', '_push_note', 'update_color']);
-	this._num = (x + (y*8));
-	this.group = 0;
-	this._push_note = (Math.abs(y-7)*8)+(x+36);
-	CellClass.super_.call(this, identifier, name, _send, args);
-}
 
-inherits(CellClass, ButtonClass);
-
-CellClass.prototype.update_color = function()
+function anything()
 {
-	this.send(KEYCOLORS[this.group]);
+	debug('anything:', messagename, arguments);
 }
 
 
-
-function Pad(num, patcher)
-{
-	var self = this;
-	this._patcher = patcher;
-	for(var i in PolyVars)
-	{
-		this['_'+PolyVars[i]] = this._patcher.getnamed(PolyVars[i]);
-	}
-	this._mod_assigns = [];
-	this.update_mod_assignments();
-}
-
-Pad.prototype.update_mod_assignments = function()
-{
-	this._mod_assigns = [];
-	var assgn = this._modifier_assignments.getvalueof()
-	while(assgn.length)
-	{
-		var x = assgn.shift();
-		var y = assgn.shift();
-		this._mod_assigns.push(assgn.shift());
-	}
-}
-
-
-function anything(){}
 
 function init()
 {
@@ -142,6 +110,7 @@ function alive(val)
 function initialize()
 {
 	debug('skin init.');
+	//debug('dict keys:', cellDict.getkeys());
 	outlet(1, 'clear');
 	outlet(1, 'repaint');
 	setup_tasks();
@@ -150,25 +119,27 @@ function initialize()
 	setup_patchers();
 	setup_controls();
 	setup_device();
+	setup_zonesettingsmodule();
+	setup_skinmodule();
+	setup_modmatrix();
+	setup_scalesmodule();
+	setup_external_chord_assigner();
+	setup_modes();
+	setup_listeners();
 	deprivatize_script_functions(this);
+	blocks_patcher_lock();
+	settings_patcher_lock();
+	update_remote_targets();
+	ZoneSettings.select_voice({'_value':1});
+	MainModes.change_mode(0);
+	_storage_in('recall');
+
 
 	if(SHOW_STORAGE)
 	{
 		storage.message('clientwindow');
 		storage.message('storagewindow');
 	}
-
-	set_input_gate(0);
-	Grid.set_target(_ggrid);
-	Keys.set_target(_kkey);
-	get_assignment_grid();
-	update_assignment_grid();
-	update_grid();
-	update_keys();
-	blocks_patcher_lock();
-	settings_patcher_lock();
-	update_remote_targets();
-	select_voice(1);
 }
 
 function setup_translations(){}
@@ -177,6 +148,7 @@ function setup_colors(){}
 
 function setup_patchers()
 {
+	
 	for(var i in Vars)
 	{
 		script[Vars[i]] = this.patcher.getnamed(Vars[i]);
@@ -190,23 +162,57 @@ function setup_patchers()
 	pads = [];
 	for(var i = 0;i < 64;i++)
 	{
-		pads[i] = new Pad(i+1, this.patcher.getnamed('poly').subpatcher(i));
+		pads[i] = new ZoneClass(i+1, this.patcher.getnamed('poly').subpatcher(i), 'Zone_'+i);
 	}
-	for(var i=0;i<64;i++)
-	{
-		KEYCOLORS[i] = pads[i]._color.getvalueof();
-	}
+	//for(var i=0;i<64;i++)
+	//{
+	//	KEYCOLORS[i] = pads[i]._color.getvalueof();
+	//}
 	//tasks.addTask(_update_topology, [], 4);
 }
 	
 function setup_controls()
 {
+
 	script['GridControlRegistry'] = new ControlRegistry('GridRegistry');
 	script['KeysControlRegistry'] = new ControlRegistry('KeysRegistry');
 	script['cells'] = [];
+	script['raw_cells'] = [];
 	script['KeyButtons'] = [];
 	script['Grid'] = new GridClass(8, 8, 'Grid');
 	script['Keys'] = new GridClass(8, 1, 'Keys');
+	script['ShiftButton'] = new ButtonClass('shift', 'Shift', function(){});
+	script['AltButton'] = new ButtonClass('alt', 'Alt', function(){});
+
+	var make_send_func = function()
+	{
+		var args = arrayfromargs(arguments);
+		var pos_fix = [0, .13333, .26666, .4, .5, .63333, .76666, .9];
+		if(args.length == 4)
+		{
+			var func = function(value)
+			{
+				//debug('sending:', value);
+				mod.Send(args[0], args[1], args[2], args[3], value);
+				var COLOR = PALETTE[value<0?0:value];
+				outlet(1, "rectangle", pos_fix[args[2]], pos_fix[args[3]], .1, .1);
+				outlet(1, "setcolor", 0, 0, 0, 1);
+				outlet(1, "setcolor", COLOR[0], COLOR[1], COLOR[2], COLOR[3]);
+				outlet(1, "fill");
+				outlet(1, "append");
+			}
+		}
+		else
+		{
+			var func = function(value)
+			{
+				//debug('value:', args, value);
+				mod.Send(args[0], args[1], args[2], value);
+			}
+		}
+		return func;
+	}
+
 	for(var x=0;x<8;x++)
 	{
 		cells[x] = [];
@@ -214,291 +220,214 @@ function setup_controls()
 		{
 			var id = x+(y*8);
 			cells[x][y] = new CellClass(x, y, id, 'Cell_'+id, make_send_func('grid', 'value', x, y));
+			raw_cells.push(cells[x][y]);
 			GridControlRegistry.register_control(id, cells[x][y]);
 			Grid.add_control(x, y, cells[x][y]);
 		}
 	}
+
 	for(var id=0;id<8;id++)
 	{
 		KeyButtons[id] = new ButtonClass(id, 'Key_'+id, make_send_func('key', 'value', id));
 		KeysControlRegistry.register_control(id, KeyButtons[id]);
 		Keys.add_control(id, 0, KeyButtons[id]);
 	}
+
+	script['_grid'] = function(x, y, val){GridControlRegistry.receive(x+(y*8), val);}
+ 	script['_key'] = function(num, val){KeysControlRegistry.receive(num, val);}
+	script['_shift'] = function(val){ShiftButton.receive(val);}
+	script['_alt'] = function(val){AltButton.receive(val);}
 }
 
 function setup_tasks()
 {
-	script['tasks'] = new TaskServer(script, 300);
+	script['tasks'] = new TaskServer(script, 150);
 }
 
-function make_send_func()
+function setup_zonesettingsmodule()
 {
-	var args = arrayfromargs(arguments);
-	var pos_fix = [0, .13333, .26666, .4, .5, .63333, .76666, .9];
-	if(args.length == 4)
+	script['ZoneSettings'] = new ZoneSettingsModule();
+}
+
+function setup_skinmodule()
+{
+	script['Skin'] = new SkinModule();
+	Skin._assign_mode.add_listener(update_input_gate);
+}
+
+function setup_modmatrix()
+{
+	script['ModMatrix'] = new ModifierMatrixModule();
+}
+
+function setup_scalesmodule()
+{
+	script['Scales'] = new ScalesModule();
+}
+
+function setup_external_chord_assigner()
+{
+	script['chordAssigner'] = new ExternalChordAssigner('ChordAssigner');
+}
+
+function setup_modes()
+{
+	//Page 1:  mainPage
+	mainPage = new ModeSwitchablePage('mainPage');
+	mainPage.enter_mode = function()
 	{
-		var func = function(value)
+		debug('mainPage entered');
+		Skin.assign_grid(Grid);
+		Skin._assign_mode.set_control(KeyButtons[7]);
+		mainPage.set_shift_button(AltButton);
+		ZoneSettings._note_gate.set_control(KeyButtons[0]);
+		ZoneSettings._modA_gate.set_control(KeyButtons[1]);
+		ZoneSettings._modB_gate.set_control(KeyButtons[2]);
+		ZoneSettings._modC_gate.set_control(KeyButtons[3]);
+	}
+	mainPage.exit_mode = function()
+	{
+		Skin.assign_grid();
+		Skin._assign_mode.set_control();
+		Skin._follow_mode.set_control();
+		ZoneSettings._note_gate.set_control();
+		ZoneSettings._modA_gate.set_control();
+		ZoneSettings._modB_gate.set_control();
+		ZoneSettings._modC_gate.set_control();
+		mainPage.set_shift_button();
+		debug('mainPage exited');
+	}
+	mainPage.update_mode = function()
+	{
+		debug('mainPage updated');
+		if(mainPage._shifted)
 		{
-			mod.Send(args[0], args[1], args[2], args[3], value);
-			var COLOR = PALETTE[value<0?0:value];
-			outlet(1, "rectangle", pos_fix[args[2]], pos_fix[args[3]], .1, .1);
-			outlet(1, "setcolor", 0, 0, 0, 1);
-			outlet(1, "setcolor", COLOR[0], COLOR[1], COLOR[2], COLOR[3]);
-			outlet(1, "fill");
-			outlet(1, "append");
+			Skin._assign_mode.set_control();
+			Skin._follow_mode.set_control(KeyButtons[7]);
 		}
-	}
-	else
-	{
-		var func = function(value)
+		else if(mainPage._alted)
 		{
-			debug('value:', args, value);
-			mod.Send(args[0], args[1], args[2], value);
 		}
-	}
-	return func;
-}
-
-function make_gui_send_function(patcher_object, message_header)
-{
-	if(message_header.length == 2)
-	{
-		var func = function(value)
+		else if(mainPage._moded)
 		{
-			//value = value==undefined ? 0 : value;
-			//var message = message_header.push(value);
-			//debug('sending gui button:', 'header is:', message_header, 'value is:', value, 'message is:', [message_header[0], message_header[1], value]);
-			//#message = message_header.concat([value]);
-			patcher_object.message.apply(patcher_object, [message_header[0], message_header[1], value]);
-		}
-	}
-	return func;
-}
-
-function _update_topology()
-{
-	debug('update_topology');
-	topology = dict_to_jsobj(topDict);
-	if(blocks_patcher)
-	{
-		var a = (blocks_patcher.subpatcher().getnamed('block1_scene').getvalueof())-1;
-		var b = (blocks_patcher.subpatcher().getnamed('block2_scene').getvalueof())-1;
-		var c = (blocks_patcher.subpatcher().getnamed('block3_scene').getvalueof())-1;
-		var d = (blocks_patcher.subpatcher().getnamed('block4_scene').getvalueof())-1;
-		blocks_patcher.subpatcher().getnamed('blocks_pad').message('scene', a, 1, b, 2, c, 3, d, 4);
-		debug('sending scene:', a, 1, b, 2, c, 3, d, 4);
-	}
-	else
-	{
-		//tasks.addTask(_update_topology, [], 4);
-	}
-}
-
-function update_remote_targets()
-{
-	for(var i in pads)
-	{
-		pads[i]._remote_id_init_gate.message(1);
-		pads[i]._remote_id.message('bang');
-	}
-}
-
-
-function dict_to_jsobj(dict) {
-	if (dict == null) return null;
-	var o = new Object();
-	var keys = dict.getkeys();
-	if (keys == null || keys.length == 0) return null;
-	if (keys instanceof Array) {
-		for (var i = 0; i < keys.length; i++)
-		{
-			var value = dict.get(keys[i]);
-			
-			if (value && value instanceof Dict) {
-				value = dict_to_jsobj(value);
-			}
-			o[keys[i]] = value;
-		}		
-	} else {
-		var value = dict.get(keys);
-		
-		if (value && value instanceof Dict) {
-			value = dict_to_jsobj(value);
-		}
-		o[keys] = value;
-	}
-	return o;
-}
-
-function anything()
-{
-	//post('anything', arrayfromargs(messagename, arguments));
-}
-
-function _blockNote(note, val)
-{
-	var args = arrayfromargs(arguments);
-	//debug('BlockNote', (note-36)%8, Math.abs(Math.floor((note-36)/8)-7), val);
-	//var x = (note-36)%8, y = (note-36)/8;
-	_grid((note-36)%8, Math.abs(Math.floor((note-36)/8)-7), val);
-}
-
-function _blockMode(val)
-{
-	if(val)
-	{
-		if(blocks_page_visible)
-		{
-			blocks_pcontrol.message('close');
-			blocks_page_visible = false;
-			//blocks_patcher.wclose();
+			debug('mainPage is moded');
+			Skin.assign_grid();
+			ZoneSettings._selected_zone.set_controls(Grid);
 		}
 		else
 		{
-			blocks_pcontrol.message('open');
-			blocks_page_visible = true;
-			//blocks_patcher.open();
+			ZoneSettings._selected_zone.set_controls();
+			Skin.assign_grid(Grid);
+			Skin._follow_mode.set_control();
+			Skin._assign_mode.set_control(KeyButtons[7]);
 		}
 	}
+
+	//Page 2:  chordPage
+	chordPage = new ModeSwitchablePage('chordPage');
+	chordPage.enter_mode = function()
+	{
+		debug('chordPage entered');
+		chordPage.set_shift_button(ShiftButton);
+		chordPage.set_alt_button(AltButton);
+		Scales._outputChooser.set_controls([KeyButtons[0], KeyButtons[1], KeyButtons[2], KeyButtons[3]]);
+		Scales.assign_grid(Grid);
+	}
+	chordPage.exit_mode = function()
+	{
+		Scales.assign_grid();
+		Scales._noteOffset.set_inc_dec_buttons();
+		Scales._octaveOffset.set_inc_dec_buttons();
+		Scales._outputChooser.set_controls();
+		chordPage.set_shift_button();
+		debug('chordPage exited');
+	}
+	chordPage.update_mode = function()
+	{
+		debug('chordPage updated');
+		if(chordPage._shifted)
+		{
+			chordPage.set_alt_button();
+			Scales._outputChooser.set_controls();
+			Scales._noteOffset.set_inc_dec_buttons(KeyButtons[0], KeyButtons[1]);
+			Scales._octaveOffset.set_inc_dec_buttons(KeyButtons[2], KeyButtons[3]);
+			//Scales._scaleOffset.set_inc_dec_buttons();
+			//Scales._noteOffset.set_inc_dec_buttons();
+		}
+		else if(chordPage._alted)
+		{
+			debug('setting alted controls');
+			chordPage.set_shift_button();
+			Scales._outputChooser.set_controls();
+			ZoneSettings._chord_gate.set_control(KeyButtons[0]);
+			ZoneSettings._chord_modA_gate.set_control(KeyButtons[1]);
+			ZoneSettings._chord_modB_gate.set_control(KeyButtons[2]);
+			ZoneSettings._chord_modC_gate.set_control(KeyButtons[3]);
+		}
+		else if(chordPage._moded)
+		{
+			debug('chordPage is moded');
+		}
+		else
+		{
+			chordPage.set_shift_button(ShiftButton);
+			chordPage.set_alt_button(AltButton);
+			Scales._noteOffset.set_inc_dec_buttons();
+			Scales._octaveOffset.set_inc_dec_buttons();
+			ZoneSettings._chord_gate.set_control();
+			ZoneSettings._chord_modA_gate.set_control();
+			ZoneSettings._chord_modB_gate.set_control();
+			ZoneSettings._chord_modC_gate.set_control();
+			Scales._outputChooser.set_controls([KeyButtons[0], KeyButtons[1], KeyButtons[2], KeyButtons[3]]);
+			//Scales._scaleOffset.set_inc_dec_buttons();
+			//Scales._noteOffset.set_inc_dec_buttons();
+		}
+	}
+
+	//Page 3:  modPage
+	modPage = new ModeSwitchablePage('modPage');
+	modPage.enter_mode = function()
+	{
+		debug('modPage entered');
+		ModMatrix.assign_grid(Grid);
+	}
+	modPage.exit_mode = function()
+	{
+		ModMatrix.assign_grid();
+		debug('modPage exited');
+	}
+	modPage.update_mode = function()
+	{
+		debug('modPage updated');
+		if(modPage._shifted)
+		{
+
+		}
+		else if(mainPage._alted)
+		{
+		}
+		else if(mainPage._moded)
+		{
+			debug('mainPage is moded');
+		}
+		else
+		{
+
+		}
+	}
+
+	script["MainModes"] = new PageStack(3, 'Main Modes', {'behaviour':DefaultPageStackBehaviourWithModeShift});
+	MainModes.add_mode(0, mainPage);
+	MainModes.add_mode(1, chordPage);
+	MainModes.add_mode(2, modPage);
+	//MainModes.add_mode(3, seqPage);
+	MainModes.set_mode_buttons([KeyButtons[4], KeyButtons[5], KeyButtons[6]]);
 }
 
-function _grid(x, y, val){GridControlRegistry.receive(x+(y*8), val);}
-
-function _ggrid(obj)
+function setup_listeners()
 {
-	var x = obj._x(Grid);
-	var y = obj._y(Grid);
-	var val = obj._value;
-	//debug('grid', x, y, val);
-	if(mod_assign_mode)
-	{
-		if(val>0)
-		{
-			//pad[current_edit-1].update_mod_assignments();
-			var pos = (x+(y*8));
-			var old_val = pads[current_edit-1]._mod_assigns[pos];
-			pads[current_edit-1]._modifier_assignments.message(pos, 0, (old_val+1)%4);
-			update_grid();
-		}
-	}
-	else if(assign_mode)
-	{
-		if((val>0))
-		{
-			assignments.message(x, y, current_edit);
-			if(cells[x][y].group!=current_edit)
-			{
-				_cell = cells[x][y];
-				_cell.group = current_edit;
-				//debug('assignment for:', x, y, 'is', current_edit);
-				push_notes.message(_cell._push_note, current_edit);
-				//mod.Send( 'grid', 'value', x, y, KEYCOLORS[current_edit-1]);
-				//cells[x][y].send(KEYCOLORS[current_edit-1]);
-				update_grid();
-			}
-		}
-	}
-	else if(alted||follow_mode)
-	{
-		if(val>0)
-		{
-			if(cells[x][y].group!=current_edit)
-			{
-				select_voice(cells[x][y].group);
-			}
-		}
-	}
-}
-
-function _key(num, val){KeysControlRegistry.receive(num, val);}
-
-function _kkey(obj)
-{
-	var num = obj._id;
-	var val = obj._value;
-	//debug('_kkey', num, val, '\n');
-	if(val > 0)
-	{
-		switch(num)
-		{
-			case 0:
-				var old_val = pads[current_edit-1]._note_gate.getvalueof();
-				var new_val= Math.abs(old_val-1);
-				pads[current_edit-1]._note_gate.message(new_val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::note_gate', current_pset, new_val);
-				note_enable.message('set', new_val);
-				break;
-			case 1:
-				var old_val = pads[current_edit-1]._modA_gate.getvalueof();
-				var new_val= Math.abs(old_val-1);
-				pads[current_edit-1]._modA_gate.message(new_val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::modA_gate', current_pset, new_val);
-				modA_enable.message('set', new_val);
-				break;
-			case 2:
-				var old_val = pads[current_edit-1]._modB_gate.getvalueof();
-				var new_val= Math.abs(old_val-1);
-				pads[current_edit-1]._modB_gate.message(new_val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::modB_gate', current_pset, new_val);
-				modB_enable.message('set', new_val);
-				break;
-			case 3:
-				var old_val = pads[current_edit-1]._modC_gate.getvalueof();
-				var new_val= Math.abs(old_val-1);
-				pads[current_edit-1]._modC_gate.message(new_val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::modC_gate', current_pset, new_val);
-				modC_enable.message('set', new_val);
-				break;
-			case 4:
-				toggle_mod_assign();
-				break;
-			case 5:
-				toggle_mod_assign();
-				break;
-			case 6:
-				toggle_follow();
-				break;
-			case 7:
-				toggle_assign();
-				break;
-		}
-		update_keys();
-	}
-	/*for(var i in glob.instances)
-	{
-		//debug('name:', glob.instances[i]._name);
-		if(glob.instances[i]!=script)
-		{
-			//debug('not this:', script._name);
-			glob.instances[i]._kkey(obj);
-		}
-	}*/
-}
-
-function shift(val)
-{
-	//debug('shift', val);
-	shifted = val>0;
-	/*for(var i in glob.instances)
-	{
-		if(glob.instances[i]!=script)
-		{
-			glob.instances[i].shift(val);
-		}
-	}*/
-}
-
-function alt(val)
-{
-	//debug('alt', val);
-	alted = val>0;
-	/*for(var i in glob.instances)
-	{
-		if(glob.instances[i]!=script)
-		{
-			glob.instances[i].alt(val);
-		}
-	}*/
+	MainModes.add_listener(update_input_gate);
+	ZoneSettings._selected_zone.add_listener(ModMatrix.update);
 }
 
 function active_handlers()
@@ -517,247 +446,12 @@ function active_handlers()
 }
 
 
-
-function update_grid()
+function update_input_gate()
 {
-	if(mod_assign_mode)
-	{
-		//var modArray = get_mod_assignments();
-		outlet(1, 'clear');
-		outlet(1, 'repaint');
-		pads[current_edit-1].update_mod_assignments();
-		for(var i=0;i<8;i++)
-		{
-			for(var j=0;j<8;j++)
-			{
-				cells[i][j].send(pads[current_edit-1]._mod_assigns[i+(j*8)]);
-			}
-		}
-	}
-	else
-	{
-		outlet(1, 'clear');
-		outlet(1, 'repaint');
-		for(var i=0;i<8;i++)
-		{
-			for(var j=0;j<8;j++)
-			{
-				cells[i][j].send(KEYCOLORS[cells[i][j].group-1]);
-			}
-		}
-	}
+	var enabled = (MainModes._value == 0) && (Skin._assign_mode._value == 0);// && (controlling);
+	//debug('update_input_gate:', enabled);
+	set_input_gate(enabled);
 }
-
-function update_keys()
-{
-	mod.Send('key', 'value', 0, pads[current_edit-1]._note_gate.getvalueof());
-	mod.Send('key', 'value', 1, pads[current_edit-1]._modA_gate.getvalueof());
-	mod.Send('key', 'value', 2, pads[current_edit-1]._modB_gate.getvalueof());
-	mod.Send('key', 'value', 3, pads[current_edit-1]._modC_gate.getvalueof());
-	mod.Send('key', 'value', 5, mod_assign_mode?3:0);
-	mod.Send('key', 'value', 6, follow_mode?2:0);
-	mod.Send('key', 'value', 7, assign_mode?5:6);
-	/*for(var i=0;i<8;i++)
-	{
-		mod.Send('key', 'value', i, parseInt((current_edit == i)*KEYS[i]));
-	}*/
-}
-
-function select_voice(num)
-{
-	debug('select_voice:', num);
-	if(num != current_edit)
-	{
-		if(DISPLAY_POLY){poly.message('wclose');}
-		current_edit = num;
-		if(selected){selected.message('set', num);}
-	}
-	//post('current_edit', current_edit, '\n');
-	if(DISPLAY_POLY){poly.message('open', num);}
-	debug('selected value is:', pads[num]._note_id.getvalueof());
-	note_enable.message('set', pads[current_edit-1]._note_gate.getvalueof());
-	note.message('set', pads[num-1]._note_id.getvalueof());
-	modA_enable.message('set', pads[num-1]._modA_gate.getvalueof());
-	mod_A.message('set', pads[num-1]._modA_id.getvalueof());
-	modB_enable.message('set', pads[num-1]._modB_gate.getvalueof());
-	mod_B.message('set', pads[num-1]._modB_id.getvalueof());
-	modC_enable.message('set', pads[num-1]._modC_gate.getvalueof());
-	mod_C.message('set', pads[num-1]._modC_id.getvalueof());
-	color.message('set', pads[num-1]._color.getvalueof());
-	Mask.message('set', pads[num-1]._mask.getvalueof());
-	cc_id.message('set', pads[num-1]._cc_id.getvalueof());
-	cc_enable.message('set', pads[num-1]._cc_enable.getvalueof());
-	cc_scale_lo.message('set', pads[num-1]._cc_scale_lo.getvalueof());
-	cc_scale_hi.message('set', pads[num-1]._cc_scale_hi.getvalueof());
-	cc_scale_exp.message('set', pads[num-1]._cc_scale_exp.getvalueof());
-	chord_enable.message('set', pads[current_edit-1]._chord_gate.getvalueof());
-	var assgn = pads[current_edit-1]._note_chord.getvalueof();
-	chord_assignment.message('clear');
-	for(var i in assgn)
-	{
-		chord_assignment.message('set', assgn[i], 127);
-	}
-	chord_modA_enable.message('set', pads[current_edit-1]._chord_modA_gate.getvalueof());
-	assgn = pads[current_edit-1]._modA_chord.getvalueof();
-	chord_modA_assignment.message('clear');
-	for(var i in assgn)
-	{
-		chord_modA_assignment.message('set', assgn[i], 127);
-	}
-	chord_modB_enable.message('set', pads[current_edit-1]._chord_modB_gate.getvalueof());
-	assgn = pads[current_edit-1]._modB_chord.getvalueof();
-	chord_modB_assignment.message('clear');
-	for(var i in assgn)
-	{
-		chord_modB_assignment.message('set', assgn[i], 127);
-	}
-	chord_modC_enable.message('set', pads[current_edit-1]._chord_modC_gate.getvalueof());
-	assgn = pads[current_edit-1]._modC_chord.getvalueof();
-	chord_modC_assignment.message('clear');
-	for(var i in assgn)
-	{
-		chord_modC_assignment.message('set', assgn[i], 127);
-	}
-	pads[current_edit-1].update_mod_assignments();
-	mod_target_assignment.message('set', pads[current_edit-1]._mod_assigns[parseInt(mod_target.getvalueof())]);
-	var remote_id = pads[num-1]._remote_id.getvalueof();
-	if((remote_id!=undefined)&&(remote_id>0))
-	{
-		debug('remote_id is:', remote_id);
-		finder.id = parseInt(remote_id);
-		//debug('finder is:', finder.path);
-		var lo = finder.get('min');
-		var hi = finder.get('max');
-		remote_scale_lo.message('minimum', lo);
-		remote_scale_lo.message('maximum', hi-1);
-		remote_scale_lo.message('set', pads[num-1]._remote_scale_lo.getvalueof());
-		remote_scale_hi.message('minimum', lo+1);
-		remote_scale_hi.message('maximum', hi);
-		remote_scale_hi.message('set', pads[num-1]._remote_scale_hi.getvalueof());
-		remote_scale_exp.message('set', pads[num-1]._remote_scale_exp.getvalueof());
-		remote_name.message('text', parameter_name_from_id(remote_id));
-		remote_scale_lo.message('hidden', 0);
-		remote_scale_hi.message('hidden', 0);
-		remote_scale_exp.message('hidden', 0);
-	}
-	else
-	{
-		remote_scale_lo.message('hidden', 1);
-		remote_scale_hi.message('hidden', 1);
-		remote_scale_exp.message('hidden', 1);
-	}
-	update_keys();
-	breakpoint_obj.message('clear');
-	breakpoint.message(pads[num-1]._breakpoint.getvalueof());
-	debug('breakpoint val:', pads[num-1]._breakpoint.getvalueof());
-	if(mod_assign_mode)
-	{
-		refresh_grid();
-	}
-	select_pad_device(pads[num-1]._note_id.getvalueof());
-	/*for(var i in glob.instances)
-	{
-		if(glob.instances[i]!=script)
-		{
-			glob.instances[i].select_voice(num);
-		}
-	}*/
-}
-
-function toggle_mod_assign()
-{
-	set_mod_assign(Math.abs(mod_assign_mode-1));
-}
-
-function set_mod_assign(val)
-{
-	mod_assign_mode = val>0;
-	set_input_gate(mod_assign_mode?0:1);
-	update_grid();
-	update_keys();
-}
-
-
-function toggle_follow()
-{
-	follow(Math.abs(follow_mode-1));
-}
-
-function follow(val)
-{
-	follow_mode = val>0;
-}
-
-
-function toggle_assign()
-{
-	assign(Math.abs(assign_mode-1));
-}
-
-function assign(val)
-{
-	assign_mode = val>0;
-	set_input_gate(assign_mode?0:1);
-}
-
-
-function get_mod_assignments()
-{
-	
-	var assgn = pads[current_edit-1]._modifier_assignments.getvalueof()
-	//debug('assgn:', assgn, '\n');
-	var modArray = [];
-	while(assgn.length)
-	{
-		var x = assgn.shift();
-		var y = assgn.shift();
-		modArray.push(assgn.shift());
-	}
-	return modArray();
-}
-
-function get_assignment_grid()
-{
-	var assgn = assignments.getvalueof()
-	//debug('assgn:', assgn, '\n');
-	while(assgn.length)
-	{
-		cells[assgn.shift()][assgn.shift()].group = assgn.shift();
-	}
-	//post_assignments();
-}
-
-function update_assignment_grid()
-{
-	if((!shifted)&&(!alted))
-	{
-		for(var i=0;i<8;i++)
-		{
-			for(var j=0;j<8;j++)
-			{
-				var _cell = cells[i][j];
-				push_notes.message(_cell._push_note, _cell.group);
-				update_grid();
-			}
-		}
-	}
-	//post_assignments();
-}
-
-function post_assignments()
-{
-	debug('assigns:')
-	{
-		for(var i=0;i<8;i++)
-		{
-			for(var j=0;j<8;j++)
-			{
-				debug(i, j, cells[i][j].group, '\n');
-			}
-		}
-	}
-}
-
 
 function set_input_gate(val)
 {
@@ -768,164 +462,87 @@ function set_input_gate(val)
 	}
 }
 
+
+function skin_pset(val)
+{
+	debug('skin_pset received in skin.js:', val);
+	preset.message(val+1);
+}
+
+function _storage_in()
+{
+	var args = arrayfromargs(arguments);
+	switch(args[0])
+	{
+		case 'recall':
+			for(var i in pads)
+			{
+				pads[i].clear_cells();
+			}
+			for(var i in raw_cells)
+			{
+				raw_cells[i].update_group_assignment();
+			}
+			for(var i in pads)
+			{
+				pads[i].reassign_color();
+			}
+			break;
+		default:
+			debug('storage: default:', args);
+			break;
+	}
+}
+
+
+
+var target_keys = {0:'_note_id', 1:'_note_gate', 2:'_modA_id', 3:'_modA_gate', 4:'_modB_id', 5:'_modB_gate', 6:'_modC_id', 7:'_modC_gate',
+				8:'_mask', 9:'_selected_zone', 10:'_color', 12:'_remote_enable', 13:'_remote_scale_lo', 14:'_remote_scale_hi', 15:'_remote_scale_exp', 
+				16:'_cc_enable', 17:'_cc_id', 18:'_cc_scale_lo', 19:'_cc_scale_hi', 20:'_cc_scale_exp', 25:'_chord_channel', 26:'_chord_gate', 27:'_note_chord',
+				28:'_chordA_channel', 29:'_chord_modA_gate', 30:'_modA_chord', 31:'_chordB_channel', 32:'_chord_modB_gate', 33:'_modB_chord',
+				34:'_chordC_channel', 35:'_chord_modC_gate', 36:'_modC_chord'};
+
 function _mod_assign(num, val, extra)
 {
-	debug('mod_assign', num, val);
+	//debug('mod_assign', num, val);
+	var current_edit = ZoneSettings._poly_index;
+	var pad = ZoneSettings.current_edit();
 	if(current_edit)
 	{
 		switch(num)
 		{
-			case 0:
-				pads[current_edit-1]._note_id.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::note_id', current_pset, val);
-				break;
-			case 1:
-				pads[current_edit-1]._note_gate.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::note_gate', current_pset, val);
-				update_keys();
-				break;
-			case 2:
-				pads[current_edit-1]._modA_id.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::modA_id', current_pset, val);
-				break;
-			case 3:
-				pads[current_edit-1]._modA_gate.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::modA_gate', current_pset, val);
-				update_keys();
-				break;
-			case 4:
-				pads[current_edit-1]._modB_id.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::modB_id', current_pset, val);
-				break;
-			case 5:
-				pads[current_edit-1]._modB_gate.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::modB_gate', current_pset, val);
-				update_keys();
-				break;
-			case 6:
-				pads[current_edit-1]._modC_id.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::modC_id', current_pset, val);
-				break;
-			case 7:
-				pads[current_edit-1]._modC_gate.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::modC_gate', current_pset, val);
-				update_keys();
-				break;
-			case 8:
-				debug('Mask', val);
-				pads[current_edit-1]._mask.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::mask', current_pset, val);
-				break;
-			case 9:
-				debug('selected:', val);
-				select_voice(val);
-				break;
-			case 10:
-				debug('color:', val);
-				KEYCOLORS[current_edit-1] = val;
-				pads[current_edit-1]._color.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::color', current_pset, val);
-				update_grid();
+			default:
+				debug('default', num, val, extra);
+				debug('target_key:', target_keys[num]);
+				ZoneSettings[target_keys[num]].receive(val, extra);
 				break;
 			case 11:
 				debug('assign_modulation_target');
 				select_parameter(current_edit);
-				remote_name.message('text', parameter_name_from_id(pads[current_edit-1]._remote_id.getvalueof()));
-				select_voice(current_edit);
-				break;
-			case 12:
-				debug('remote_enable:', val);
-				pads[current_edit-1]._remote_enable.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::remote_enable', current_pset, val);
-			case 13:
-				debug('remote_scale_lo:', val);
-				pads[current_edit-1]._remote_scale_lo.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::remote_scale_lo', current_pset, val);
-				break;
-			case 14:
-				debug('remote_scale_hi:', val);
-				pads[current_edit-1]._remote_scale_hi.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::remote_scale_hi', current_pset, val);
-				break;
-			case 15:
-				debug('remote_scale_exp:', val);
-				pads[current_edit-1]._remote_scale_exp.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::remote_scale_exp', current_pset, val);
-				break;
-			case 16:
-				debug('cc_enable');
-				pads[current_edit-1]._cc_enable.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::cc_enable', current_pset, val);
-				break;
-			case 17:
-				debug('cc_id:', val);
-				pads[current_edit-1]._cc_id.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::cc_id', current_pset, val);
-				break;
-			case 18:
-				debug('cc_scale_lo:', val);
-				pads[current_edit-1]._scale_lo.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::cc_scale_lo', current_pset, val);
-				break;
-			case 19:
-				debug('cc_scale_hi:', val);
-				pads[current_edit-1]._scale_hi.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::cc_scale_hi', current_pset, val);
-				break;
-			case 20:
-				debug('cc_scale_exp:', val);
-				pads[current_edit-1]._scale_exp.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::cc_scale_exp', current_pset, val);
+				remote_name.message('text', parameter_name_from_id(pad._remote_id.getvalueof()));
+				//ZoneSettings.select_voice(current_edit);
 				break;
 			case 21:
-				debug('mod_target_assignment:', val);
-				pads[current_edit-1]._modifier_assignments.message('list', mod_target.getvalueof()-1, 0, val);
-				debug('mod_target_assignment', 'pad:', current_edit-1, 'mod_target.getvalueof():', mod_target.getvalueof()-1, 'new value:', val, 'new_array:', pads[current_edit-1]._modifier_assignments.getvalueof());
-				storage.setstoredvalue('poly.'+(current_edit)+'::modifier_assignments', current_pset, pads[current_edit-1]._modifier_assignments.getvalueof());
-				pads[current_edit-1].update_mod_assignments();
+				debug('modifier_target_assignment:', val);
+				pad._modifier_assignments.message('list', mod_target.getvalueof()-1, 0, val);
+				ModMatrix.update();
 				break;
 			case 22:
-				debug('mod_target:', val);
-				pads[current_edit-1].update_mod_assignments();
-				mod_target_assignment.message('set', pads[current_edit-1]._mod_assigns[val-1]);
+				debug('modifier_target:', val);
+				pad.update_mod_assignments();
+				mod_target_assignment.message('set', pad._mod_assigns[val-1]);
+				//ModMatrix.update();
 				break;
 			case 23:
 				debug('clear_remote_id');
-				clear_parameter(current_edit);
-				remote_name.message('text', parameter_name_from_id(pads[current_edit-1]._remote_id.getvalueof()));
-				select_voice(current_edit);
+				clear_parameter(current_edit-1);
+				remote_name.message('text', parameter_name_from_id(pad._remote_id.getvalueof()));
+				//select_voice(current_edit);
 				break;
-			case 25:
-				debug('chord_channel', val);
-				pads[current_edit-1]._chord_channel.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::chord_channel', current_pset, val);
-				break;
-			case 26:
-				debug('chord_enable', val);
-				pads[current_edit-1]._chord_gate.message(val);
-				storage.setstoredvalue('poly.'+(current_edit)+'::chord_gate', current_pset, val);
-				break;
-			case 27:
-				debug('chord_assign', val, extra);
-				var old = pads[current_edit-1]._note_chord.getvalueof();
-				var index = old.indexOf(val);
-				debug('old:', old, 'index:', index);
-				if((extra>0)&&(index==-1))
-				{
-					debug('here a');
-					old.push(val);
-					pads[current_edit-1]._note_chord.message(old);
-					storage.setstoredvalue('poly.'+(current_edit)+'::note_chord', current_pset, old);
-				}
-				else if((extra==0)&&(index!=-1))
-				{
-					debug('here b');
-					old.splice(index,1);
-					pads[current_edit-1]._note_chord.message(old);
-					storage.setstoredvalue('poly.'+(current_edit)+'::note_chord', current_pset, old);
-				}
-				//pads[current_edit-1].chord_gate.message(val);
-				debug('new value is:', pads[current_edit-1]._note_chord.getvalueof());
+			case 37:
+				debug('r chordAssigner', val, extra);
+				var args = arrayfromargs(arguments);
+				chordAssigner.receive(args);
 				break;
 			case 'breakpoint':
 				var args = arrayfromargs(arguments);
@@ -937,7 +554,7 @@ function _mod_assign(num, val, extra)
 					storage.setstoredvalue('poly.'+(current_edit)+'::breakpoint', current_pset, breakpoint.getvalueof());
 					//storage.getstoredvalue('poly.'+(current_edit)+'::breakpoint', current_pset);
 					storage.message('recall', 'poly.'+(current_edit)+'::breakpoint', current_pset);
-					pads[current_edit-1]._breakpoint.message('bang');
+					pad._breakpoint.message('bang');
 					
 				}
 				break;
@@ -945,85 +562,7 @@ function _mod_assign(num, val, extra)
 	}
 }
 
-function blocks_patcher_unlock()
-{
-	blocks_patcher.window('size', 0, 400, 1190, 800);
-	blocks_patcher.window('flags', 'minimize');
-	blocks_patcher.window('flags', 'zoom');
-	blocks_patcher.window('flags', 'close');
-	blocks_patcher.window('flags', 'grow');
-	blocks_patcher.window('flags', 'title');
-	blocks_patcher.window('flags', 'nofloat');
-	blocks_patcher.window('exec');
-}
 
-function blocks_patcher_lock()
-{
-	blocks_patcher.window('size', 80, 80, 375, 600);
-	blocks_patcher.window('flags', 'nominimize');
-	//blocks_patcher.window('flags', 'nozoom');
-	blocks_patcher.window('flags', 'noclose');
-	blocks_patcher.window('flags', 'nogrow');
-	//blocks_patcher.window('flags', 'notitle');
-	blocks_patcher.window('flags', 'float');
-	blocks_patcher.window('exec');
-}
-
-function settings_patcher_unlock()
-{
-	skin_settings.window('size', 0, 400, 1190, 800);
-	skin_settings.window('flags', 'minimize');
-	skin_settings.window('flags', 'zoom');
-	skin_settings.window('flags', 'close');
-	skin_settings.window('flags', 'grow');
-	skin_settings.window('flags', 'title');
-	skin_settings.window('flags', 'nofloat');
-	skin_settings.window('exec');
-}
-
-function settings_patcher_lock()
-{
-	skin_settings.window('size', 40, 40, 470, 580);
-	skin_settings.window('flags', 'nominimize');
-	//blocks_patcher.window('flags', 'nozoom');
-	skin_settings.window('flags', 'noclose');
-	skin_settings.window('flags', 'nogrow');
-	//blocks_patcher.window('flags', 'notitle');
-	skin_settings.window('flags', 'float');
-	skin_settings.window('exec');
-}
-
-function skin_pset(val)
-{
-	debug('skin_pset received in skin.js:', val);
-	preset.message(val+1);
-}
-
-
-INFO = "SKIN\n\n";
-SETUP_INFO = "Add this device to a MIDI Track, place a DrumRack after it.  Set the input port (top menu in device) to Push's Live port.\n";
-OVERVIEW_INFO = "64 Pads may be divided into 64 different zones.\n\n\n"+
-			"Each zone has its own output note, in addition to three alternate output notes that may be triggered when different zone assigned to modify it is held down.\n\n"+
-			"A zone has several editable parameters:\n\n"+
-			"Color: the displayed color of the zone.\n"+ 
-			"Note: the note that is output when the zone is played.\n"+ 
-			"Mod_A - Mod_C:  the alternate note that is output when another zone is set to trigger a modified output on selected zone.\n"+
-			"Mask Time: adjust to prevent double-triggering of notes within the zone.\n";
-KEY_INFO = "To select a zone for editing, change the first parameter knob to the target zone.\n"+
-			"To assign a grid cell to the zone, press the KEY 8 to toggle ASSIGN mode (ASSIGN mode = RED, PLAY mode = GREEN).\n"+
-			"Toggle FOLLOW mode with KEY 7.  This will automatically select the zone for editing whenever a zone is triggered.\n"+
-			"Toggle MODIFIER assign mode with KEY 6.\n"+
-			"In MODIFIER assign mode, each cell corresponds to one of the 64 zones.  Pressing a cell cycles through four possible states for each target zone:  Off, Mod_A, Mod_B, Mod_C. \n"+
-			"If any MOD source is assigned to a target zone and that zone is struck while the selected zone is being held, the target zone will trigger the corresponding MOD note instead of its original assigned note ID.\n"+
-			"\n"+
-			"The first four KEYS toggle output of NOTE, MOD_A, MOD_B, and MOD_C.  Make sure that MOD assignments are turned on here, or MOD targets will not trigger any note when struck.\n";
-
-function info()
-{
-	debug('info...');
-	info_pcontrol.message('open');
-	info_patcher.subpatcher().getnamed('info_text').message('set', [INFO, SETUP_INFO, OVERVIEW_INFO, KEY_INFO]);
-}
 
 function Editor(val)
 {
@@ -1040,12 +579,216 @@ function Editor(val)
 	}
 }
 
-/*
+function settings_patcher_unlock()
+{
+	skin_settings.window('size', 0, 400, 1190, 800);
+	skin_settings.window('flags', 'minimize');
+	skin_settings.window('flags', 'zoom');
+	skin_settings.window('flags', 'close');
+	skin_settings.window('flags', 'grow');
+	skin_settings.window('flags', 'title');
+	skin_settings.window('flags', 'nofloat');
+	skin_settings.window('exec');
+}
+
+function settings_patcher_lock()
+{
+	skin_settings.window('size', 40, 40, 430, 590);
+	skin_settings.window('flags', 'nominimize');
+	//blocks_patcher.window('flags', 'nozoom');
+	skin_settings.window('flags', 'noclose');
+	skin_settings.window('flags', 'nogrow');
+	//blocks_patcher.window('flags', 'notitle');
+	skin_settings.window('flags', 'float');
+	skin_settings.window('exec');
+}
+
+
+
+function ZoneSettingsModule()
+{
+	var self = this;
+	this.add_bound_properties(this, ['update', 'select_voice', 'current_edit', '_edit_index', '_parameterObjs', 'change_color', '_chord_assigners']);
+	this._name = 'ZoneSettings';
+	this._pset = 1;
+	this._poly_index = 1;
+	this._zone_index = 0;
+	this.current_edit = function(){return pads[this._zone_index];}
+	this._parameterObjs = [];
+
+	ZoneSettingsModule.super_.call(this, 'ZoneSettingsModule');
+
+	var make_callback = function(polyname, settingsname)
+	{
+		var func = function(obj)
+		{
+			self.current_edit()['_'+polyname].message(obj._value);
+			storage.setstoredvalue('poly.'+self._poly_index+'::'+polyname, self._pset, obj._value);
+			script[settingsname].message('set', obj._value);
+		}
+		return func;
+	}
+
+	this._note_gate = new RegisteredToggledParameter(this._name + '_NoteGate', {'polyobj':'note_gate', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':1, 'callback':make_callback('note_gate', 'note_enable')});
+	this._modA_gate = new RegisteredToggledParameter(this._name + '_ModAGate', {'polyobj':'modA_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('modA_gate', 'modA_enable')});
+	this._modB_gate = new RegisteredToggledParameter(this._name + '_ModBGate', {'polyobj':'modB_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('modB_gate', 'modB_enable')});
+	this._modC_gate = new RegisteredToggledParameter(this._name + '_ModCGate', {'polyobj':'modC_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('modC_gate', 'modC_enable')});
+
+	this._note_id = new RegisteredRangedParameter(this._name + '_NoteID', {'polyobj':'note_id', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('note_id', 'note')});
+	this._modA_id = new RegisteredRangedParameter(this._name + '_ModAID', {'polyobj':'modA_id', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('modA_id', 'mod_A')});
+	this._modB_id = new RegisteredRangedParameter(this._name + '_ModBID', {'polyobj':'modB_id', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('modB_id', 'mod_B')});
+	this._modC_id = new RegisteredRangedParameter(this._name + '_ModCID', {'polyobj':'modC_id', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('modC_id', 'mod_C')});
+
+	this._chord_channel = new RegisteredRangedParameter(this._name + '_ChordChannel', {'polyobj':'chord_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_callback('chord_channel', 'chord_channel')});
+	this._chordA_channel = new RegisteredRangedParameter(this._name + '_ChordModAChannel', {'polyobj':'chordA_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_callback('chordA_channel', 'chordA_channel')});
+	this._chordB_channel = new RegisteredRangedParameter(this._name + '_ChordModBChannel', {'polyobj':'chordB_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_callback('chordB_channel', 'chordB_channel')});
+	this._chordC_channel = new RegisteredRangedParameter(this._name + '_ChordModCChannel', {'polyobj':'chordC_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_callback('chordC_channel', 'chordC_channel')});
+
+	this._chord_gate = new RegisteredToggledParameter(this._name + '_ChordGate', {'polyobj':'chord_gate', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':1, 'callback':make_callback('chord_gate', 'chord_enable')});
+	this._chord_modA_gate = new RegisteredToggledParameter(this._name + '_ChordModAGate', {'polyobj':'chord_modA_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('chord_modA_gate', 'chord_modA_enable')});
+	this._chord_modB_gate = new RegisteredToggledParameter(this._name + '_ChordModBGate', {'polyobj':'chord_modB_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('chord_modB_gate', 'chord_modB_enable')});
+	this._chord_modC_gate = new RegisteredToggledParameter(this._name + '_ChordModCGate', {'polyobj':'chord_modC_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('chord_modC_gate', 'chord_modC_enable')});
+
+	this._note_chord = new RegisteredChordNotifier(this._name + '_NoteChord', {'polyobj':'note_chord', 'settingsobj':'chord_assignment', 'registry':this._parameterObjs});
+	this._modA_chord = new RegisteredChordNotifier(this._name + '_ModAChord', {'polyobj':'modA_chord', 'settingsobj':'chord_modA_assignment', 'registry':this._parameterObjs});
+	this._modB_chord = new RegisteredChordNotifier(this._name + '_ModBChord', {'polyobj':'modB_chord', 'settingsobj':'chord_modB_assignment', 'registry':this._parameterObjs});
+	this._modC_chord = new RegisteredChordNotifier(this._name + '_ModCChord', {'polyobj':'modC_chord', 'settingsobj':'chord_modC_assignment', 'registry':this._parameterObjs});
+	this.chord_assigners = function(index){return [this._note_chord, this._modA_chord, this._modB_chord, this._modC_chord][index];}.bind(this);
+
+	this._cc_enable = new RegisteredToggledParameter(this._name + '_CCEnable', {'polyobj':'cc_enable', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('cc_enable', 'cc_enable')});
+	this._cc_id = new RegisteredRangedParameter(this._name + '_CCID', {'polyobj':'cc_id', 'registry':this._parameterObjs, 'range':128, 'callback':make_callback('cc_id', 'cc_id')});
+	this._cc_scale_lo = new RegisteredRangedParameter(this._name + '_CCScaleLo', {'polyobj':'cc_scale_lo', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_scale_lo', 'cc_scale_lo')});
+	this._cc_scale_hi = new RegisteredRangedParameter(this._name + '_CCScaleHi', {'polyobj':'cc_scale_hi', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_scale_hi', 'remote_scale_hi')});
+	this._cc_scale_exp = new RegisteredRangedParameter(this._name + '_CCScaleExp', {'polyobj':'cc_scale_exp', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_scale_exp', 'cc_scale_exp')});
+
+	this._remote_enable = new RegisteredToggledParameter(this._name + '_RemoteEnable', {'polyobj':'remote_enable', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('remote_enable', 'remote_enable')});
+	//this._remote_id = new RegisteredRangedParameter(this._name + '_CCID', {'polyobj':'remote_id', 'registry':this._parameterObjs, 'range':128, 'callback':make_callback('remote_id', 'remote_id')});
+	this._remote_scale_lo = new RegisteredRangedParameter(this._name + '_RemoteScaleLo', {'polyobj':'remote_scale_lo', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('remote_scale_lo', 'remote_scale_lo')});
+	this._remote_scale_hi = new RegisteredRangedParameter(this._name + '_RemoteScaleHi', {'polyobj':'remote_scale_hi', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('remote_scale_hi', 'remote_scale_hi')});
+	this._remote_scale_exp = new RegisteredRangedParameter(this._name + '_RemoteScaleExp', {'polyobj':'remote_scale_exp', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('remote_scale_exp', 'remote_scale_exp')});
+
+	this._mask = new RegisteredRangedParameter(this._name + '_ModCID', {'polyobj':'mask', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('mask', 'Mask')});
+
+	var color_callback = make_callback('color', 'color');
+	var color_callback_full = function(obj)
+	{
+		color_callback(obj);
+		self.current_edit().reassign_color();
+	}
+	this._color = new RegisteredRangedParameter(this._name + '_Color', {'polyobj':'color', 'registry':this._parameterObjs, 'range':128, 'callback':color_callback_full});
+
+	//this._selected_zone = new ParameterClass(this._name + '_SelectedZone', {'callback':this.select_voice, 'value':1});
+	this._selected_zone = new RadioComponent(this._name + '_SelectedZone', 0, 63, 0, this.select_voice, color.RED, color.CYAN, {'value':1});
+
+}
+
+inherits(ZoneSettingsModule, Bindable);
+
+ZoneSettingsModule.prototype.change_color = function(obj)
+{
+	debug('change_color:', obj._value);
+}
+
+ZoneSettingsModule.prototype.update = function()
+{
+	
+	//mod.Send('key', 'value', 0, pads[current_edit-1]._note_gate.getvalueof());
+	//mod.Send('key', 'value', 1, pads[current_edit-1]._modA_gate.getvalueof());
+	//mod.Send('key', 'value', 2, pads[current_edit-1]._modB_gate.getvalueof());
+	//mod.Send('key', 'value', 3, pads[current_edit-1]._modC_gate.getvalueof());
+}
+
+ZoneSettingsModule.prototype.select_voice = function(obj)
+{
+	var num = obj._value + 1;
+	debug('ZoneSettingsModule.select_voice:', num);
+	if(num != this._poly_index)
+	{
+		if(DISPLAY_POLY){poly.message('wclose');}
+		//this._edit_index = num;
+		this._poly_index = num;
+		this._zone_index = num-1;
+		if(selected){selected.message('set', num);}
+	}
+	var pad = this.current_edit();
+	if(DISPLAY_POLY){poly.message('open', num);}
+
+	for(var i in this._parameterObjs)
+	{
+		this._parameterObjs[i].relink(pad);
+	}
+
+	var assgn = pad._note_chord.getvalueof();
+	chord_assignment.message('clear');
+	for(var i in assgn)
+	{
+		chord_assignment.message('set', assgn[i], 127);
+	}
+	assgn = pad._modA_chord.getvalueof();
+	chord_modA_assignment.message('clear');
+	for(var i in assgn)
+	{
+		chord_modA_assignment.message('set', assgn[i], 127);
+	}
+	assgn = pad._modB_chord.getvalueof();
+	chord_modB_assignment.message('clear');
+	for(var i in assgn)
+	{
+		chord_modB_assignment.message('set', assgn[i], 127);
+	}
+	assgn = pad._modC_chord.getvalueof();
+	chord_modC_assignment.message('clear');
+	for(var i in assgn)
+	{
+		chord_modC_assignment.message('set', assgn[i], 127);
+	}
+	Scales.update_chord_display();
+	pad.update_mod_assignments();
+	mod_target_assignment.message('set', pad._mod_assigns[parseInt(mod_target.getvalueof())]);
+	var remote_id = pad._remote_id.getvalueof();
+	if((remote_id!=undefined)&&(remote_id>0))
+	{
+		finder.id = parseInt(remote_id);
+		var lo = finder.get('min');
+		var hi = finder.get('max');
+		remote_scale_lo.message('minimum', lo);
+		remote_scale_lo.message('maximum', hi-1);
+		remote_scale_lo.message('set', pad._remote_scale_lo.getvalueof());
+		remote_scale_hi.message('minimum', lo+1);
+		remote_scale_hi.message('maximum', hi);
+		remote_scale_hi.message('set', pad._remote_scale_hi.getvalueof());
+		remote_scale_exp.message('set', pad._remote_scale_exp.getvalueof());
+		remote_name.message('text', parameter_name_from_id(remote_id));
+		remote_scale_lo.message('hidden', 0);
+		remote_scale_hi.message('hidden', 0);
+		remote_scale_exp.message('hidden', 0);
+	}
+	else
+	{
+		remote_scale_lo.message('hidden', 1);
+		remote_scale_hi.message('hidden', 1);
+		remote_scale_exp.message('hidden', 1);
+	}
+	breakpoint_obj.message('clear');
+	breakpoint.message(pad._breakpoint.getvalueof());
+	//debug('breakpoint val:', pad._breakpoint.getvalueof());
+
+	select_pad_device(pad._note_id.getvalueof());
+}
+
+
+
 function SkinModule()
 {
 	var self = this;
-	//this.add_bound_properties(this, ['update', 'assign_grid', 'assign_keys', '_grid']);
+	this.add_bound_properties(this, ['update', 'assign_grid', 'assign_keys', '_grid', '_keys', '_button_press', '_pressed_color']);
 	this._grid = undefined;
+	this._keys = undefined;
+	this._pressed_color = colors.WHITE;
+
+	this._assign_mode = new ToggledParameter(this._name + '_AssignMode', {'onValue':colors.RED, 'offValue':colors.GREEN, 'value':0});   // 'callback':self.update})
+	this._follow_mode = new ToggledParameter(this._name + '_FollowMode', {'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0});   // 'callback':self.update})
+
 	SkinModule.super_.call(this, 'SkinModule');
 }
 
@@ -1053,19 +796,753 @@ inherits(SkinModule, Bindable);
 
 SkinModule.prototype.update = function()
 {
+	//debug('SkinModule:', 'update');
+	/*outlet(1, 'clear');
+	outlet(1, 'repaint');
+	for(var i=0;i<8;i++)
+	{
+		for(var j=0;j<8;j++)
+		{
+			cells[i][j].send(KEYCOLORS[cells[i][j].group-1]);
+		}
+	}*/
+	for(var i in pads)
+	{
+		pads[i].update_color();
+	}
 }
 
 SkinModule.prototype.assign_grid = function(grid)
 {
+	debug('SkinModule assign grid', grid);
+	if(this._grid instanceof GridClass)
+	{
+		this._grid.remove_listener(this._button_press);
+	}
 	this._grid = grid;
+	if(this._grid instanceof GridClass)
+	{
+		this._grid.add_listener(this._button_press);
+	}
+	this.update();
 }
 
-*/
-
-function DeviceModule()
+SkinModule.prototype.assign_keys = function(keys)
 {
-
+	this._keys = keys;
 }
+
+SkinModule.prototype._button_press = function(button)
+{
+	if(button.pressed())
+	{
+		if(this._assign_mode._value>0)
+		{
+			//debug('assigning...', button._name, ZoneSettings._edit_index);
+			if(button.group!=ZoneSettings._poly_index)
+			{
+				for(var i in pads)
+				{
+					pads[i].remove_cell(button);
+				}
+				pads[ZoneSettings._zone_index].add_cell(button);
+				push_notes.message(button._push_note, ZoneSettings._poly_index);
+				this.update();
+			}
+		}
+		else
+		{
+			//debug('send ZONE_ON_COLOR', button.group, pads[button.group]._name);
+			pads[button.group].send(ZONE_ON_COLOR);
+			if(AltButton.pressed()||this._follow_mode._value>0)
+			{
+				if(button.group!=ZoneSettings._zone_index)
+				{
+					ZoneSettings.select_voice({'_value':button.group});
+				}
+			}
+		}
+	}
+	else
+	{
+		//debug('button_unpress:', button._name, pads[button.group]._color);
+		//debug('update_color');
+		pads[button.group].update_color();
+	}
+}
+
+
+
+function ModifierMatrixModule()
+{
+	var self = this;
+	this._grid = undefined;
+	this._keys = undefined;
+	this.add_bound_properties(this, ['update', 'assign_grid', 'assign_keys', '_grid', '_keys']);
+	ModifierMatrixModule.super_.call(this, 'ModifierMatrixModule');
+}
+
+inherits(ModifierMatrixModule, Bindable);
+
+ModifierMatrixModule.prototype.update = function()
+{
+	debug('ModifierMatrixModule.update');
+	//var modArray = pads[SkinSettings
+	//outlet(1, 'clear');
+	//outlet(1, 'repaint');
+	if(this._grid)
+	{
+		var pad= ZoneSettings.current_edit();
+		pad.update_mod_assignments();
+		for(var i=0;i<8;i++)
+		{
+			for(var j=0;j<8;j++)
+			{
+				cells[i][j].send(pad._mod_assigns[i+(j*8)]);
+			}
+		}
+	}
+}
+
+ModifierMatrixModule.prototype.assign_grid = function(grid)
+{
+	debug('ModMatrix assign grid', grid);
+	if(this._grid instanceof GridClass)
+	{
+		this._grid.remove_listener(this._button_press);
+	}
+	this._grid = grid ? grid : undefined;
+	if(this._grid instanceof GridClass)
+	{
+		this._grid.add_listener(this._button_press);
+	}
+	this.update();
+}
+
+ModifierMatrixModule.prototype.assign_keys = function(keys)
+{
+	this._keys = keys;
+}
+
+ModifierMatrixModule.prototype._button_press = function(button)
+{
+	if(button.pressed())
+	{
+		//debug('button_press:', button._name);
+		//button.send(this._pressed_color);
+		var pad = ZoneSettings.current_edit();
+		var coords = button.get_coords(Grid);
+		var pos = (coords[0]+(coords[1]*8));
+		var old_val = pad._mod_assigns[pos];
+		pad._modifier_assignments.message(pos, 0, (old_val+1)%4);
+		//this.update();
+		update_mod_matrix();
+		
+	}
+	else
+	{
+		//debug('button_unpress:', button._name, pads[button.group]._color);
+		//button.send(pads[button.group]._color);
+	}
+}
+
+//for some reason ModMatrix is losing its binding in _button_press, so this is a workaround
+function update_mod_matrix()
+{
+	ModMatrix.update();
+}
+
+
+
+ScalesModule = function(parameters)
+{
+	var self = this;
+	this.add_bound_properties(this, ['_current_scale', '_button_press', '_update', 'assign_grid', '_grid', '_pressed_color', 'width', 'height', 'colors', '_output_target', 'chord_display']);
+	this.colors = PushColors;
+	this._current_scale = 'Chromatic';
+	this._pressed_color = this.colors.GREEN;
+	this._chord_color = this.colors.RED;
+	this.chord_display = -1;
+	this._grid = undefined;
+	this._grid_function = function(){}
+	this.width = function(){return  !this._grid ? 0 : this._grid.width();}
+	this.height = function(){return !this._grid ? 0 : this._grid.height();}
+	this._NOTENAMES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+	this.NOTENAMES = [];
+	for(var i=0;i<128;i++)
+	{
+		this.NOTENAMES[i]=(this._NOTENAMES[i%12] + ' ' + (Math.floor(i/12)-2) );
+	}
+	this.WHITEKEYS = {0:0, 2:2, 4:4, 5:5, 7:7, 9:9, 11:11, 12:12};
+	//this.NOTES = [24, 25, 26, 27, 28, 29, 30, 31, 16, 17, 18, 19, 20, 21, 22, 23, 8, 9, 10, 11, 12, 13, 14, 15, 0, 1, 2, 3, 4, 5, 6, 7];
+	//this.DRUMNOTES = [12, 13, 14, 15, 28, 29, 30, 31, 8, 9, 10, 11, 24, 25, 26, 27, 4, 5, 6, 7, 20, 21, 22, 23, 0, 1, 2, 3, 16, 17, 18, 19];
+	//this.SCALENOTES = [36, 38, 40, 41, 43, 45, 47, 48, 24, 26, 28, 29, 31, 33, 35, 36, 12, 14, 16, 17, 19, 21, 23, 24, 0, 2, 4, 5, 7, 9, 11, 12];
+	this.KEYCOLORS = [this.colors.OFF, this.colors.WHITE, this.colors.CYAN, this.colors.BLUE, this.colors.RED, this.colors.RED, this.colors.RED, this.colors.RED];
+	this.SCALES = 	{'Chromatic':[0,1,2,3,4,5,6,7,8,9,10,11],
+				'Major':[0,2,4,5,7,9,11],
+				'Minor':[0,2,3,5,7,8,10],
+				'Dorian':[0,2,3,5,7,9,10],
+				'Mixolydian':[0,2,4,5,7,9,10],
+				'Lydian':[0,2,4,6,7,9,11],
+				'Phrygian':[0,1,3,5,7,8,10],
+				'Locrian':[0,1,3,4,7,8,10],
+				'Diminished':[0,1,3,4,6,7,9,10],
+				'Whole-half':[0,2,3,5,6,8,9,11],
+				'Whole Tone':[0,2,4,6,8,10],
+				'Minor Blues':[0,3,5,6,7,10],
+				'Minor Pentatonic':[0,3,5,7,10],
+				'Major Pentatonic':[0,2,4,7,9],
+				'Harmonic Minor':[0,2,3,5,7,8,11],
+				'Melodic Minor':[0,2,3,5,7,9,11],
+				'Dominant Sus':[0,2,5,7,9,10],
+				'Super Locrian':[0,1,3,4,6,8,10],
+				'Neopolitan Minor':[0,1,3,5,7,8,11],
+				'Neopolitan Major':[0,1,3,5,7,9,11],
+				'Enigmatic Minor':[0,1,3,6,7,10,11],
+				'Enigmatic':[0,1,4,6,8,10,11],
+				'Composite':[0,1,4,6,7,8,11],
+				'Bebop Locrian':[0,2,3,5,6,8,10,11],
+				'Bebop Dominant':[0,2,4,5,7,9,10,11],
+				'Bebop Major':[0,2,4,5,7,8,9,11],
+				'Bhairav':[0,1,4,5,7,8,11],
+				'Hungarian Minor':[0,2,3,6,7,8,11],
+				'Minor Gypsy':[0,1,4,5,7,8,10],
+				'Persian':[0,1,4,5,6,8,11],
+				'Hirojoshi':[0,2,3,7,8],
+				'In-Sen':[0,1,5,7,10],
+				'Iwato':[0,1,5,6,10],
+				'Kumoi':[0,2,3,7,9],
+				'Pelog':[0,1,3,4,7,8],
+				'Spanish':[0,1,3,4,5,6,8,10]};
+	this.SCALENAMES = [];
+	var i = 0;
+	for (var name in this.SCALES){this.SCALENAMES[i] = name;i++};
+	this._noteMap = new Array(256);
+	for(var i=0;i<256;i++)
+	{
+		this._noteMap[i] = [];
+	}
+	this.DEFAULT_SCALE = 'Chromatic';
+	this.SPLIT_SCALES = {}; //{'DrumPad':1, 'Major':1};
+	for(var param in parameters)
+	{
+		self[param] = parameters[param];
+	}
+
+	this._output_object_names = ['_chord_out', '_chord_modA_out', '_chord_modB_out', '_chord_modC_out'];
+	this._vertOffset = new OffsetComponent(this._name + '_Vertical_Offset', 0, 119, 4, self._update.bind(this), colors.MAGENTA);
+	this._scaleOffset = new OffsetComponent(this._name + '_Scale_Offset', 0, self.SCALES.length, 0, self._update.bind(this), colors.BLUE);
+	this._noteOffset = new OffsetComponent(this._name + '_Note_Offset', 0, 12, 0, self._update.bind(this), colors.CYAN);
+	this._octaveOffset = new OffsetComponent(this._name + '_Octave_Offset', 0, 119, 36, self._update.bind(this), colors.YELLOW, colors.OFF, 12);
+	this._outputChooser = new RadioComponent(this._name + '_Output_Chooser', 0, 3, 0, self.update_output_target.bind(this), colors.RED, colors.MAGENTA);
+	ScalesModule.super_.call(this, 'ScalesModule');
+}
+
+inherits(ScalesModule, Bindable);
+
+ScalesModule.prototype.set_grid_function = function(func){this.grid_function = func;}
+
+ScalesModule.prototype.assign_grid = function(grid)
+{
+	debug('ScalesClass assign grid', grid);
+	if(this._grid instanceof GridClass)
+	{
+		this._grid.clear_translations();
+		this._grid.remove_listener(this._button_press);
+	}
+	this._grid = grid;
+	if(this._grid instanceof GridClass)
+	{
+		this._grid.add_listener(this._button_press);
+		if(!(this._last_pressed_button instanceof ButtonClass))
+		{
+			this._last_pressed_button = this._grid.get_button(0, this._grid.height()-1);
+		}
+	}
+	this._update();
+}
+
+ScalesModule.prototype._button_press = function(button)
+{
+	if(button.pressed())
+	{
+		//debug('button_press:', button._name, button._translation);
+		button.send(this._pressed_color);
+		//this._output_target&&this._output_target.message('in0', button._translation, 127);
+		poly.message('target', ZoneSettings._poly_index);
+		poly.message('chordout', button._translation, button._value);
+		var current_output = this._outputChooser._value;
+		if((this._outputChooser._buttons.length > current_output)&&(this._outputChooser._buttons[current_output].pressed()))
+		{
+			//debug('chord_assigners:', ZoneSettings.chord_assigners(current_output));
+			//debug('selected:', ZoneSettings._chord_assigners[current_output]);
+			ZoneSettings.chord_assigners(current_output).toggle(button._translation, button._value);
+			this.update_chord_display()
+		}
+		//debug('sent:', ZoneSettings._poly_index, button._translation, 127);
+	}
+	else
+	{
+		//debug('button_unpress:', button._name);
+		button.send(button.scale_color);
+		//this._output_target&&this._output_target.message('in0', button._translation, 0);
+		poly.message('target', ZoneSettings._poly_index);
+		poly.message('chordout', button._translation, 0);
+		//debug('sent:', ZoneSettings._poly_index, button._translation, 0);
+	}
+}
+
+ScalesModule.prototype._update = function()
+{
+	//debug('Scales update', this, Scales);
+	this._update_request = false;
+	this._noteMap = [];
+	for(var i=0;i<128;i++)
+	{
+		this._noteMap[i] = [];
+	}
+	//debug('grid:', this._grid, this._grid instanceof GridClass);
+	if(this._grid instanceof GridClass)
+	{
+		var width = this.width();
+		var height = this.height();
+		var offset = this._noteOffset._value + this._octaveOffset._value;
+		debug('offset is:', offset);
+		var vertoffset = this._vertOffset._value;
+		var scale = this.SCALENAMES[this._scaleOffset._value];
+		debug('new scale is:', scale);
+		this._current_scale = scale;
+		var scale_len = this.SCALES[scale].length;
+		debug('chord_display:', this.chord_display);
+		for(var column=0;column<width;column++)
+		{
+			for(var row=0;row<height;row++)
+			{
+				var note_pos = column + (Math.abs((height-1)-row))*parseInt(vertoffset);
+				var note = offset + this.SCALES[scale][note_pos%scale_len] + (12*Math.floor(note_pos/scale_len));
+				var button = this._grid.get_button(column, row);
+				if(button)
+				{
+					button.set_translation(note%127);
+					this._noteMap[note%127].push(button);
+					//debug(button._name, 'translation:', button._translation, 'eval:', ((button._translation in this.chord_display)*4), 'scale_color:', ((note%12) in this.WHITEKEYS) + (((note_pos%scale_len)==0)*2) + ((this.chord_display.indexOf(button._translation)>-1)*4));
+					button.scale_color = this.KEYCOLORS[((note%12) in this.WHITEKEYS) + (((note_pos%scale_len)==0)*2) + ((this.chord_display.indexOf(button._translation)>-1)*4)];  // + (button._chord*4)
+					button.send(button.scale_color);
+				}
+			}
+		}
+	}
+	//debug('ending Scale update');
+}
+
+ScalesModule.prototype.update_output_target = function(obj)
+{
+	//debug('update_output_target', obj._value + 1);
+	//this._output_target = ZoneSettings.current_edit()[this._output_object_names[obj._value]];
+	messnamed(unique+'chord_target', obj._value + 1);
+	this.update_chord_display();
+}
+
+ScalesModule.prototype.update_chord_display = function()
+{
+	///wow, I really hate this :(
+	debug('update_chord_display.......................');
+	var polyobj = ['_note_chord', '_modA_chord', '_modB_chord', '_modC_chord'][this._outputChooser._value];
+	this.chord_display = ZoneSettings.current_edit()[polyobj].getvalueof();
+	//debug('chord_display is:', this.chord_display);
+	this._update();
+}
+
+
+
+RegisteredToggledParameter = function(name, args)
+{
+	RegisteredToggledParameter.super_.call(this, name, args);
+	if(this._registry)
+	{
+		this.register(this._registry);
+	}
+}
+
+inherits(RegisteredToggledParameter, ToggledParameter);
+
+RegisteredToggledParameter.prototype.register = function(registry)
+{
+	if(registry.indexOf(this)==-1)
+	{
+		registry.push(this);
+	}
+}
+
+RegisteredToggledParameter.prototype.relink = function(pad)
+{
+	//debug('relink polyobj:', this._polyobj, pad['_'+this._polyobj].getvalueof());
+	this.set_value(pad['_'+this._polyobj].getvalueof());
+}	
+
+
+
+RegisteredRangedParameter = function(name, args)
+{
+	RegisteredRangedParameter.super_.call(this, name, args);
+	if(this._registry)
+	{
+		this.register(this._registry);
+	}
+}
+
+inherits(RegisteredRangedParameter, RangedParameter);
+
+RegisteredRangedParameter.prototype.register = function(registry)
+{
+	if(registry.indexOf(this)==-1)
+	{
+		registry.push(this);
+	}
+}
+
+RegisteredRangedParameter.prototype.relink = function(pad)
+{
+	//debug('relink polyobj:', this._polyobj, pad['_'+this._polyobj].getvalueof());
+	this.set_value(pad['_'+this._polyobj].getvalueof());
+}
+
+
+
+RegisteredChordNotifier = function(name, args)
+{
+	var self = this;
+	this.add_bound_properties(this, ['toggle', 'receive']);
+	RegisteredChordNotifier.super_.call(this, name, args);
+	if(this._registry)
+	{
+		this.register(this._registry);
+	}
+}
+
+inherits(RegisteredChordNotifier, NotifierClass);
+
+RegisteredChordNotifier.prototype.register = function(registry)
+{
+	if(registry.indexOf(this)==-1)
+	{
+		registry.push(this);
+	}
+}
+
+RegisteredChordNotifier.prototype.relink = function(pad)
+{
+	//debug('relink polyobj:', this._polyobj, pad['_'+this._polyobj].getvalueof());
+	//if(!pad['_'+this._polyobj]){debug('missing target for:', this._polyobj)}
+	this.set_value(pad['_'+this._polyobj].getvalueof());
+}
+
+RegisteredChordNotifier.prototype.receive = function(note, value)
+{
+	var pad = ZoneSettings.current_edit();
+	var poly_edit = ZoneSettings._poly_index;
+	var polyobj = pad['_'+this._polyobj];
+	var old = polyobj.getvalueof();
+	var index = old.indexOf(note);
+	if((value>0)&&(index=-1))
+	{
+		old.push(note);
+		this._value = old;
+		polyobj.message(this._value);
+		storage.setstoredvalue('poly.'+(poly_edit)+'::'+this._polyobj, current_pset, this._value);
+		this.notify();
+	}
+	else if((value==0)&&(index!=-1))
+	{
+		old.splice(index,1);
+		this._value = old;
+		polyobj.message(this._value);
+		storage.setstoredvalue('poly.'+(poly_edit)+'::'+this._polyobj, current_pset, this._value);
+		this.notify();
+	}
+	debug('new_value is:', polyobj.getvalueof());
+}
+
+RegisteredChordNotifier.prototype.toggle = function(note, value)
+{
+	//debug('toggle', note, value);
+	var pad = ZoneSettings.current_edit();
+	var poly_edit = ZoneSettings._poly_index;
+	var polyobj = pad['_'+this._polyobj];
+	var old = polyobj.getvalueof();
+	var index = old.indexOf(note);
+	if(value>0)
+	{
+		messnamed(unique+this._settingsobj, note, index < 0 ? value : 0);
+		//debug('sent chord...', note, index = -1 ? value : 0);
+	}
+	debug('new_value is:', polyobj.getvalueof());
+}
+
+RegisteredChordNotifier.prototype.set_value = function(value)
+{
+	this._value = value;
+	this.notify();
+}
+
+
+
+CellClass = function(x, y, identifier, name, _send, args)
+{
+	this.add_bound_properties(this, ['_num', '_chord', 'group', '_push_note', 'update_color']);
+	this._num = (x + (y*8));
+	this.group = 0;
+	this._chord = false;
+	this._push_note = (Math.abs(y-7)*8)+(x+36);
+	CellClass.super_.call(this, identifier, name, _send, args);
+}
+
+inherits(CellClass, ButtonClass);
+
+CellClass.prototype.update_color = function()
+{
+	//this needs to be moved to the Pad instead.
+	//this.send(KEYCOLORS[this.group]);
+}
+
+CellClass.prototype.update_group_assignment = function()
+{
+	pads[cellDict.get(this._name)].add_cell(this);
+}
+
+
+
+var ZONE_ON_COLOR = colors.WHITE;
+
+ZoneClass = function(num, patcher, name, args)
+{
+	var self = this;
+	this._number = num;  //this starts @1, coresponds with poly#
+	this.add_bound_properties(this, ['_patcher', '_cells', '_mod_assigns', 'update_mod_assignments', 'get_cells', 'add_cell', 'remove_cell', 'clear_cells', 'reassign_color', 'update_color', 'send']);
+	this._patcher = patcher;
+	this._cells = [];
+	for(var i in PolyVars)
+	{
+		this['_'+PolyVars[i]] = this._patcher.getnamed(PolyVars[i]);
+	}
+	this._mod_assigns = [];
+	this.update_mod_assignments();
+	this._current_color = this._color.getvalueof();
+	ZoneClass.super_.call(this, name, args)
+}
+
+inherits(ZoneClass, Bindable);
+
+ZoneClass.prototype.update_mod_assignments = function()
+{
+	this._mod_assigns = [];
+	var assgn = this._modifier_assignments.getvalueof()
+	while(assgn.length)
+	{
+		var x = assgn.shift();
+		var y = assgn.shift();
+		this._mod_assigns.push(assgn.shift());
+	}
+	//debug('update_mod_assignments', this._name, this._mod_assigns);
+}
+
+ZoneClass.prototype.get_cells = function()
+{
+	return this._cells;
+}
+
+ZoneClass.prototype.add_cell = function(cell)
+{
+	//debug('cell:', cell._name, 'group:', cell.group);
+	cell.group>-1&&pads[cell.group].remove_cell(cell);
+	cell.group = this._number-1;
+	cellDict.set(cell._name, cell.group);
+	push_notes.message(cell._push_note, cell.group);
+	//pushDict.set(cell._push_note, cell.group);
+	if(this._cells.indexOf(cell)<0)
+	{
+		this._cells.push(cell);
+	}
+	//debug(this._name, 'add_cell', cell._name, 'group is now:', this._number, 'zone_members:', this._cells.length);
+}
+
+ZoneClass.prototype.remove_cell = function(cell)
+{
+	var index = this._cells.indexOf(cell);
+	if(index>0)
+	{
+		this._cells.splice(index, 1);
+	}
+	cell.group = 0;
+}
+
+ZoneClass.prototype.clear_cells = function()
+{
+	for(var i in this._cells)
+	{
+		this.remove_cell(this._cells[i]);
+	}
+	this._cells = [];
+}
+
+ZoneClass.prototype.reassign_color = function()
+{
+	this._current_color = this._color.getvalueof();
+	this.update_color();
+}
+
+ZoneClass.prototype.update_color = function()
+{
+	var page = MainModes.current_page();
+	if((page == mainPage)&&(!mainPage._moded))
+	{
+		for(var i in this._cells)
+		{
+			this._cells[i].send(this._current_color);
+		}
+	}
+}
+
+ZoneClass.prototype.send = function(val)
+{
+	//debug(this._name, 'send', val, this._cells.length);
+	for(var i in this._cells)
+	{
+		//debug(this._cells[i]._name, val);
+		this._cells[i].send(val);
+	}
+}
+
+
+
+ExternalChordAssigner = function(name, args)
+{
+	var self = this;
+	this.add_bound_properties(this, ['_chord_number']);
+	ExternalChordAssigner.super_.call(this, name, args);
+	this._chord_number = new RadioComponent(this._name + '_ChordNumber', 0, 3, 0, function(){}, colors.WHITE, colors.RED, {'value':0});
+}
+
+inherits(ExternalChordAssigner, Bindable);
+
+ExternalChordAssigner.prototype.receive = function(args)
+{
+	//var args = arrayfromargs(arguments);
+	debug('ExternalChordAssigner receive:', args);
+	switch(args[1])
+	{
+		case 'chord_number':
+			this._chord_number.receive(args[2]);
+			break;
+		case 'assign':
+			var number = this._chord_number._value;
+			var polyobjname = ['_note_chord', '_modA_chord', '_modB_chord', '_modC_chord'][number];
+			var poly_edit = ZoneSettings._poly_index;
+			var polyobj = ZoneSettings.current_edit()[polyobjname];
+			var new_args = args.slice(2);
+			polyobj.message(new_args);
+			storage.setstoredvalue('poly.'+(poly_edit)+'::'+polyobjname, current_pset, new_args);
+			var name = ZoneSettings.chord_assigners(number)['_settingsobj'];
+			//debug('name:', name);
+			var chord_assignment = script[name];
+			chord_assignment.message('clear');
+			for(var i in new_args)
+			{
+				chord_assignment.message('set', new_args[i], 127);
+			}
+			Scales.update_chord_display();
+			break;
+	}
+}
+
+
+
+DefaultPageStackBehaviourWithModeShift = function(parent_mode_object)
+{
+	debug('initializing DefaultPageStackBehaviourWithModeShift');
+	var self = this;
+	var parent = parent_mode_object;
+	this.press_immediate = function(button)
+	{
+		//debug('press_immediate', parent, parent.mode_buttons);
+		var mode = parent.mode_buttons.indexOf(button);
+		if(mode!=parent.current_mode())
+		{
+			parent.splice_mode(mode);
+			parent.push_mode(mode);
+			parent.recalculate_mode();
+		}
+		else
+		{
+			var page = parent.current_page();
+			parent.current_page()._mode_button_value(button);
+		}
+	}
+	this.press_delayed = function(button)
+	{
+		//debug('press_delayed');
+	}
+	this.release_immediate = function(button)
+	{
+		//debug('release_immediate');
+		parent.clean_mode_stack();
+	}
+	this.release_delayed = function(button)
+	{
+		//debug('release_delayed');
+		var mode = parent.mode_buttons.indexOf(button);
+		if(mode!=parent.current_mode())
+		{
+			parent.pop_mode(mode);
+			parent.recalculate_mode();
+		}
+		else
+		{
+			parent.current_page()._mode_button_value(button);
+		}
+	}
+}
+
+ModeSwitchablePage = function(name, args)
+{
+	var self = this;
+	this._moded = false;
+	this.add_bound_properties(this, ['_moded', '_mode_button_value']);
+	ModeSwitchablePage.super_.call(this, name, args);
+}
+
+inherits(ModeSwitchablePage, Page);
+
+ModeSwitchablePage.prototype._mode_button_value = function(obj)
+{
+	//lcl_debug('old altValue');
+	//debug('_mode_button_value', obj, obj._value);
+	var new_mode = false;
+	if(obj)
+	{
+		new_mode= obj._value > 0;
+	}
+	if(new_mode != this._moded)
+	{
+		this._moded = new_mode;
+		this.update_mode();
+	}
+}
+
+
+
+DeviceModule = function()
+{
+	var self = this;
+	this.add_bound_properties(this, ['update']);
+	DeviceModule.super_.call(this, 'DeviceModule');
+}
+
+inherits(DeviceModule, Bindable);
+
+DeviceModule.prototype.update = function(){}
+
+///Device Stuff, needs to go in its own Prototype
 
 function setup_device()
 {
@@ -1084,7 +1561,6 @@ function setup_device()
 	detect_drumrack();
 }
 
-//send the current chain assignment to mod.js
 function select_pad_device(note)
 {
 	debug('select_pad_device:', note);
@@ -1161,6 +1637,148 @@ function parameter_name_from_id(id)
 	}
 	return new_name;
 }
+
+
+
+
+///  Blocks Lightpad Stuff
+
+function _update_topology()
+{
+	debug('update_topology');
+	topology = dict_to_jsobj(topDict);
+	if(blocks_patcher)
+	{
+		var a = (blocks_patcher.subpatcher().getnamed('block1_scene').getvalueof())-1;
+		var b = (blocks_patcher.subpatcher().getnamed('block2_scene').getvalueof())-1;
+		var c = (blocks_patcher.subpatcher().getnamed('block3_scene').getvalueof())-1;
+		var d = (blocks_patcher.subpatcher().getnamed('block4_scene').getvalueof())-1;
+		blocks_patcher.subpatcher().getnamed('blocks_pad').message('scene', a, 1, b, 2, c, 3, d, 4);
+		debug('sending scene:', a, 1, b, 2, c, 3, d, 4);
+	}
+	else
+	{
+		//tasks.addTask(_update_topology, [], 4);
+	}
+}
+
+function update_remote_targets()
+{
+	for(var i in pads)
+	{
+		pads[i]._remote_id_init_gate.message(1);
+		pads[i]._remote_id.message('bang');
+	}
+}
+
+function dict_to_jsobj(dict) {
+	if (dict == null) return null;
+	var o = new Object();
+	var keys = dict.getkeys();
+	if (keys == null || keys.length == 0) return null;
+	if (keys instanceof Array) {
+		for (var i = 0; i < keys.length; i++)
+		{
+			var value = dict.get(keys[i]);
+			
+			if (value && value instanceof Dict) {
+				value = dict_to_jsobj(value);
+			}
+			o[keys[i]] = value;
+		}		
+	} else {
+		var value = dict.get(keys);
+		
+		if (value && value instanceof Dict) {
+			value = dict_to_jsobj(value);
+		}
+		o[keys] = value;
+	}
+	return o;
+}
+
+function _blockNote(note, val)
+{
+	var args = arrayfromargs(arguments);
+	//debug('BlockNote', (note-36)%8, Math.abs(Math.floor((note-36)/8)-7), val);
+	//var x = (note-36)%8, y = (note-36)/8;
+	_grid((note-36)%8, Math.abs(Math.floor((note-36)/8)-7), val);
+}
+
+function _blockMode(val)
+{
+	if(val)
+	{
+		if(blocks_page_visible)
+		{
+			blocks_pcontrol.message('close');
+			blocks_page_visible = false;
+			//blocks_patcher.wclose();
+		}
+		else
+		{
+			blocks_pcontrol.message('open');
+			blocks_page_visible = true;
+			//blocks_patcher.open();
+		}
+	}
+}
+
+function blocks_patcher_unlock()
+{
+	blocks_patcher.window('size', 0, 400, 1190, 800);
+	blocks_patcher.window('flags', 'minimize');
+	blocks_patcher.window('flags', 'zoom');
+	blocks_patcher.window('flags', 'close');
+	blocks_patcher.window('flags', 'grow');
+	blocks_patcher.window('flags', 'title');
+	blocks_patcher.window('flags', 'nofloat');
+	blocks_patcher.window('exec');
+}
+
+function blocks_patcher_lock()
+{
+	blocks_patcher.window('size', 80, 80, 375, 600);
+	blocks_patcher.window('flags', 'nominimize');
+	//blocks_patcher.window('flags', 'nozoom');
+	blocks_patcher.window('flags', 'noclose');
+	blocks_patcher.window('flags', 'nogrow');
+	//blocks_patcher.window('flags', 'notitle');
+	blocks_patcher.window('flags', 'float');
+	blocks_patcher.window('exec');
+}
+
+
+
+
+INFO = "SKIN\n\n";
+SETUP_INFO = "Add this device to a MIDI Track, place a DrumRack after it.  Set the input port (top menu in device) to Push's Live port.\n";
+OVERVIEW_INFO = "64 Pads may be divided into 64 different zones.\n\n\n"+
+			"Each zone has its own output note, in addition to three alternate output notes that may be triggered when different zone assigned to modify it is held down.\n\n"+
+			"A zone has several editable parameters:\n\n"+
+			"Color: the displayed color of the zone.\n"+ 
+			"Note: the note that is output when the zone is played.\n"+ 
+			"Mod_A - Mod_C:  the alternate note that is output when another zone is set to trigger a modified output on selected zone.\n"+
+			"Mask Time: adjust to prevent double-triggering of notes within the zone.\n";
+KEY_INFO = "To select a zone for editing, change the first parameter knob to the target zone.\n"+
+			"To assign a grid cell to the zone, press the KEY 8 to toggle ASSIGN mode (ASSIGN mode = RED, PLAY mode = GREEN).\n"+
+			"Toggle FOLLOW mode with KEY 7.  This will automatically select the zone for editing whenever a zone is triggered.\n"+
+			"Toggle MODIFIER assign mode with KEY 6.\n"+
+			"In MODIFIER assign mode, each cell corresponds to one of the 64 zones.  Pressing a cell cycles through four possible states for each target zone:  Off, Mod_A, Mod_B, Mod_C. \n"+
+			"If any MOD source is assigned to a target zone and that zone is struck while the selected zone is being held, the target zone will trigger the corresponding MOD note instead of its original assigned note ID.\n"+
+			"\n"+
+			"The first four KEYS toggle output of NOTE, MOD_A, MOD_B, and MOD_C.  Make sure that MOD assignments are turned on here, or MOD targets will not trigger any note when struck.\n";
+
+
+function info()
+{
+	debug('info...');
+	info_pcontrol.message('open');
+	info_patcher.subpatcher().getnamed('info_text').message('set', [INFO, SETUP_INFO, OVERVIEW_INFO, KEY_INFO]);
+}
+
+
+
 
 
 forceload(this);

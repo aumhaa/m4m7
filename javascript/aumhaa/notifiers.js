@@ -528,9 +528,13 @@ ButtonClass.prototype.flash = function(val)
 
 ButtonClass.prototype.get_coords= function(grid)
 {
-	if(grid instanceof Grid && this._grid[grid._name])
+	if(grid instanceof GridClass && this._grid[grid._name])
 	{
 		return([this._grid[grid._name].x, this._grid[grid._name].y]);
+	}
+	else
+	{
+		return([-1, -1]);
 	}
 }
 
@@ -611,7 +615,7 @@ GUIButton.prototype.flash = function(val)
 
 GUIButton.prototype.get_coords= function(grid)
 {
-	if(grid instanceof Grid && this._grid[grid._name])
+	if(grid instanceof GridClass && this._grid[grid._name])
 	{
 		return([this._grid[grid._name].x, this._grid[grid._name].y]);
 	}
@@ -780,14 +784,64 @@ exports.GridClass = GridClass;
 /////////////////////////////////////////////////////////////////////////////
 //Mode is a notifier that automatically updates buttons when its state changes
 
+var PRS_DLY = 750;
+
+DefaultPageStackBehaviour = function(parent_mode_object)
+{
+	var self = this;
+	var parent = parent_mode_object;
+	this.press_immediate = function(button)
+	{
+		//debug('press_immediate', parent, parent.mode_buttons);
+		var mode = parent.mode_buttons.indexOf(button);
+		parent.splice_mode(mode);
+		parent.push_mode(mode);
+		parent.recalculate_mode();
+	}
+	this.press_delayed = function(button)
+	{
+		//debug('press_delayed');
+	}
+	this.release_immediate = function(button)
+	{
+		//debug('release_immediate');
+		parent.clean_mode_stack();
+	}
+	this.release_delayed = function(button)
+	{
+		//debug('release_delayed');
+		var mode = parent.mode_buttons.indexOf(button);
+		parent.pop_mode(mode);
+		parent.recalculate_mode();
+	}
+}
+
+exports.DefaultPageStackBehaviour = DefaultPageStackBehaviour;
+
+
+
 ModeClass = function(number_of_modes, name, args)
 {
 	this.add_bound_properties(this, ['mode_cycle_value', 'mode_value', 'toggle_value', 'change_mode', 'update', 'add_mode', 'set_mode_buttons', 'set_mode_cycle_button', 'current_mode']);
 	this._value = 0;
 	this._mode_callbacks = new Array(number_of_modes);
+	this._mode_stack = [];
 	this.mode_buttons = [];
 	this.mode_cycle_button = undefined;
+	this._timered = function()
+	{
+		//debug('timered...', arguments[0]._name);
+		button = arguments[0];
+		if(button&&button.pressed())
+		{
+			this._behaviour.press_delayed(button);
+		}
+	}
+	this._behaviour_timer = new Task(this._timered, this);
+	this.add_bound_properties(this, ['_behaviour_timer', '_timered', '_mode_stack', 'mode_value']);
 	ModeClass.super_.call(this, name, args);
+	this._behaviour = this._behaviour!= undefined ? new this._behaviour(this) : new DefaultPageStackBehaviour(this);
+	this._press_delay = this._press_delay ? this._press_delay : PRS_DLY;
 	this.mode_toggle = new ToggledParameter(this._name + '_Mode_Toggle', {'onValue':colors.BLUE, 'offValue':colors.CYAN, 'value':0});
 	this.mode_toggle.add_listener(this.toggle_value);
 }
@@ -799,7 +853,7 @@ ModeClass.prototype.mode_cycle_value = function(button)
 	if(button.pressed())
 	{
 		this.change_mode((this._value + 1) % this._mode_callbacks.length)
-		this.notify();
+		//this.notify();
 	}
 }
 
@@ -813,10 +867,37 @@ ModeClass.prototype.mode_value = function(button)
 	}
 }
 
+ModeClass.prototype.mode_value = function(button)
+{
+	if(button.pressed())
+	{
+		if(this._behaviour_timer.running)
+		{
+			this._behaviour_timer.cancel();
+		}
+		this._behaviour.press_immediate(button);
+		this._behaviour_timer.arguments = button;
+		this._behaviour_timer.schedule(this._press_delay);
+	}
+	else
+	{
+		if(this._behaviour_timer.running)
+		{
+			this._behaviour_timer.cancel();
+			this._behaviour.release_immediate(button);
+		}
+		else
+		{
+			this._behaviour.release_delayed(button);
+		}
+	}
+	this.notify();
+}
+
 ModeClass.prototype.toggle_value = function(button)
 {
 	this.change_mode(button._value);
-	this.notify();
+	//this.notify();
 }
 
 ModeClass.prototype.change_mode = function(value, force)
@@ -827,6 +908,7 @@ ModeClass.prototype.change_mode = function(value, force)
 		{
 			this._value = value;
 			this.update();
+			//this.notify();
 		}
 	}
 }
@@ -910,6 +992,39 @@ ModeClass.prototype.current_mode = function()
 	return(this._value)
 }
 
+ModeClass.prototype.push_mode = function(mode)
+{
+	if(mode>-1){this._mode_stack.unshift(mode);}
+}
+
+ModeClass.prototype.splice_mode = function(mode)
+{
+	var index = this._mode_stack.indexOf(mode);
+	if(index>-1){this._mode_stack.splice(index, 1);}
+}
+
+ModeClass.prototype.clean_mode_stack = function()
+{
+	this._mode_stack.splice(1, this._mode_stack.length-1);
+}
+
+ModeClass.prototype.pop_mode = function()
+{
+	if(this._mode_stack.length > 1){this._mode_stack.shift();}
+}
+
+ModeClass.prototype.pop_all_modes = function()
+{
+	this._mode_stack = [];
+}
+
+ModeClass.prototype.recalculate_mode = function()
+{
+	//debug('recalculate_mode');
+	var mode = this._mode_stack.length ? this._mode_stack[0] : 0;
+	this.change_mode(this._mode_stack[0]);
+}
+
 exports.ModeClass = ModeClass;
 
 
@@ -959,7 +1074,7 @@ PageStack.prototype.change_mode = function(value, force)
 
 PageStack.prototype.current_page = function()
 {
-	return(this._pages[this.current_mode()]);
+	return this._pages[this.current_mode()];
 }
 
 PageStack.prototype.restore_mode = function()
@@ -1103,7 +1218,7 @@ ToggledParameter.prototype._Callback = function(obj)
 
 ToggledParameter.prototype.update_control = function(value)
 {
-	if(this._control){this._control.send(this._value ? this._onValue : this._offValue);}
+	if(this._control){this._control.send(this._value > 0 ? this._onValue : this._offValue);}
 }
 
 exports.ToggledParameter = ToggledParameter;
@@ -1588,11 +1703,13 @@ exports.DoubleSliderComponent = DoubleSliderComponent;
 
 Page = function(name, args)
 {
-	this.add_bound_properties(this, ['controlInput', '_shiftValue']);
+	this.add_bound_properties(this, ['controlInput', '_shiftValue', '_altValue']);
 	this._controls = {};
 	this.active = false;
 	this._shifted = false;
 	this._shift_button = undefined;
+	this._alted = false;
+	this._alt_button = undefined;
 	Page.super_.call(this, name, args);
 }
 
@@ -1611,6 +1728,21 @@ Page.prototype._shiftValue = function(obj)
 	if(new_shift != this._shifted)
 	{
 		this._shifted = new_shift;
+		this.update_mode();
+	}
+}
+
+Page.prototype._altValue = function(obj)
+{
+	lcl_debug('old altValue');
+	var new_alt = false;
+	if(obj)
+	{
+		new_alt = obj._value > 0;
+	}
+	if(new_alt != this._alted)
+	{
+		this._alted = new_alt;
 		this.update_mode();
 	}
 }
@@ -1650,6 +1782,24 @@ Page.prototype.set_shift_button = function(button)
 		if(this._shift_button)
 		{
 			this._shift_button.set_target(this._shiftValue);
+		}
+	}
+}
+
+Page.prototype.set_alt_button = function(button)
+{
+	if ((button != this._alt_button)&&(button instanceof(NotifierClass) || !button))
+	{
+		if(this._alt_button)
+		{
+			this._alt_button.remove_target(this._altValue);
+			this._alt_button.reset();
+			this._alted = false;
+		}
+		this._alt_button = button;
+		if(this._alt_button)
+		{
+			this._alt_button.set_target(this._altValue);
 		}
 	}
 }
