@@ -1892,6 +1892,14 @@ TaskServer.prototype.addTask = function(callback, arguments, interval, repeat, n
 	}
 }
 
+TaskServer.prototype.resetTask = function(name)
+{
+	if((name)&&(this._queue[name]))
+	{
+		this._queue[name].ticks = 0;
+	}
+}
+
 TaskServer.prototype.removeTask = function(callback, arguments, name)
 {
 	lcl_debug('removing task:', name);

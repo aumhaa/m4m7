@@ -44,12 +44,14 @@ var drumrack_id = 0;
 var this_device_id = -1;
 var current_device;
 var current_chords = [[], [], [], []];
+var dirty = false;
+//var storageTask;
 
 var PRS_DLY = 300;
 var colors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
 var PushColors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
 
-var Vars = ['assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings'];
+var Vars = ['output_port', 'input_port', 'storage_text', 'storage_menu', 'assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings'];
 
 var PolyVars = ['note_id', 'modA_id', 'modB_id', 'modC_id', 'note_gate', 'modA_gate', 'modB_gate', 'modC_gate', 'note_chord', 'modA_chord', 'modB_chord', 'modC_chord', 'chord_gate', 'chord_modA_gate', 'chord_modB_gate', 'chord_modC_gate', 'chord_channel', 'chordA_channel', 'chordB_channel', 'chordC_channel', 'mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'remote_id_init_gate', 'breakpoint', 'breakpoint_obj', 'chord_flush'];
 
@@ -126,12 +128,15 @@ function initialize()
 	setup_external_chord_assigner();
 	setup_modes();
 	setup_listeners();
+	setup_storage();
+	setup_ports();
 	deprivatize_script_functions(this);
 	blocks_patcher_lock();
 	settings_patcher_lock();
 	update_remote_targets();
-	ZoneSettings.select_voice({'_value':1});
+	ZoneSettings.select_voice({'_value':0});
 	MainModes.change_mode(0);
+	storage.message('getslotnamelist');
 	_storage_in('recall');
 
 
@@ -340,6 +345,7 @@ function setup_modes()
 		Scales._octaveOffset.set_inc_dec_buttons();
 		Scales._outputChooser.set_controls();
 		chordPage.set_shift_button();
+		chordPage.set_alt_button();
 		debug('chordPage exited');
 	}
 	chordPage.update_mode = function()
@@ -389,10 +395,14 @@ function setup_modes()
 	modPage.enter_mode = function()
 	{
 		debug('modPage entered');
+		modPage.set_shift_button(ShiftButton);
+		modPage.set_alt_button(AltButton);
 		ModMatrix.assign_grid(Grid);
 	}
 	modPage.exit_mode = function()
 	{
+		modPage.set_shift_button();
+		modPage.set_alt_button();
 		ModMatrix.assign_grid();
 		debug('modPage exited');
 	}
@@ -428,6 +438,17 @@ function setup_listeners()
 {
 	MainModes.add_listener(update_input_gate);
 	ZoneSettings._selected_zone.add_listener(ModMatrix.update);
+}
+
+function setup_storage()
+{
+	tasks.addTask(update_preset, [], 2, true, 'update_preset');
+}
+
+function setup_ports()
+{
+	input_port.message('symbol', 'Ableton Push 2 Live Port');
+	output_port.message('symbol', 'IAC Bus Bus 1');
 }
 
 function active_handlers()
@@ -475,6 +496,9 @@ function _storage_in()
 	switch(args[0])
 	{
 		case 'recall':
+			debug('recall:', args);
+			current_pset = args[1];
+			ZoneSettings._pset = current_pset;
 			for(var i in pads)
 			{
 				pads[i].clear_cells();
@@ -487,6 +511,39 @@ function _storage_in()
 			{
 				pads[i].reassign_color();
 			}
+			storage_menu.message('set', current_pset-1);
+			ZoneSettings.select_voice({'_value':ZoneSettings._zone_index});
+			ModMatrix.update();
+			break;
+		case 'text':
+			args.shift();
+			var name = args.join(' ');
+			debug('create_preset:', name);
+			storage.message('insert', 1);
+			storage.message('slotname', 1, name);
+			storage_text.message('clear');
+			storage.message('getslotnamelist');
+			break;
+		case 'menu':
+			debug('storage menu:', args);
+			storage.message(args[1]+1);
+			break;
+		case 'slotname':
+			debug('slotname:', args);
+			if(args[1]==0)
+			{
+				storage_menu.message('clear');
+			}
+			else if(args[1]=='done')
+			{
+				break;
+			}
+			else
+			{
+				args.splice(0,2);
+				args.unshift('append');
+				storage_menu.message(args);
+			}
 			break;
 		default:
 			debug('storage: default:', args);
@@ -494,6 +551,24 @@ function _storage_in()
 	}
 }
 
+function dirtyStorage()
+{
+	dirty = true;
+	tasks.resetTask('update_preset');
+	//debug('setting dirty');
+}
+
+function update_preset()
+{
+	//debug('update_preset');
+	if(dirty)
+	{
+		//debug('updating storage...');
+		dirty = false;
+		storage.message('store', current_pset);
+		debug('storage updated.');
+	}
+}
 
 
 var target_keys = {0:'_note_id', 1:'_note_gate', 2:'_modA_id', 3:'_modA_gate', 4:'_modB_id', 5:'_modB_gate', 6:'_modC_id', 7:'_modC_gate',
@@ -512,15 +587,19 @@ function _mod_assign(num, val, extra)
 		switch(num)
 		{
 			default:
-				debug('default', num, val, extra);
-				debug('target_key:', target_keys[num]);
+				//debug('default', num, val, extra);
+				//debug('target_key:', target_keys[num]);
 				ZoneSettings[target_keys[num]].receive(val, extra);
+				dirtyStorage();
 				break;
 			case 11:
-				debug('assign_modulation_target');
+				debug('set_remote_id');
 				select_parameter(current_edit);
 				remote_name.message('text', parameter_name_from_id(pad._remote_id.getvalueof()));
-				//ZoneSettings.select_voice(current_edit);
+				break;
+			case 23:
+				debug('clear_remote_id');
+				clear_parameter(current_edit);
 				break;
 			case 21:
 				debug('modifier_target_assignment:', val);
@@ -532,12 +611,6 @@ function _mod_assign(num, val, extra)
 				pad.update_mod_assignments();
 				mod_target_assignment.message('set', pad._mod_assigns[val-1]);
 				//ModMatrix.update();
-				break;
-			case 23:
-				debug('clear_remote_id');
-				clear_parameter(current_edit-1);
-				remote_name.message('text', parameter_name_from_id(pad._remote_id.getvalueof()));
-				//select_voice(current_edit);
 				break;
 			case 37:
 				debug('r chordAssigner', val, extra);
@@ -555,10 +628,10 @@ function _mod_assign(num, val, extra)
 					//storage.getstoredvalue('poly.'+(current_edit)+'::breakpoint', current_pset);
 					storage.message('recall', 'poly.'+(current_edit)+'::breakpoint', current_pset);
 					pad._breakpoint.message('bang');
-					
 				}
 				break;
 		}
+		dirtyStorage();
 	}
 }
 
@@ -623,8 +696,9 @@ function ZoneSettingsModule()
 		var func = function(obj)
 		{
 			self.current_edit()['_'+polyname].message(obj._value);
-			storage.setstoredvalue('poly.'+self._poly_index+'::'+polyname, self._pset, obj._value);
+			//storage.setstoredvalue('poly.'+self._poly_index+'::'+polyname, self._pset, obj._value);
 			script[settingsname].message('set', obj._value);
+			storageTask=true;
 		}
 		return func;
 	}
@@ -698,6 +772,44 @@ ZoneSettingsModule.prototype.update = function()
 	//mod.Send('key', 'value', 3, pads[current_edit-1]._modC_gate.getvalueof());
 }
 
+ZoneSettingsModule.prototype.update_device = function()
+{
+	//debug('update_device');
+	var pad = ZoneSettings.current_edit();
+	var remote_id = pad._remote_id.getvalueof();
+	debug('remote_id is:', remote_id);
+	if((remote_id!=undefined)&&(remote_id>0))
+	{
+		finder.id = parseInt(remote_id);
+		var lo = finder.get('min');
+		var hi = finder.get('max');
+		remote_scale_lo.message('minimum', lo);
+		remote_scale_lo.message('maximum', hi-1);
+		remote_scale_lo.message('set', pad._remote_scale_lo.getvalueof());
+		remote_scale_hi.message('minimum', lo+1);
+		remote_scale_hi.message('maximum', hi);
+		remote_scale_hi.message('set', pad._remote_scale_hi.getvalueof());
+		remote_scale_exp.message('set', pad._remote_scale_exp.getvalueof());
+		remote_name.message('text', parameter_name_from_id(remote_id));
+		remote_scale_lo.message('hidden', 0);
+		remote_scale_hi.message('hidden', 0);
+		remote_scale_exp.message('hidden', 0);
+		debug('finished displaying linked parameter');
+	}
+	else
+	{
+		remote_scale_lo.message('hidden', 1);
+		remote_scale_hi.message('hidden', 1);
+		remote_scale_exp.message('hidden', 1);
+		remote_name.message('text', parameter_name_from_id(remote_id));
+		debug('finished hiding remote parameter');
+	}
+	breakpoint_obj.message('clear');
+	breakpoint.message(pad._breakpoint.getvalueof());
+	//debug('breakpoint val:', pad._breakpoint.getvalueof());
+	//debug('finished updating device');
+}
+
 ZoneSettingsModule.prototype.select_voice = function(obj)
 {
 	var num = obj._value + 1;
@@ -745,34 +857,7 @@ ZoneSettingsModule.prototype.select_voice = function(obj)
 	Scales.update_chord_display();
 	pad.update_mod_assignments();
 	mod_target_assignment.message('set', pad._mod_assigns[parseInt(mod_target.getvalueof())]);
-	var remote_id = pad._remote_id.getvalueof();
-	if((remote_id!=undefined)&&(remote_id>0))
-	{
-		finder.id = parseInt(remote_id);
-		var lo = finder.get('min');
-		var hi = finder.get('max');
-		remote_scale_lo.message('minimum', lo);
-		remote_scale_lo.message('maximum', hi-1);
-		remote_scale_lo.message('set', pad._remote_scale_lo.getvalueof());
-		remote_scale_hi.message('minimum', lo+1);
-		remote_scale_hi.message('maximum', hi);
-		remote_scale_hi.message('set', pad._remote_scale_hi.getvalueof());
-		remote_scale_exp.message('set', pad._remote_scale_exp.getvalueof());
-		remote_name.message('text', parameter_name_from_id(remote_id));
-		remote_scale_lo.message('hidden', 0);
-		remote_scale_hi.message('hidden', 0);
-		remote_scale_exp.message('hidden', 0);
-	}
-	else
-	{
-		remote_scale_lo.message('hidden', 1);
-		remote_scale_hi.message('hidden', 1);
-		remote_scale_exp.message('hidden', 1);
-	}
-	breakpoint_obj.message('clear');
-	breakpoint.message(pad._breakpoint.getvalueof());
-	//debug('breakpoint val:', pad._breakpoint.getvalueof());
-
+	this.update_device();
 	select_pad_device(pad._note_id.getvalueof());
 }
 
@@ -814,7 +899,7 @@ SkinModule.prototype.update = function()
 
 SkinModule.prototype.assign_grid = function(grid)
 {
-	debug('SkinModule assign grid', grid);
+	//debug('SkinModule assign grid', grid);
 	if(this._grid instanceof GridClass)
 	{
 		this._grid.remove_listener(this._button_press);
@@ -838,16 +923,20 @@ SkinModule.prototype._button_press = function(button)
 	{
 		if(this._assign_mode._value>0)
 		{
-			//debug('assigning...', button._name, ZoneSettings._edit_index);
-			if(button.group!=ZoneSettings._poly_index)
+			//debug('assigning...', button._name, ZoneSettings._zone_index);
+			if(button.group!=ZoneSettings._zone_index)
 			{
 				for(var i in pads)
 				{
+					//debug('removing:', i);
 					pads[i].remove_cell(button);
 				}
 				pads[ZoneSettings._zone_index].add_cell(button);
+				storageTask=true;
+				//storage.setstoredvalue('cell_dict', current_pset, cell_dict.getstoredvalue());
 				push_notes.message(button._push_note, ZoneSettings._poly_index);
 				this.update();
+				dirtyStorage();
 			}
 		}
 		else
@@ -1249,16 +1338,18 @@ RegisteredChordNotifier.prototype.receive = function(note, value)
 		old.push(note);
 		this._value = old;
 		polyobj.message(this._value);
-		storage.setstoredvalue('poly.'+(poly_edit)+'::'+this._polyobj, current_pset, this._value);
+		//storage.setstoredvalue('poly.'+(poly_edit)+'::'+this._polyobj, current_pset, this._value);
 		this.notify();
+		storageTask=true;
 	}
 	else if((value==0)&&(index!=-1))
 	{
 		old.splice(index,1);
 		this._value = old;
 		polyobj.message(this._value);
-		storage.setstoredvalue('poly.'+(poly_edit)+'::'+this._polyobj, current_pset, this._value);
+		//storage.setstoredvalue('poly.'+(poly_edit)+'::'+this._polyobj, current_pset, this._value);
 		this.notify();
+		storageTask=true;
 	}
 	debug('new_value is:', polyobj.getvalueof());
 }
@@ -1307,7 +1398,10 @@ CellClass.prototype.update_color = function()
 
 CellClass.prototype.update_group_assignment = function()
 {
-	pads[cellDict.get(this._name)].add_cell(this);
+	//debug('update_group_assignment:', cellDict.get(this._name));
+	var num = cellDict.get(this._name);
+	pads[num > -1 ? num : 0].add_cell(this);
+	//pads[cellDict.get(this._name)].add_cell(this);
 }
 
 
@@ -1333,6 +1427,11 @@ ZoneClass = function(num, patcher, name, args)
 
 inherits(ZoneClass, Bindable);
 
+ZoneClass.prototype.initialize = function()
+{
+	this._remote_id_init_gate.message(1);
+}
+
 ZoneClass.prototype.update_mod_assignments = function()
 {
 	this._mod_assigns = [];
@@ -1354,26 +1453,35 @@ ZoneClass.prototype.get_cells = function()
 ZoneClass.prototype.add_cell = function(cell)
 {
 	//debug('cell:', cell._name, 'group:', cell.group);
-	cell.group>-1&&pads[cell.group].remove_cell(cell);
+	if(cell.group>-1){pads[cell.group].remove_cell(cell);}
 	cell.group = this._number-1;
 	cellDict.set(cell._name, cell.group);
-	push_notes.message(cell._push_note, cell.group);
+	push_notes.message(cell._push_note, cell.group+1);  //patcher ignores a 0 assignment coming from push_notes coll
 	//pushDict.set(cell._push_note, cell.group);
 	if(this._cells.indexOf(cell)<0)
 	{
 		this._cells.push(cell);
 	}
 	//debug(this._name, 'add_cell', cell._name, 'group is now:', this._number, 'zone_members:', this._cells.length);
+	//dirtyStorage();
 }
 
 ZoneClass.prototype.remove_cell = function(cell)
 {
-	var index = this._cells.indexOf(cell);
-	if(index>0)
+	//var index = this._cells.indexOf(cell);
+	//if(index>0)
+	//{
+	//	this._cells.splice(index, 1);
+	//}
+	for(var i in this._cells)
 	{
-		this._cells.splice(index, 1);
+		if(this._cells[i] == cell)
+		{
+			this._cells.splice(i, 1);
+		}
 	}
-	cell.group = 0;
+	//cell.group = 0;
+	//cellDict.set(cell._name, cell.group);
 }
 
 ZoneClass.prototype.clear_cells = function()
@@ -1414,7 +1522,6 @@ ZoneClass.prototype.send = function(val)
 }
 
 
-
 ExternalChordAssigner = function(name, args)
 {
 	var self = this;
@@ -1441,7 +1548,8 @@ ExternalChordAssigner.prototype.receive = function(args)
 			var polyobj = ZoneSettings.current_edit()[polyobjname];
 			var new_args = args.slice(2);
 			polyobj.message(new_args);
-			storage.setstoredvalue('poly.'+(poly_edit)+'::'+polyobjname, current_pset, new_args);
+			//storage.setstoredvalue('poly.'+(poly_edit)+'::'+polyobjname, current_pset, new_args);
+			storageTask=true;
 			var name = ZoneSettings.chord_assigners(number)['_settingsobj'];
 			//debug('name:', name);
 			var chord_assignment = script[name];
@@ -1481,11 +1589,17 @@ DefaultPageStackBehaviourWithModeShift = function(parent_mode_object)
 	this.press_delayed = function(button)
 	{
 		//debug('press_delayed');
+		
 	}
 	this.release_immediate = function(button)
 	{
 		//debug('release_immediate');
 		parent.clean_mode_stack();
+		var mode = parent.mode_buttons.indexOf(button);
+		if(mode==parent.current_mode())
+		{
+			parent.current_page()._mode_button_value(button);
+		}
 	}
 	this.release_delayed = function(button)
 	{
@@ -1603,21 +1717,29 @@ function select_parameter(poly_num)
 {
 	finder.goto('live_set', 'view', 'selected_parameter');
 	pads[poly_num-1]._remote_id.message(parseInt(finder.id));
-	storage.setstoredvalue('poly.'+(poly_num)+'::remote_id', current_pset, parseInt(finder.id));
+	//storage.setstoredvalue('poly.'+(poly_num)+'::remote_id', current_pset, parseInt(finder.id));
 	pads[poly_num-1]._remote_scale_lo.message(parseInt(finder.get('min')));
-	storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_lo', current_pset, parseInt(finder.get('min')));
+	//storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_lo', current_pset, parseInt(finder.get('min')));
 	pads[poly_num-1]._remote_scale_hi.message(parseInt(finder.get('max')));
-	storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_hi', current_pset, parseInt(finder.get('max')));
+	//storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_hi', current_pset, parseInt(finder.get('max')));
+	storageTask=true;
+	ZoneSettings.update_device();
 }
 
 function clear_parameter(poly_num)
 {
 	pads[poly_num-1]._remote_id.message(0);
-	storage.setstoredvalue('poly.'+(poly_num)+'::remote_id', current_pset, 0);
+	/*
+	//pads[poly_num-1]._remote_id.message('set', 0);
+	//storage.setstoredvalue('poly.'+(poly_num)+'::remote_id', current_pset, 0);
 	pads[poly_num-1]._remote_scale_lo.message(0);
-	storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_lo', current_pset, 0);
+	//storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_lo', current_pset, 0);
 	pads[poly_num-1]._remote_scale_hi.message(127);
-	storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_hi', current_pset, 127);
+	//storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_hi', current_pset, 127);
+	storageTask=true;
+	remote_name.message('text', parameter_name_from_id(pads[poly_num-1]._remote_id.getvalueof()));
+	*/
+	ZoneSettings.update_device();
 }
 
 function parameter_name_from_id(id)
@@ -1638,6 +1760,15 @@ function parameter_name_from_id(id)
 	return new_name;
 }
 
+function update_remote_targets()
+{
+	//messnamed(unique+'live_remote_gate', 1);
+	for(var i in pads)
+	{
+		pads[i]._remote_id_init_gate.message(1);
+		pads[i]._remote_id.message('bang');
+	}
+}
 
 
 
@@ -1660,41 +1791,6 @@ function _update_topology()
 	{
 		//tasks.addTask(_update_topology, [], 4);
 	}
-}
-
-function update_remote_targets()
-{
-	for(var i in pads)
-	{
-		pads[i]._remote_id_init_gate.message(1);
-		pads[i]._remote_id.message('bang');
-	}
-}
-
-function dict_to_jsobj(dict) {
-	if (dict == null) return null;
-	var o = new Object();
-	var keys = dict.getkeys();
-	if (keys == null || keys.length == 0) return null;
-	if (keys instanceof Array) {
-		for (var i = 0; i < keys.length; i++)
-		{
-			var value = dict.get(keys[i]);
-			
-			if (value && value instanceof Dict) {
-				value = dict_to_jsobj(value);
-			}
-			o[keys[i]] = value;
-		}		
-	} else {
-		var value = dict.get(keys);
-		
-		if (value && value instanceof Dict) {
-			value = dict_to_jsobj(value);
-		}
-		o[keys] = value;
-	}
-	return o;
 }
 
 function _blockNote(note, val)

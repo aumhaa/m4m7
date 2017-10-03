@@ -9,7 +9,7 @@
 			"modernui" : 1
 		}
 ,
-		"rect" : [ 121.0, 78.0, 1286.0, 801.0 ],
+		"rect" : [ 121.0, 78.0, 910.0, 801.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 1,
 		"default_fontsize" : 12.0,
@@ -777,6 +777,8 @@
 					"outlettype" : [ "", "float" ],
 					"parameter_enable" : 1,
 					"patching_rect" : [ 503.499847, 110.0, 44.0, 47.0 ],
+					"presentation" : 1,
+					"presentation_rect" : [ 330.0, 10.0, 44.0, 47.0 ],
 					"saved_attribute_attributes" : 					{
 						"valueof" : 						{
 							"parameter_order" : 1,
@@ -1252,7 +1254,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-30", 1 ],
-					"midpoints" : [ 1076.642639, 594.5, 829.24585, 594.5 ],
+					"midpoints" : [ 1076.642639, 594.5, 829.245849, 594.5 ],
 					"source" : [ "obj-49", 1 ]
 				}
 
@@ -1395,7 +1397,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-15", 12 ],
-					"midpoints" : [ 1008.230042, 725.0, 909.848993, 725.0 ],
+					"midpoints" : [ 1008.230042, 725.0, 909.848992, 725.0 ],
 					"source" : [ "obj-85", 0 ]
 				}
 
@@ -1409,13 +1411,13 @@
 			}
  ],
 		"parameters" : 		{
-			"obj-57" : [ "mod_B", "mod_B", 5 ],
-			"obj-29" : [ "color", "color", 2 ],
+			"obj-12" : [ "selected", "selected", 1 ],
+			"obj-13" : [ "note", "note", 3 ],
 			"obj-9" : [ "Mask", "Mask Time", 7 ],
 			"obj-58" : [ "mod_C", "mod_C", 6 ],
+			"obj-29" : [ "color", "color", 2 ],
 			"obj-56" : [ "mod_A", "mod_A", 4 ],
-			"obj-12" : [ "selected", "selected", 1 ],
-			"obj-13" : [ "note", "note", 3 ]
+			"obj-57" : [ "mod_B", "mod_B", 5 ]
 		}
 ,
 		"dependency_cache" : [  ],
