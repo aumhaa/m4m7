@@ -8,7 +8,7 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = true;
+var FORCELOAD = false;
 var DEBUG = true;
 aumhaa.init(this);
 
