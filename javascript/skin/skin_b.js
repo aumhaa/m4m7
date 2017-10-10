@@ -8,7 +8,7 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = false;
+var FORCELOAD = true;
 var DEBUG = true;
 aumhaa.init(this);
 
@@ -52,8 +52,6 @@ var colors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GR
 var PushColors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
 
 var Vars = ['output_port', 'input_port', 'storage_text', 'storage_menu', 'assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings'];
-
-var PolyVars = ['note_id', 'modA_id', 'modB_id', 'modC_id', 'note_gate', 'modA_gate', 'modB_gate', 'modC_gate', 'note_chord', 'modA_chord', 'modB_chord', 'modC_chord', 'chord_gate', 'chord_modA_gate', 'chord_modB_gate', 'chord_modC_gate', 'chord_channel', 'chordA_channel', 'chordB_channel', 'chordC_channel', 'mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'remote_id_init_gate', 'breakpoint', 'breakpoint_obj', 'chord_flush'];
 
 var EditorVars = ['toggle', 'note', 'mod_A', 'mod_B', 'mod_C', 'chord_assignment', 'chord_enable', 'chord_modA_assignment', 'chord_modA_enable', 'chord_modB_assignment', 'chord_modB_enable', 'chord_modC_assignment', 'chord_modC_enable', 'chord_channel', 'chordA_channel', 'chordB_channel', 'chordC_channel', 'selected', 'color', 'Mask', 'remote_name', 'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable', 'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj'];
 
@@ -691,6 +689,44 @@ function ZoneSettingsModule()
 
 	ZoneSettingsModule.super_.call(this, 'ZoneSettingsModule');
 
+	var make_layer_callback = function(layer_number, polyname, settingsname)
+	{
+		var func = function(obj)
+		{
+			self.current_edit()['_layers'][layer_number]['_'+polyname].message(obj._value);
+			//storage.setstoredvalue('poly.'+self._poly_index+'::'+polyname, self._pset, obj._value);
+			script[settingsname].message('set', obj._value);
+			storageTask=true;
+		}
+		return func;
+	}
+
+	this._note_gate = new RegisteredToggledParameterForLayer(this._name + '_NoteGate', {'layer_number':0, 'polyobj':'gate', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':1, 'callback':make_layer_callback(0, 'gate', 'note_enable')});
+	this._modA_gate = new RegisteredToggledParameterForLayer(this._name + '_ModAGate', {'layer_number':1, 'polyobj':'gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_layer_callback(1, 'gate', 'modA_enable')});
+	this._modB_gate = new RegisteredToggledParameterForLayer(this._name + '_ModBGate', {'layer_number':2, 'polyobj':'gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_layer_callback(2, 'gate', 'modB_enable')});
+	this._modC_gate = new RegisteredToggledParameterForLayer(this._name + '_ModCGate', {'layer_number':3, 'polyobj':'gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_layer_callback(3, 'gate', 'modC_enable')});
+
+	this._note_id = new RegisteredRangedParameterForLayer(this._name + '_NoteID', {'layer_number':0, 'polyobj':'id', 'registry':this._parameterObjs, 'range':127, 'callback':make_layer_callback(0, 'id', 'note')});
+	this._modA_id = new RegisteredRangedParameterForLayer(this._name + '_ModAID', {'layer_number':1, 'polyobj':'id', 'registry':this._parameterObjs, 'range':127, 'callback':make_layer_callback(1, 'id', 'mod_A')});
+	this._modB_id = new RegisteredRangedParameterForLayer(this._name + '_ModBID', {'layer_number':2, 'polyobj':'id', 'registry':this._parameterObjs, 'range':127, 'callback':make_layer_callback(2, 'id', 'mod_B')});
+	this._modC_id = new RegisteredRangedParameterForLayer(this._name + '_ModCID', {'layer_number':3, 'polyobj':'id', 'registry':this._parameterObjs, 'range':127, 'callback':make_layer_callback(3, 'id', 'mod_C')});
+
+	this._chord_channel = new RegisteredRangedParameterForLayer(this._name + '_ChordChannel', {'layer_number':0, 'polyobj':'chord_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_layer_callback(0, 'chord_channel', 'chord_channel')});
+	this._chordA_channel = new RegisteredRangedParameterForLayer(this._name + '_ChordModAChannel', {'layer_number':1, 'polyobj':'chord_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_layer_callback(1, 'chord_channel', 'chordA_channel')});
+	this._chordB_channel = new RegisteredRangedParameterForLayer(this._name + '_ChordModBChannel', {'layer_number':2, 'polyobj':'chord_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_layer_callback(2, 'chord_channel', 'chordB_channel')});
+	this._chordC_channel = new RegisteredRangedParameterForLayer(this._name + '_ChordModCChannel', {'layer_number':3, 'polyobj':'chord_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_layer_callback(3, 'chord_channel', 'chordC_channel')});
+
+	this._chord_gate = new RegisteredToggledParameterForLayer(this._name + '_ChordGate', {'layer_number':0, 'polyobj':'chord_gate', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':1, 'callback':make_layer_callback(0, 'chord_gate', 'chord_enable')});
+	this._chord_modA_gate = new RegisteredToggledParameterForLayer(this._name + '_ChordModAGate', {'layer_number':1, 'polyobj':'chord_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_layer_callback(1, 'chord_gate', 'chord_modA_enable')});
+	this._chord_modB_gate = new RegisteredToggledParameterForLayer(this._name + '_ChordModBGate', {'layer_number':2, 'polyobj':'chord_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_layer_callback(2, 'chord_gate', 'chord_modB_enable')});
+	this._chord_modC_gate = new RegisteredToggledParameterForLayer(this._name + '_ChordModCGate', {'layer_number':3, 'polyobj':'chord_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_layer_callback(3, 'chord_gate', 'chord_modC_enable')});
+
+	this._note_chord = new RegisteredChordNotifier(this._name + '_NoteChord', {'layer_number':0, 'polyobj':'chord', 'settingsobj':'chord_assignment', 'registry':this._parameterObjs});
+	this._modA_chord = new RegisteredChordNotifier(this._name + '_ModAChord', {'layer_number':1, 'polyobj':'chord', 'settingsobj':'chord_modA_assignment', 'registry':this._parameterObjs});
+	this._modB_chord = new RegisteredChordNotifier(this._name + '_ModBChord', {'layer_number':2, 'polyobj':'chord', 'settingsobj':'chord_modB_assignment', 'registry':this._parameterObjs});
+	this._modC_chord = new RegisteredChordNotifier(this._name + '_ModCChord', {'layer_number':3, 'polyobj':'chord', 'settingsobj':'chord_modC_assignment', 'registry':this._parameterObjs});
+	this.chord_assigners = function(index){return [this._note_chord, this._modA_chord, this._modB_chord, this._modC_chord][index];}.bind(this);
+
 	var make_callback = function(polyname, settingsname)
 	{
 		var func = function(obj)
@@ -703,34 +739,8 @@ function ZoneSettingsModule()
 		return func;
 	}
 
-	this._note_gate = new RegisteredToggledParameter(this._name + '_NoteGate', {'polyobj':'note_gate', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':1, 'callback':make_callback('note_gate', 'note_enable')});
-	this._modA_gate = new RegisteredToggledParameter(this._name + '_ModAGate', {'polyobj':'modA_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('modA_gate', 'modA_enable')});
-	this._modB_gate = new RegisteredToggledParameter(this._name + '_ModBGate', {'polyobj':'modB_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('modB_gate', 'modB_enable')});
-	this._modC_gate = new RegisteredToggledParameter(this._name + '_ModCGate', {'polyobj':'modC_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('modC_gate', 'modC_enable')});
-
-	this._note_id = new RegisteredRangedParameter(this._name + '_NoteID', {'polyobj':'note_id', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('note_id', 'note')});
-	this._modA_id = new RegisteredRangedParameter(this._name + '_ModAID', {'polyobj':'modA_id', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('modA_id', 'mod_A')});
-	this._modB_id = new RegisteredRangedParameter(this._name + '_ModBID', {'polyobj':'modB_id', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('modB_id', 'mod_B')});
-	this._modC_id = new RegisteredRangedParameter(this._name + '_ModCID', {'polyobj':'modC_id', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('modC_id', 'mod_C')});
-
-	this._chord_channel = new RegisteredRangedParameter(this._name + '_ChordChannel', {'polyobj':'chord_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_callback('chord_channel', 'chord_channel')});
-	this._chordA_channel = new RegisteredRangedParameter(this._name + '_ChordModAChannel', {'polyobj':'chordA_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_callback('chordA_channel', 'chordA_channel')});
-	this._chordB_channel = new RegisteredRangedParameter(this._name + '_ChordModBChannel', {'polyobj':'chordB_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_callback('chordB_channel', 'chordB_channel')});
-	this._chordC_channel = new RegisteredRangedParameter(this._name + '_ChordModCChannel', {'polyobj':'chordC_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_callback('chordC_channel', 'chordC_channel')});
-
-	this._chord_gate = new RegisteredToggledParameter(this._name + '_ChordGate', {'polyobj':'chord_gate', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':1, 'callback':make_callback('chord_gate', 'chord_enable')});
-	this._chord_modA_gate = new RegisteredToggledParameter(this._name + '_ChordModAGate', {'polyobj':'chord_modA_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('chord_modA_gate', 'chord_modA_enable')});
-	this._chord_modB_gate = new RegisteredToggledParameter(this._name + '_ChordModBGate', {'polyobj':'chord_modB_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('chord_modB_gate', 'chord_modB_enable')});
-	this._chord_modC_gate = new RegisteredToggledParameter(this._name + '_ChordModCGate', {'polyobj':'chord_modC_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('chord_modC_gate', 'chord_modC_enable')});
-
-	this._note_chord = new RegisteredChordNotifier(this._name + '_NoteChord', {'polyobj':'note_chord', 'settingsobj':'chord_assignment', 'registry':this._parameterObjs});
-	this._modA_chord = new RegisteredChordNotifier(this._name + '_ModAChord', {'polyobj':'modA_chord', 'settingsobj':'chord_modA_assignment', 'registry':this._parameterObjs});
-	this._modB_chord = new RegisteredChordNotifier(this._name + '_ModBChord', {'polyobj':'modB_chord', 'settingsobj':'chord_modB_assignment', 'registry':this._parameterObjs});
-	this._modC_chord = new RegisteredChordNotifier(this._name + '_ModCChord', {'polyobj':'modC_chord', 'settingsobj':'chord_modC_assignment', 'registry':this._parameterObjs});
-	this.chord_assigners = function(index){return [this._note_chord, this._modA_chord, this._modB_chord, this._modC_chord][index];}.bind(this);
-
 	this._cc_enable = new RegisteredToggledParameter(this._name + '_CCEnable', {'polyobj':'cc_enable', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('cc_enable', 'cc_enable')});
-	this._cc_id = new RegisteredRangedParameter(this._name + '_CCID', {'polyobj':'cc_id', 'registry':this._parameterObjs, 'range':128, 'callback':make_callback('cc_id', 'cc_id')});
+	this._cc_id = new RegisteredRangedParameter(this._name + '_CCID', {'polyobj':'cc_id', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_id', 'cc_id')});
 	this._cc_scale_lo = new RegisteredRangedParameter(this._name + '_CCScaleLo', {'polyobj':'cc_scale_lo', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_scale_lo', 'cc_scale_lo')});
 	this._cc_scale_hi = new RegisteredRangedParameter(this._name + '_CCScaleHi', {'polyobj':'cc_scale_hi', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_scale_hi', 'remote_scale_hi')});
 	this._cc_scale_exp = new RegisteredRangedParameter(this._name + '_CCScaleExp', {'polyobj':'cc_scale_exp', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_scale_exp', 'cc_scale_exp')});
@@ -830,35 +840,48 @@ ZoneSettingsModule.prototype.select_voice = function(obj)
 		this._parameterObjs[i].relink(pad);
 	}
 
-	var assgn = pad._note_chord.getvalueof();
+	/*var assgn = pad._layers[0]._chord.getvalueof();
 	chord_assignment.message('clear');
 	for(var i in assgn)
 	{
-		chord_assignment.message('set', assgn[i], 127);
+		debug('assgn:', assgn[i], '....................');
+		if(assgn[i]>-1)
+		{
+			chord_assignment.message('set', assgn[i], 127);
+		}
 	}
-	assgn = pad._modA_chord.getvalueof();
+	var assgn = pad._layers[1]._chord.getvalueof();
 	chord_modA_assignment.message('clear');
 	for(var i in assgn)
 	{
-		chord_modA_assignment.message('set', assgn[i], 127);
+		if(assgn[i]>-1)
+		{
+			chord_modA_assignment.message('set', assgn[i], 127);
+		}
 	}
-	assgn = pad._modB_chord.getvalueof();
+	var assgn = pad._layers[2]._chord.getvalueof();
 	chord_modB_assignment.message('clear');
 	for(var i in assgn)
 	{
-		chord_modB_assignment.message('set', assgn[i], 127);
+		if(assgn[i]>-1)
+		{
+			chord_modB_assignment.message('set', assgn[i], 127);
+		}
 	}
-	assgn = pad._modC_chord.getvalueof();
+	var assgn = pad._layers[3]._chord.getvalueof();
 	chord_modC_assignment.message('clear');
 	for(var i in assgn)
 	{
-		chord_modC_assignment.message('set', assgn[i], 127);
-	}
+		if(assgn[i]>-1)
+		{
+			chord_modC_assignment.message('set', assgn[i], 127);
+		}
+	}*/
 	Scales.update_chord_display();
 	pad.update_mod_assignments();
 	mod_target_assignment.message('set', pad._mod_assigns[parseInt(mod_target.getvalueof())]);
 	this.update_device();
-	select_pad_device(pad._note_id.getvalueof());
+	select_pad_device(pad._layers[0]._id.getvalueof());
 }
 
 
@@ -1236,8 +1259,8 @@ ScalesModule.prototype.update_chord_display = function()
 {
 	///wow, I really hate this :(
 	debug('update_chord_display.......................');
-	var polyobj = ['_note_chord', '_modA_chord', '_modB_chord', '_modC_chord'][this._outputChooser._value];
-	this.chord_display = ZoneSettings.current_edit()[polyobj].getvalueof();
+	//var polyobj = ['_note_chord', '_modA_chord', '_modB_chord', '_modC_chord'][this._outputChooser._value];
+	this.chord_display = ZoneSettings.current_edit()['_layers'][this._outputChooser._value]['_chord'].getvalueof();
 	//debug('chord_display is:', this.chord_display);
 	this._update();
 }
@@ -1271,6 +1294,21 @@ RegisteredToggledParameter.prototype.relink = function(pad)
 
 
 
+RegisteredToggledParameterForLayer = function(name, args)
+{
+	RegisteredToggledParameterForLayer.super_.call(this, name, args);
+}
+
+inherits(RegisteredToggledParameterForLayer, RegisteredToggledParameter);
+
+RegisteredToggledParameterForLayer.prototype.relink = function(pad)
+{
+	//debug('relink polyobj:', this._polyobj, pad['_'+this._polyobj].getvalueof());
+	this.set_value(pad['_layers'][this._layer_number]['_'+this._polyobj].getvalueof());
+}	
+
+
+
 RegisteredRangedParameter = function(name, args)
 {
 	RegisteredRangedParameter.super_.call(this, name, args);
@@ -1278,6 +1316,7 @@ RegisteredRangedParameter = function(name, args)
 	{
 		this.register(this._registry);
 	}
+	//this.add_bound_properties(this, ['_Callback']);
 }
 
 inherits(RegisteredRangedParameter, RangedParameter);
@@ -1294,6 +1333,40 @@ RegisteredRangedParameter.prototype.relink = function(pad)
 {
 	//debug('relink polyobj:', this._polyobj, pad['_'+this._polyobj].getvalueof());
 	this.set_value(pad['_'+this._polyobj].getvalueof());
+}
+
+RegisteredRangedParameter.prototype._Callback = function(obj)
+{
+	//debug(
+	if(obj._value!=undefined)
+	{
+		if(this._javaObj)
+		{
+			debug('Callback', self._name, obj._value);
+			this._javaObj.set(obj._value, this._range);
+		}
+		else
+		{
+			debug('Callback', 'received:', self._name, obj._value, 'forwarding:', Math.round((obj._value/127)*this._range) );
+			this.receive(Math.round((obj._value/127)*this._range));
+		}
+	}
+}
+
+
+
+RegisteredRangedParameterForLayer = function(name, args)
+{
+	RegisteredRangedParameterForLayer.super_.call(this, name, args);
+}
+
+inherits(RegisteredRangedParameterForLayer, RegisteredRangedParameter);
+
+RegisteredRangedParameterForLayer.prototype.relink = function(pad)
+{
+	//debug('relink polyobj:', this._polyobj);
+	//debug('layer:', this._layer_number, pad['_layers'][this._layer_number], pad['_layers'][this._layer_number]['_'+this._polyobj].getvalueof());
+	this.set_value(pad['_layers'][this._layer_number]['_'+this._polyobj].getvalueof());
 }
 
 
@@ -1323,14 +1396,27 @@ RegisteredChordNotifier.prototype.relink = function(pad)
 {
 	//debug('relink polyobj:', this._polyobj, pad['_'+this._polyobj].getvalueof());
 	//if(!pad['_'+this._polyobj]){debug('missing target for:', this._polyobj)}
-	this.set_value(pad['_'+this._polyobj].getvalueof());
+	this.set_value(pad['_layers'][this._layer_number]['_'+this._polyobj].getvalueof());
+
+	var pad = ZoneSettings.current_edit();
+	var assgn = pad._layers[this._layer_number]._chord.getvalueof();
+	var chord_assignment = script[this._settingsobj];
+	chord_assignment.message('clear');
+	for(var i in assgn)
+	{
+		//debug('assgn:', assgn[i], '....................');
+		if(assgn[i]>-1)
+		{
+			chord_assignment.message('set', assgn[i], 127);
+		}
+	}
 }
 
 RegisteredChordNotifier.prototype.receive = function(note, value)
 {
 	var pad = ZoneSettings.current_edit();
 	var poly_edit = ZoneSettings._poly_index;
-	var polyobj = pad['_'+this._polyobj];
+	var polyobj = pad['_layers'][this._layer_number]['_'+this._polyobj];
 	var old = polyobj.getvalueof();
 	var index = old.indexOf(note);
 	if((value>0)&&(index=-1))
@@ -1359,7 +1445,7 @@ RegisteredChordNotifier.prototype.toggle = function(note, value)
 	//debug('toggle', note, value);
 	var pad = ZoneSettings.current_edit();
 	var poly_edit = ZoneSettings._poly_index;
-	var polyobj = pad['_'+this._polyobj];
+	var polyobj = pad['_layers'][this._layer_number]['_'+this._polyobj];
 	var old = polyobj.getvalueof();
 	var index = old.indexOf(note);
 	if(value>0)
@@ -1406,6 +1492,33 @@ CellClass.prototype.update_group_assignment = function()
 
 
 
+var LayerVars = ['gate', 'id', 'chord_gate', 'chord', 'chord_channel'];
+
+LayerClass = function(layer_number, patcher, name, args)
+{
+	var self = this;
+	this._patcher = patcher;
+	this._layer_number = layer_number;
+	//debug('making layer:', i, this._patcher);
+	var bound_props = [];
+	for(var i in LayerVars)
+	{
+		var script_name = LayerVars[i];
+		//debug('looking for:',  script_name);
+		this['_'+script_name] = this._patcher.subpatcher().getnamed(script_name);
+		bound_props.push('_'+script_name);
+	}
+	LayerClass.super_.call(this, name, args);
+	this.add_bound_properties(this, bound_props);
+}
+
+inherits(LayerClass, Bindable);
+
+
+var PolyVars = ['mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 
+				'remote_scale_hi', 'remote_scale_exp', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'remote_id_init_gate',
+				'breakpoint', 'breakpoint_obj', 'chord_flush'];
+
 var ZONE_ON_COLOR = colors.WHITE;
 
 ZoneClass = function(num, patcher, name, args)
@@ -1415,14 +1528,25 @@ ZoneClass = function(num, patcher, name, args)
 	this.add_bound_properties(this, ['_patcher', '_cells', '_mod_assigns', 'update_mod_assignments', 'get_cells', 'add_cell', 'remove_cell', 'clear_cells', 'reassign_color', 'update_color', 'send']);
 	this._patcher = patcher;
 	this._cells = [];
+	this._layers = [];
 	for(var i in PolyVars)
 	{
-		this['_'+PolyVars[i]] = this._patcher.getnamed(PolyVars[i]);
+		var script_name = PolyVars[i];
+		this['_'+script_name] = this._patcher.getnamed(script_name);
+	}
+	for(var i=0;i<4;i++)
+	{
+		this._layers[i] = new LayerClass(i, this._patcher.getnamed('layer_'+i), 'layer_'+i);
+		//this.['_layer_'+i+'_gate'] = this._layers[i]._gate;
+		//this.['_layer_'+i+'_id'] = this._layers[i]._id;
+		//this.['_layer_'+i+'_chord_gate'] = this._layers[i]._chord_gate;
+		//this.['_layer_'+i+'_chord'] = this._layers[i]._chord;
+		//this.['_layer_'+i+'_chord_channel'] = this._layers[i]._chord_channel;
 	}
 	this._mod_assigns = [];
 	this.update_mod_assignments();
 	this._current_color = this._color.getvalueof();
-	ZoneClass.super_.call(this, name, args)
+	ZoneClass.super_.call(this, name, args);
 }
 
 inherits(ZoneClass, Bindable);
@@ -1543,9 +1667,9 @@ ExternalChordAssigner.prototype.receive = function(args)
 			break;
 		case 'assign':
 			var number = this._chord_number._value;
-			var polyobjname = ['_note_chord', '_modA_chord', '_modB_chord', '_modC_chord'][number];
+			//var polyobjname = ['_note_chord', '_modA_chord', '_modB_chord', '_modC_chord'][number];
 			var poly_edit = ZoneSettings._poly_index;
-			var polyobj = ZoneSettings.current_edit()[polyobjname];
+			var polyobj = ZoneSettings.current_edit()[number][polyobjname];
 			var new_args = args.slice(2);
 			polyobj.message(new_args);
 			//storage.setstoredvalue('poly.'+(poly_edit)+'::'+polyobjname, current_pset, new_args);
