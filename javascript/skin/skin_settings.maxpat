@@ -9,7 +9,7 @@
 			"modernui" : 1
 		}
 ,
-		"rect" : [ 267.0, 78.0, 551.0, 801.0 ],
+		"rect" : [ 365.0, 78.0, 390.0, 797.0 ],
 		"bgcolor" : [ 0.65098, 0.666667, 0.662745, 1.0 ],
 		"editing_bgcolor" : [ 0.65098, 0.666667, 0.662745, 1.0 ],
 		"bglocked" : 0,
@@ -55,7 +55,7 @@
 					"style" : "",
 					"thickness" : 100.0,
 					"uncheckedcolor" : [ 0.376471, 0.384314, 0.4, 0.0 ],
-					"varname" : "toggle"
+					"varname" : "toggle_note"
 				}
 
 			}

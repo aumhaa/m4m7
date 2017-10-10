@@ -8,8 +8,8 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = true;
-var DEBUG = true;
+var FORCELOAD = false;
+var DEBUG = false;
 aumhaa.init(this);
 
 ROLI = require('ROLI');
@@ -53,7 +53,7 @@ var PushColors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5
 
 var Vars = ['output_port', 'input_port', 'storage_text', 'storage_menu', 'assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings'];
 
-var EditorVars = ['toggle', 'note', 'mod_A', 'mod_B', 'mod_C', 'chord_assignment', 'chord_enable', 'chord_modA_assignment', 'chord_modA_enable', 'chord_modB_assignment', 'chord_modB_enable', 'chord_modC_assignment', 'chord_modC_enable', 'chord_channel', 'chordA_channel', 'chordB_channel', 'chordC_channel', 'selected', 'color', 'Mask', 'remote_name', 'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable', 'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj'];
+var EditorVars = ['toggle_note', 'note', 'mod_A', 'mod_B', 'mod_C', 'chord_assignment', 'chord_enable', 'chord_modA_assignment', 'chord_modA_enable', 'chord_modB_assignment', 'chord_modB_enable', 'chord_modC_assignment', 'chord_modC_enable', 'chord_channel', 'chordA_channel', 'chordB_channel', 'chordC_channel', 'selected', 'color', 'Mask', 'remote_name', 'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable', 'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj'];
 
 var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
 			'DrumGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
@@ -197,12 +197,12 @@ function setup_controls()
 			{
 				//debug('sending:', value);
 				mod.Send(args[0], args[1], args[2], args[3], value);
-				var COLOR = PALETTE[value<0?0:value];
-				outlet(1, "rectangle", pos_fix[args[2]], pos_fix[args[3]], .1, .1);
-				outlet(1, "setcolor", 0, 0, 0, 1);
-				outlet(1, "setcolor", COLOR[0], COLOR[1], COLOR[2], COLOR[3]);
-				outlet(1, "fill");
-				outlet(1, "append");
+				//var COLOR = PALETTE[value<0?0:value];
+				//outlet(1, "rectangle", pos_fix[args[2]], pos_fix[args[3]], .1, .1);
+				//outlet(1, "setcolor", 0, 0, 0, 1);
+				//outlet(1, "setcolor", COLOR[0], COLOR[1], COLOR[2], COLOR[3]);
+				//outlet(1, "fill");
+				//outlet(1, "append");
 			}
 		}
 		else
@@ -573,7 +573,7 @@ var target_keys = {0:'_note_id', 1:'_note_gate', 2:'_modA_id', 3:'_modA_gate', 4
 				8:'_mask', 9:'_selected_zone', 10:'_color', 12:'_remote_enable', 13:'_remote_scale_lo', 14:'_remote_scale_hi', 15:'_remote_scale_exp', 
 				16:'_cc_enable', 17:'_cc_id', 18:'_cc_scale_lo', 19:'_cc_scale_hi', 20:'_cc_scale_exp', 25:'_chord_channel', 26:'_chord_gate', 27:'_note_chord',
 				28:'_chordA_channel', 29:'_chord_modA_gate', 30:'_modA_chord', 31:'_chordB_channel', 32:'_chord_modB_gate', 33:'_modB_chord',
-				34:'_chordC_channel', 35:'_chord_modC_gate', 36:'_modC_chord'};
+				34:'_chordC_channel', 35:'_chord_modC_gate', 37:'_toggle_note', 36:'_modC_chord'};
 
 function _mod_assign(num, val, extra)
 {
@@ -610,7 +610,7 @@ function _mod_assign(num, val, extra)
 				mod_target_assignment.message('set', pad._mod_assigns[val-1]);
 				//ModMatrix.update();
 				break;
-			case 37:
+			case 38:
 				debug('r chordAssigner', val, extra);
 				var args = arrayfromargs(arguments);
 				chordAssigner.receive(args);
@@ -739,6 +739,8 @@ function ZoneSettingsModule()
 		return func;
 	}
 
+	this._toggle_note = new RegisteredToggledParameter(this._name + '_Toggle', {'polyobj':'toggle_note', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('toggle_note', 'toggle_note')});
+
 	this._cc_enable = new RegisteredToggledParameter(this._name + '_CCEnable', {'polyobj':'cc_enable', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('cc_enable', 'cc_enable')});
 	this._cc_id = new RegisteredRangedParameter(this._name + '_CCID', {'polyobj':'cc_id', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_id', 'cc_id')});
 	this._cc_scale_lo = new RegisteredRangedParameter(this._name + '_CCScaleLo', {'polyobj':'cc_scale_lo', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_scale_lo', 'cc_scale_lo')});
@@ -839,44 +841,6 @@ ZoneSettingsModule.prototype.select_voice = function(obj)
 	{
 		this._parameterObjs[i].relink(pad);
 	}
-
-	/*var assgn = pad._layers[0]._chord.getvalueof();
-	chord_assignment.message('clear');
-	for(var i in assgn)
-	{
-		debug('assgn:', assgn[i], '....................');
-		if(assgn[i]>-1)
-		{
-			chord_assignment.message('set', assgn[i], 127);
-		}
-	}
-	var assgn = pad._layers[1]._chord.getvalueof();
-	chord_modA_assignment.message('clear');
-	for(var i in assgn)
-	{
-		if(assgn[i]>-1)
-		{
-			chord_modA_assignment.message('set', assgn[i], 127);
-		}
-	}
-	var assgn = pad._layers[2]._chord.getvalueof();
-	chord_modB_assignment.message('clear');
-	for(var i in assgn)
-	{
-		if(assgn[i]>-1)
-		{
-			chord_modB_assignment.message('set', assgn[i], 127);
-		}
-	}
-	var assgn = pad._layers[3]._chord.getvalueof();
-	chord_modC_assignment.message('clear');
-	for(var i in assgn)
-	{
-		if(assgn[i]>-1)
-		{
-			chord_modC_assignment.message('set', assgn[i], 127);
-		}
-	}*/
 	Scales.update_chord_display();
 	pad.update_mod_assignments();
 	mod_target_assignment.message('set', pad._mod_assigns[parseInt(mod_target.getvalueof())]);
@@ -1515,7 +1479,7 @@ LayerClass = function(layer_number, patcher, name, args)
 inherits(LayerClass, Bindable);
 
 
-var PolyVars = ['mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 
+var PolyVars = ['toggled_state', 'toggle_note', 'mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 
 				'remote_scale_hi', 'remote_scale_exp', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'remote_id_init_gate',
 				'breakpoint', 'breakpoint_obj', 'chord_flush'];
 
@@ -1537,11 +1501,6 @@ ZoneClass = function(num, patcher, name, args)
 	for(var i=0;i<4;i++)
 	{
 		this._layers[i] = new LayerClass(i, this._patcher.getnamed('layer_'+i), 'layer_'+i);
-		//this.['_layer_'+i+'_gate'] = this._layers[i]._gate;
-		//this.['_layer_'+i+'_id'] = this._layers[i]._id;
-		//this.['_layer_'+i+'_chord_gate'] = this._layers[i]._chord_gate;
-		//this.['_layer_'+i+'_chord'] = this._layers[i]._chord;
-		//this.['_layer_'+i+'_chord_channel'] = this._layers[i]._chord_channel;
 	}
 	this._mod_assigns = [];
 	this.update_mod_assignments();
@@ -1628,9 +1587,11 @@ ZoneClass.prototype.update_color = function()
 	var page = MainModes.current_page();
 	if((page == mainPage)&&(!mainPage._moded))
 	{
+		var toggled = Math.floor(this._toggled_state.getvalueof());
+		//debug('toggled:', toggled, this._current_color, this._current_color + toggled);
 		for(var i in this._cells)
 		{
-			this._cells[i].send(this._current_color);
+			this._cells[i].send(toggled ? colors.WHITE : this._current_color);
 		}
 	}
 }
