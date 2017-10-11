@@ -46,14 +46,17 @@ var current_device;
 var current_chords = [[], [], [], []];
 var dirty = false;
 //var storageTask;
+var inputPort = undefined;
+var outputPort = undefined;
+var Alive = false;
 
 var PRS_DLY = 300;
 var colors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
 var PushColors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
 
-var Vars = ['output_port', 'input_port', 'storage_text', 'storage_menu', 'assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings'];
+var Vars = ['input_mode', 'thru_channel', 'output_port', 'input_port', 'storage_text', 'storage_menu', 'assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings'];
 
-var EditorVars = ['toggle_note', 'note', 'mod_A', 'mod_B', 'mod_C', 'chord_assignment', 'chord_enable', 'chord_modA_assignment', 'chord_modA_enable', 'chord_modB_assignment', 'chord_modB_enable', 'chord_modC_assignment', 'chord_modC_enable', 'chord_channel', 'chordA_channel', 'chordB_channel', 'chordC_channel', 'selected', 'color', 'Mask', 'remote_name', 'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable', 'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj'];
+var EditorVars = ['settings_thispatcher', 'settings_position', 'toggle_note', 'note', 'mod_A', 'mod_B', 'mod_C', 'chord_assignment', 'chord_enable', 'chord_modA_assignment', 'chord_modA_enable', 'chord_modB_assignment', 'chord_modB_enable', 'chord_modC_assignment', 'chord_modC_enable', 'chord_channel', 'chordA_channel', 'chordB_channel', 'chordC_channel', 'selected', 'color', 'Mask', 'remote_name', 'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable', 'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj'];
 
 var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
 			'DrumGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
@@ -73,7 +76,7 @@ var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Ma
 
 function anything()
 {
-	debug('anything:', messagename, arguments);
+	debug('anything:', messagename, arrayfromargs(arguments));
 }
 
 
@@ -125,6 +128,7 @@ function initialize()
 	setup_scalesmodule();
 	setup_external_chord_assigner();
 	setup_modes();
+	setup_track_input_component();
 	setup_listeners();
 	setup_storage();
 	setup_ports();
@@ -136,7 +140,7 @@ function initialize()
 	MainModes.change_mode(0);
 	storage.message('getslotnamelist');
 	_storage_in('recall');
-
+	Alive = true;
 
 	if(SHOW_STORAGE)
 	{
@@ -432,6 +436,13 @@ function setup_modes()
 	MainModes.set_mode_buttons([KeyButtons[4], KeyButtons[5], KeyButtons[6]]);
 }
 
+function setup_track_input_component()
+{
+	output_port.message('bang');
+	script['InputSource'] = new TrackInputSourceComponent('InputSourceComponent', {'apiProperty':'current_input_routing'});
+	//debug('_apiProperty:', InputSource._apiProperty);
+}
+
 function setup_listeners()
 {
 	MainModes.add_listener(update_input_gate);
@@ -452,7 +463,7 @@ function setup_ports()
 function active_handlers()
 {
 	var args = arrayfromargs(arguments);
-	debug('active_handlers:', args);
+	//debug('active_handlers:', args);
 	var controlling = false;
 	for(var i in args)
 	{
@@ -465,6 +476,18 @@ function active_handlers()
 }
 
 
+function input(val)
+{
+	inputPort = val;
+}
+
+function output(val)
+{
+	debug('output:', val);
+	outputPort = val;
+	Alive&&InputSource.update();
+}
+
 function update_input_gate()
 {
 	var enabled = (MainModes._value == 0) && (Skin._assign_mode._value == 0);// && (controlling);
@@ -474,7 +497,7 @@ function update_input_gate()
 
 function set_input_gate(val)
 {
-	debug('set_input_gate', val);
+	//debug('set_input_gate', val);
 	if(midiInputGate)
 	{
 		midiInputGate.message('int',  val);
@@ -564,7 +587,7 @@ function update_preset()
 		//debug('updating storage...');
 		dirty = false;
 		storage.message('store', current_pset);
-		debug('storage updated.');
+		//debug('storage updated.');
 	}
 }
 
@@ -615,6 +638,11 @@ function _mod_assign(num, val, extra)
 				var args = arrayfromargs(arguments);
 				chordAssigner.receive(args);
 				break;
+			case 39:
+				var args = arrayfromargs(arguments);
+				debug('settings_position', args.slice(-4));
+				settings_position.message(args.slice(-4));
+				break;
 			case 'breakpoint':
 				var args = arrayfromargs(arguments);
 				debug('breakpoint:', args);
@@ -645,6 +673,8 @@ function Editor(val)
 	}
 	else
 	{
+		settings_thispatcher.message('window', 'getsize');
+		//debug('POS:', pos);
 		skin_settings_pcontrol.close();
 		blocks_pcontrol.close();
 	}
@@ -664,7 +694,9 @@ function settings_patcher_unlock()
 
 function settings_patcher_lock()
 {
-	skin_settings.window('size', 40, 40, 430, 590);
+	//var pos = settings_thispatcher.getsize();
+	var pos = settings_position.getvalueof();
+	skin_settings.window('size', pos[0], pos[1], pos[2], pos[3]);
 	skin_settings.window('flags', 'nominimize');
 	//blocks_patcher.window('flags', 'nozoom');
 	skin_settings.window('flags', 'noclose');
@@ -715,6 +747,7 @@ function ZoneSettingsModule()
 	this._chordA_channel = new RegisteredRangedParameterForLayer(this._name + '_ChordModAChannel', {'layer_number':1, 'polyobj':'chord_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_layer_callback(1, 'chord_channel', 'chordA_channel')});
 	this._chordB_channel = new RegisteredRangedParameterForLayer(this._name + '_ChordModBChannel', {'layer_number':2, 'polyobj':'chord_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_layer_callback(2, 'chord_channel', 'chordB_channel')});
 	this._chordC_channel = new RegisteredRangedParameterForLayer(this._name + '_ChordModCChannel', {'layer_number':3, 'polyobj':'chord_channel', 'registry':this._parameterObjs, 'range':16, 'callback':make_layer_callback(3, 'chord_channel', 'chordC_channel')});
+	this.chord_channels = function(index){return [this._chord_channel, this._chordA_channel, this._chordB_channel, this._chordC_channel][index];}.bind(this);
 
 	this._chord_gate = new RegisteredToggledParameterForLayer(this._name + '_ChordGate', {'layer_number':0, 'polyobj':'chord_gate', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':1, 'callback':make_layer_callback(0, 'chord_gate', 'chord_enable')});
 	this._chord_modA_gate = new RegisteredToggledParameterForLayer(this._name + '_ChordModAGate', {'layer_number':1, 'polyobj':'chord_gate', 'registry':this._parameterObjs, 'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':make_layer_callback(1, 'chord_gate', 'chord_modA_enable')});
@@ -789,7 +822,7 @@ ZoneSettingsModule.prototype.update_device = function()
 	//debug('update_device');
 	var pad = ZoneSettings.current_edit();
 	var remote_id = pad._remote_id.getvalueof();
-	debug('remote_id is:', remote_id);
+	//debug('remote_id is:', remote_id);
 	if((remote_id!=undefined)&&(remote_id>0))
 	{
 		finder.id = parseInt(remote_id);
@@ -806,7 +839,7 @@ ZoneSettingsModule.prototype.update_device = function()
 		remote_scale_lo.message('hidden', 0);
 		remote_scale_hi.message('hidden', 0);
 		remote_scale_exp.message('hidden', 0);
-		debug('finished displaying linked parameter');
+		//debug('finished displaying linked parameter');
 	}
 	else
 	{
@@ -814,7 +847,7 @@ ZoneSettingsModule.prototype.update_device = function()
 		remote_scale_hi.message('hidden', 1);
 		remote_scale_exp.message('hidden', 1);
 		remote_name.message('text', parameter_name_from_id(remote_id));
-		debug('finished hiding remote parameter');
+		//debug('finished hiding remote parameter');
 	}
 	breakpoint_obj.message('clear');
 	breakpoint.message(pad._breakpoint.getvalueof());
@@ -825,7 +858,7 @@ ZoneSettingsModule.prototype.update_device = function()
 ZoneSettingsModule.prototype.select_voice = function(obj)
 {
 	var num = obj._value + 1;
-	debug('ZoneSettingsModule.select_voice:', num);
+	//debug('ZoneSettingsModule.select_voice:', num);
 	if(num != this._poly_index)
 	{
 		if(DISPLAY_POLY){poly.message('wclose');}
@@ -846,6 +879,7 @@ ZoneSettingsModule.prototype.select_voice = function(obj)
 	mod_target_assignment.message('set', pad._mod_assigns[parseInt(mod_target.getvalueof())]);
 	this.update_device();
 	select_pad_device(pad._layers[0]._id.getvalueof());
+	Scales.update_program_output();
 }
 
 
@@ -962,7 +996,7 @@ inherits(ModifierMatrixModule, Bindable);
 
 ModifierMatrixModule.prototype.update = function()
 {
-	debug('ModifierMatrixModule.update');
+	//debug('ModifierMatrixModule.update');
 	//var modArray = pads[SkinSettings
 	//outlet(1, 'clear');
 	//outlet(1, 'repaint');
@@ -1183,13 +1217,13 @@ ScalesModule.prototype._update = function()
 		var width = this.width();
 		var height = this.height();
 		var offset = this._noteOffset._value + this._octaveOffset._value;
-		debug('offset is:', offset);
+		//debug('offset is:', offset);
 		var vertoffset = this._vertOffset._value;
 		var scale = this.SCALENAMES[this._scaleOffset._value];
-		debug('new scale is:', scale);
+		//debug('new scale is:', scale);
 		this._current_scale = scale;
 		var scale_len = this.SCALES[scale].length;
-		debug('chord_display:', this.chord_display);
+		//debug('chord_display:', this.chord_display);
 		for(var column=0;column<width;column++)
 		{
 			for(var row=0;row<height;row++)
@@ -1217,12 +1251,20 @@ ScalesModule.prototype.update_output_target = function(obj)
 	//this._output_target = ZoneSettings.current_edit()[this._output_object_names[obj._value]];
 	messnamed(unique+'chord_target', obj._value + 1);
 	this.update_chord_display();
+	this.update_program_output();
+}
+
+ScalesModule.prototype.update_program_output = function()
+{
+	var obj = this._outputChooser;
+	thru_channel.message(ZoneSettings.chord_channels(obj._value)._value);  //send out the current edits active chord channel to the programthru bus.
+	debug('sending to thru channel:', ZoneSettings.chord_channels(obj._value)._value);
 }
 
 ScalesModule.prototype.update_chord_display = function()
 {
 	///wow, I really hate this :(
-	debug('update_chord_display.......................');
+	//debug('update_chord_display.......................');
 	//var polyobj = ['_note_chord', '_modA_chord', '_modB_chord', '_modC_chord'][this._outputChooser._value];
 	this.chord_display = ZoneSettings.current_edit()['_layers'][this._outputChooser._value]['_chord'].getvalueof();
 	//debug('chord_display is:', this.chord_display);
@@ -1652,7 +1694,7 @@ ExternalChordAssigner.prototype.receive = function(args)
 
 DefaultPageStackBehaviourWithModeShift = function(parent_mode_object)
 {
-	debug('initializing DefaultPageStackBehaviourWithModeShift');
+	//debug('initializing DefaultPageStackBehaviourWithModeShift');
 	var self = this;
 	var parent = parent_mode_object;
 	this.press_immediate = function(button)
@@ -1690,15 +1732,15 @@ DefaultPageStackBehaviourWithModeShift = function(parent_mode_object)
 	{
 		//debug('release_delayed');
 		var mode = parent.mode_buttons.indexOf(button);
-		if(mode!=parent.current_mode())
-		{
+		//if(mode!=parent.current_mode())
+		//{
 			parent.pop_mode(mode);
 			parent.recalculate_mode();
-		}
-		else
-		{
+		//}
+		//else
+		//{
 			parent.current_page()._mode_button_value(button);
-		}
+		//}
 	}
 }
 
@@ -1725,6 +1767,67 @@ ModeSwitchablePage.prototype._mode_button_value = function(obj)
 	{
 		this._moded = new_mode;
 		this.update_mode();
+	}
+}
+
+
+
+TrackInputSourceComponent = function(name, args)
+{
+	var self = this;
+	//debug('ROOT DEVICE IS:', this._liveobj.get('name'));
+	TrackInputSourceComponent.super_.call(this, name, args);
+	this._liveobj = new LiveAPI(this._apiCallback, 'this_device');
+	this.find_root_track(this._liveobj);
+	this._liveobj.property = this._apiProperty;
+
+}
+
+inherits(TrackInputSourceComponent, ParameterClass);
+
+TrackInputSourceComponent.prototype.find_root_track = function(obj)
+{
+	if(obj.id > 0)
+	{
+		if(obj.type == 'Track')
+		{
+			return (obj);
+		}
+		else
+		{
+			obj.goto('canonical_parent');
+			this.find_root_track(obj);
+		}
+	}
+	else
+	{
+		return undefined;
+	}
+}
+
+TrackInputSourceComponent.prototype.receive = function(value)
+{
+	this.Super_().prototype.receive.call(this, value);
+	this.update();
+}
+
+TrackInputSourceComponent.prototype.update = function()
+{
+	var name = this._value.replace(/\(|\)|\"/gi, '');
+	//debug('replaced name:', name);
+	debug('TrackInputSourceComponent.update', name, name.length, outputPort, outputPort.length, name == outputPort);
+	if((name == 'All Ins')||(name == outputPort))
+	{
+		var mode = input_mode.getvalueof();
+		if(mode==2)
+		{
+			input_mode.message(0);
+		}
+		input_mode.message('enableitem', 2, 0);
+	}
+	else
+	{
+		input_mode.message('enableitem', 2, 1);
 	}
 }
 
@@ -1762,7 +1865,7 @@ function setup_device()
 
 function select_pad_device(note)
 {
-	debug('select_pad_device:', note);
+	//debug('select_pad_device:', note);
 	if(drumrack_id>0)
 	{
 		mod.Send( 'send_explicit', 'receive_device_proxy', 'set_mod_device_parent', 'id', drumrack_id);
@@ -1777,7 +1880,7 @@ function detect_drumrack()
 	{
 		finder = new LiveAPI(function(){}, 'this_device');
 	}
-	debug('detect_drumrack');
+	//debug('detect_drumrack');
 	finder.goto('this_device');
 	var this_id = parseInt(finder.id);
 	finder.goto('canonical_parent');
@@ -1790,9 +1893,9 @@ function detect_drumrack()
 		if(finder.get('class_name')=='DrumGroupDevice')
 		{
 			//drumgroup_is_present = true;
-			debug('DrumRack found!');
+			//debug('DrumRack found!');
 			drumrack_id = parseInt(finder.id);
-			debug('DrumRack id:', drumrack_id);
+			//debug('DrumRack id:', drumrack_id);
 			break;
 		}
 	}
