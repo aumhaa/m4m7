@@ -8,8 +8,8 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = false;
-var DEBUG = false;
+var FORCELOAD = true;
+var DEBUG = true;
 aumhaa.init(this);
 
 ROLI = require('ROLI');
@@ -73,6 +73,8 @@ var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Ma
 			'NoDevice':[['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']]}
 
 
+var glob = new Global('skin_global');
+
 
 function anything()
 {
@@ -114,8 +116,8 @@ function initialize()
 {
 	debug('skin init.');
 	//debug('dict keys:', cellDict.getkeys());
-	outlet(1, 'clear');
-	outlet(1, 'repaint');
+	//outlet(1, 'clear');
+	//outlet(1, 'repaint');
 	setup_tasks();
 	setup_translations();
 	setup_colors();
@@ -132,6 +134,7 @@ function initialize()
 	setup_listeners();
 	setup_storage();
 	setup_ports();
+	setup_global_link();
 	deprivatize_script_functions(this);
 	blocks_patcher_lock();
 	settings_patcher_lock();
@@ -287,6 +290,7 @@ function setup_modes()
 		Skin.assign_grid(Grid);
 		Skin._assign_mode.set_control(KeyButtons[7]);
 		mainPage.set_shift_button(AltButton);
+		mainPage.set_alt_button(ShiftButton);
 		ZoneSettings._note_gate.set_control(KeyButtons[0]);
 		ZoneSettings._modA_gate.set_control(KeyButtons[1]);
 		ZoneSettings._modB_gate.set_control(KeyButtons[2]);
@@ -314,15 +318,18 @@ function setup_modes()
 		}
 		else if(mainPage._alted)
 		{
+			debug('mainPage._alted');
+			Skin.assign_grid();
+			ZoneSettings._selected_zone.set_controls(Grid);
 		}
 		else if(mainPage._moded)
 		{
 			debug('mainPage is moded');
-			Skin.assign_grid();
-			ZoneSettings._selected_zone.set_controls(Grid);
+			Skin._transform_mode.receive(1);
 		}
 		else
 		{
+			Skin._transform_mode.receive(0);
 			ZoneSettings._selected_zone.set_controls();
 			Skin.assign_grid(Grid);
 			Skin._follow_mode.set_control();
@@ -458,6 +465,17 @@ function setup_ports()
 {
 	input_port.message('symbol', 'Ableton Push 2 Live Port');
 	output_port.message('symbol', 'IAC Bus Bus 1');
+}
+
+function setup_global_link()
+{
+	debug('setup_global_link');
+	glob.skin = script;
+	if(glob.skin_editor)
+	{
+		glob.skin_editor.debug('skin calling editor.');
+	}
+	script['SkinEditor'] = new SkinEditorComponent('SkinEditor', {'frontEnd':glob.skin_editor});
 }
 
 function active_handlers()
@@ -810,11 +828,18 @@ ZoneSettingsModule.prototype.change_color = function(obj)
 
 ZoneSettingsModule.prototype.update = function()
 {
-	
-	//mod.Send('key', 'value', 0, pads[current_edit-1]._note_gate.getvalueof());
-	//mod.Send('key', 'value', 1, pads[current_edit-1]._modA_gate.getvalueof());
-	//mod.Send('key', 'value', 2, pads[current_edit-1]._modB_gate.getvalueof());
-	//mod.Send('key', 'value', 3, pads[current_edit-1]._modC_gate.getvalueof());
+	var pad = this.current_edit();
+	for(var i in this._parameterObjs)
+	{
+		this._parameterObjs[i].relink(pad);
+	}
+	Scales.update_chord_display();
+	pad.update_mod_assignments();
+	mod_target_assignment.message('set', pad._mod_assigns[parseInt(mod_target.getvalueof())]);
+	this.update_device();
+	select_pad_device(pad._layers[0]._id.getvalueof());
+	Scales.update_program_output();
+	//debug('ZoneSettings finished updating');
 }
 
 ZoneSettingsModule.prototype.update_device = function()
@@ -862,24 +887,12 @@ ZoneSettingsModule.prototype.select_voice = function(obj)
 	if(num != this._poly_index)
 	{
 		if(DISPLAY_POLY){poly.message('wclose');}
-		//this._edit_index = num;
 		this._poly_index = num;
 		this._zone_index = num-1;
 		if(selected){selected.message('set', num);}
 	}
-	var pad = this.current_edit();
 	if(DISPLAY_POLY){poly.message('open', num);}
-
-	for(var i in this._parameterObjs)
-	{
-		this._parameterObjs[i].relink(pad);
-	}
-	Scales.update_chord_display();
-	pad.update_mod_assignments();
-	mod_target_assignment.message('set', pad._mod_assigns[parseInt(mod_target.getvalueof())]);
-	this.update_device();
-	select_pad_device(pad._layers[0]._id.getvalueof());
-	Scales.update_program_output();
+	this.update();
 }
 
 
@@ -894,7 +907,7 @@ function SkinModule()
 
 	this._assign_mode = new ToggledParameter(this._name + '_AssignMode', {'onValue':colors.RED, 'offValue':colors.GREEN, 'value':0});   // 'callback':self.update})
 	this._follow_mode = new ToggledParameter(this._name + '_FollowMode', {'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0});   // 'callback':self.update})
-
+	this._transform_mode = new ToggledParameter(this._name + '_TransformMode', {'onValue':colors.CYAN, 'offValue':colors.OFF, 'value':0});
 	SkinModule.super_.call(this, 'SkinModule');
 }
 
@@ -964,7 +977,13 @@ SkinModule.prototype._button_press = function(button)
 		{
 			//debug('send ZONE_ON_COLOR', button.group, pads[button.group]._name);
 			pads[button.group].send(ZONE_ON_COLOR);
-			if(AltButton.pressed()||this._follow_mode._value>0)
+			debug('this._transform_mode._value:', this._transform_mode._value);
+			if(this._transform_mode._value>0)
+			{
+				//debug('transforming pad');
+				SkinEditor.transform_pad(pads[button.group]);
+			}
+			else if(AltButton.pressed()||this._follow_mode._value>0)
 			{
 				if(button.group!=ZoneSettings._zone_index)
 				{
@@ -1521,6 +1540,7 @@ LayerClass = function(layer_number, patcher, name, args)
 inherits(LayerClass, Bindable);
 
 
+
 var PolyVars = ['toggled_state', 'toggle_note', 'mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 
 				'remote_scale_hi', 'remote_scale_exp', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'remote_id_init_gate',
 				'breakpoint', 'breakpoint_obj', 'chord_flush'];
@@ -1830,6 +1850,57 @@ TrackInputSourceComponent.prototype.update = function()
 		input_mode.message('enableitem', 2, 1);
 	}
 }
+
+
+SkinEditorComponent = function(name, args)
+{
+	var self = this;
+	this.add_bound_properties(this, ['update']);
+	SkinEditorComponent.super_.call(this, name, args);
+	this.update();
+}
+
+inherits(SkinEditorComponent, Bindable);
+
+SkinEditorComponent.prototype.update = function()
+{
+	if(this._frontEnd)
+	{
+		this._frontEnd.debug('SkinEditorComponent.update()');
+	}
+}
+
+SkinEditorComponent.prototype.transform_pad = function(pad)
+{
+	debug('transform_pad:', pad._name);
+	var current_edit = ZoneSettings.current_edit();
+	var function_selector_val = this._frontEnd.function_selector_val;
+	var incremental_val = this._frontEnd.incremental_val;
+	var which_value_val = this._frontEnd.which_value_val;
+	var note_val = this._frontEnd.note_val;
+	var channel_val = this._frontEnd.channel_val;
+	var next_value_val = this._frontEnd.next_value_val;
+	switch(function_selector_val)
+	{
+		case 0:
+			var val = which_value_val ? this._frontEnd.grab_and_advance_channel_value() : current_edit._chord_channel._value;
+			pad._layers[0]._chord_channel.message(val);
+			break;
+		case 1:
+			pad._layers[0]._id.message(which_value_val ? this._frontEnd.grab_and_advance_note_value() : current_edit._note._value);
+			break;
+		case 2:
+			pad._layers[0]._id.message(pad._number-1);
+			pad._layers[0]._chord_channel.message(0);
+			break;
+	}
+	//debug('values now, channel:', pad._layers[0]._chord_channel.getvalueof(), 'id:', pad._layers[0]._id.getvalueof());
+	if(pad == current_edit)
+	{
+		ZoneSettings.update();
+	}
+}
+
 
 
 

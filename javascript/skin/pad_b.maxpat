@@ -43,7 +43,7 @@
 					"numinlets" : 1,
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
-					"patching_rect" : [ 828.0, 119.0, 85.0, 22.0 ],
+					"patching_rect" : [ 805.4375, 137.0, 85.0, 22.0 ],
 					"style" : "",
 					"text" : "loadmess 150"
 				}
@@ -1668,7 +1668,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-41", 0 ],
-					"midpoints" : [ 616.020874, 166.75, 1012.5, 166.75 ],
+					"midpoints" : [ 616.020874, 105.75, 1012.5, 105.75 ],
 					"source" : [ "obj-11", 1 ]
 				}
 
