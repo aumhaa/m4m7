@@ -33,9 +33,9 @@ function initialize()
 {
 	debug('skin_editor initialize()');
 	setup_patcher();
-	setup_global_link();
 	grab_vals();
 	deprivatize_script_functions(this);
+	setup_global_link();
 }
 
 function setup_patcher()
@@ -49,11 +49,12 @@ function setup_patcher()
 
 function setup_global_link()
 {
-	debug('skin_editor setup_global_link()');
+	//debug('skin_editor setup_global_link()');
 	glob.skin_editor = script;
 	if(glob.skin)
 	{
-		glob.skin.debug('editor calling skin.');
+		//glob.skin.debug('editor calling skin.');
+		glob.skin.SkinEditor.set_frontEnd();
 	}
 }
 
@@ -116,7 +117,11 @@ function test_this()
 	//advance_value();
 }
 
-
+function freebang()
+{
+	glob.skin_editor = undefined;
+	//delete glob.skin_editor;
+}
 
 
 forceload(this);

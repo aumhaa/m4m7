@@ -471,11 +471,14 @@ function setup_global_link()
 {
 	debug('setup_global_link');
 	glob.skin = script;
+	//debug('here');
 	if(glob.skin_editor)
 	{
-		glob.skin_editor.debug('skin calling editor.');
+		//debug(glob.skin_editor);
+		//glob.skin_editor.debug('skin calling editor.');
 	}
-	script['SkinEditor'] = new SkinEditorComponent('SkinEditor', {'frontEnd':glob.skin_editor});
+	script['SkinEditor'] = new SkinEditorComponent('SkinEditor');
+	//debug('done with link');
 }
 
 function active_handlers()
@@ -1857,47 +1860,67 @@ SkinEditorComponent = function(name, args)
 	var self = this;
 	this.add_bound_properties(this, ['update']);
 	SkinEditorComponent.super_.call(this, name, args);
-	this.update();
+	this.set_frontEnd();
+	//this.update();
 }
 
 inherits(SkinEditorComponent, Bindable);
 
+SkinEditorComponent.prototype.set_frontEnd = function()
+{
+	debug('SkinEditorComponent.set_frontEnd');
+	if(glob.skin_editor)
+	{
+		//this._frontEnd = glob.skin_editor;
+		for(var i in glob.skin_editor)
+		{
+			debug(i, glob.skin_editor[i]);
+		}
+	}
+}
+
 SkinEditorComponent.prototype.update = function()
 {
-	if(this._frontEnd)
+	debug('SkinEditorComponent.update');
+	if(glob.skin_editor)
 	{
-		this._frontEnd.debug('SkinEditorComponent.update()');
+		glob.skin_editor.debug('SkinEditorComponent.update()');
 	}
+	debug('done');
 }
 
 SkinEditorComponent.prototype.transform_pad = function(pad)
 {
 	debug('transform_pad:', pad._name);
-	var current_edit = ZoneSettings.current_edit();
-	var function_selector_val = this._frontEnd.function_selector_val;
-	var incremental_val = this._frontEnd.incremental_val;
-	var which_value_val = this._frontEnd.which_value_val;
-	var note_val = this._frontEnd.note_val;
-	var channel_val = this._frontEnd.channel_val;
-	var next_value_val = this._frontEnd.next_value_val;
-	switch(function_selector_val)
+	var frontEnd = glob.skin_editor;
+	if(frontEnd)
 	{
-		case 0:
-			var val = which_value_val ? this._frontEnd.grab_and_advance_channel_value() : current_edit._chord_channel._value;
-			pad._layers[0]._chord_channel.message(val);
-			break;
-		case 1:
-			pad._layers[0]._id.message(which_value_val ? this._frontEnd.grab_and_advance_note_value() : current_edit._note._value);
-			break;
-		case 2:
-			pad._layers[0]._id.message(pad._number-1);
-			pad._layers[0]._chord_channel.message(0);
-			break;
-	}
-	//debug('values now, channel:', pad._layers[0]._chord_channel.getvalueof(), 'id:', pad._layers[0]._id.getvalueof());
-	if(pad == current_edit)
-	{
-		ZoneSettings.update();
+		var current_edit = ZoneSettings.current_edit();
+		var function_selector_val = frontEnd.function_selector_val;
+		var incremental_val = frontEnd.incremental_val;
+		var which_value_val = frontEnd.which_value_val;
+		var note_val = frontEnd.note_val;
+		var channel_val = frontEnd.channel_val;
+		var next_value_val = frontEnd.next_value_val;
+		switch(function_selector_val)
+		{
+			case 0:
+				var val = which_value_val ? frontEnd.grab_and_advance_channel_value() : current_edit._chord_channel._value;
+				pad._layers[0]._chord_channel.message(val);
+				break;
+			case 1:
+				pad._layers[0]._id.message(which_value_val ? frontEnd.grab_and_advance_note_value() : current_edit._note._value);
+				break;
+			case 2:
+				pad._layers[0]._id.message(pad._number-1);
+				pad._layers[0]._chord_channel.message(0);
+				break;
+		}
+		//debug('values now, channel:', pad._layers[0]._chord_channel.getvalueof(), 'id:', pad._layers[0]._id.getvalueof());
+		if(pad == current_edit)
+		{
+			ZoneSettings.update();
+		}
 	}
 }
 
@@ -2134,7 +2157,12 @@ function info()
 
 
 
-
+function freebang()
+{
+	debug('freebang');
+	glob.skin = undefined;
+	//delete glob.skin;
+}
 
 forceload(this);
 
