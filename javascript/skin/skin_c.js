@@ -323,7 +323,7 @@ function setup_modes()
 		{
 			debug('mainPage._alted');
 			Skin.assign_grid();
-			ZoneSettings._selected_zone.set_controls(Grid);
+			//ZoneSettings._selected_zone.set_controls(Grid);
 		}
 		else if(mainPage._moded)
 		{
@@ -333,7 +333,7 @@ function setup_modes()
 		else
 		{
 			Skin._transform_mode.receive(0);
-			ZoneSettings._selected_zone.set_controls();
+			//ZoneSettings._selected_zone.set_controls();
 			Skin.assign_grid(Grid);
 			Skin._follow_mode.set_control();
 			Skin._assign_mode.set_control(KeyButtons[7]);
@@ -380,10 +380,10 @@ function setup_modes()
 			Scales._outputChooser.set_controls();
 			Scales.assign_grid();
 			ZoneSettings._selected_zone.set_controls(Grid);
-			ZoneSettings._chord_gate.set_control(KeyButtons[0]);
-			ZoneSettings._chord_modA_gate.set_control(KeyButtons[1]);
-			ZoneSettings._chord_modB_gate.set_control(KeyButtons[2]);
-			ZoneSettings._chord_modC_gate.set_control(KeyButtons[3]);
+			ZoneSettings._main_mono.set_control(KeyButtons[0]);
+			ZoneSettings._modA_mono.set_control(KeyButtons[1]);
+			ZoneSettings._modB_mono.set_control(KeyButtons[2]);
+			ZoneSettings._modC_mono.set_control(KeyButtons[3]);
 		}
 		else if(chordPage._moded)
 		{
@@ -397,10 +397,10 @@ function setup_modes()
 			chordPage.set_alt_button(AltButton);
 			Scales._noteOffset.set_inc_dec_buttons();
 			Scales._octaveOffset.set_inc_dec_buttons();
-			ZoneSettings._chord_gate.set_control();
-			ZoneSettings._chord_modA_gate.set_control();
-			ZoneSettings._chord_modB_gate.set_control();
-			ZoneSettings._chord_modC_gate.set_control();
+			ZoneSettings._main_mono.set_control();
+			ZoneSettings._modA_mono.set_control();
+			ZoneSettings._modB_mono.set_control();
+			ZoneSettings._modC_mono.set_control();
 			Scales._outputChooser.set_controls([KeyButtons[0], KeyButtons[1], KeyButtons[2], KeyButtons[3]]);
 			Scales.assign_grid(Grid);
 			//Scales._scaleOffset.set_inc_dec_buttons();
