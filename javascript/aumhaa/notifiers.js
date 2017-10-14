@@ -1495,7 +1495,7 @@ exports.OffsetComponent = OffsetComponent;
 
 RadioComponent = function(name, minimum, maximum, initial, callback, onValue, offValue, args)
 {
-	this.add_bound_properties(this, ['receive', 'set_value', 'update_controls', '_apiCallback', '_Callback', 'set_controls', 'set_enabled']);
+	this.add_bound_properties(this, ['_min', '_max', 'receive', 'set_value', 'update_controls', '_apiCallback', '_Callback', 'set_controls', 'set_enabled']);
 	this._min = minimum!=undefined?minimum:0;
 	this._max = maximum!=undefined?maximum:1;
 	this._buttons = [];
@@ -1504,7 +1504,8 @@ RadioComponent = function(name, minimum, maximum, initial, callback, onValue, of
 	this._displayValues = [this._onValue, this._offValue];
 	this._callback = callback;
 	RadioComponent.super_.call(this, name, args);
-	this._value = initial!=undefined?initial:0;
+	this._value = initial!=undefined?initial:this._min;
+	//debug(this._name, 'initial is:', initial, this._value);
 	//if(callback!=undefined)
 	//{
 	//	this.set_target(callback);
@@ -1525,7 +1526,7 @@ RadioComponent.prototype._Callback = function(obj)
 {
 	if(obj._value)
 	{
-		var val = this._buttons.indexOf(obj);
+		var val = this._buttons.indexOf(obj) + this._min;
 		this.set_value(val);
 	}
 }
