@@ -313,3 +313,31 @@ ModComponent.prototype.wiki = function()
 }
 
 exports.ModComponent = ModComponent;
+
+
+
+ModProxyComponent = function(parent, props)
+{
+	var self = this;
+	this.debug = DEBUG_MOD ? Debug : function(){};
+	this.patch_type = 'mod_proxy';
+	this.unique = '---';
+	this.legacy = 0;
+	this.attrs = [];
+	this.modFunctions = [];
+	this.modAddresses = [];
+	this.this_device_id = 0;
+	this.stored_messages = [];
+	this.control_surface_ids = {0:true};
+	this.wiki_addy = undefined;
+	this.finder = undefined;
+	if(props!=undefined)
+	{
+		for(var i in props)
+		{
+			this[props[i]] = function(){}.bind(this);
+		}
+	}
+}
+
+exports.ModProxyComponent = ModProxyComponent;
