@@ -5,7 +5,7 @@ var script = this;
 script._name = 'skin_editor';
 
 aumhaa = require('_base');
-var FORCELOAD = false;
+var FORCELOAD = true;
 var DEBUG = true;
 aumhaa.init(this);
 
@@ -101,7 +101,8 @@ function _gui_input()
 			note_val = args[1];
 			break;
 		case 3:
-			which_val = ['zone', 'local'][args[1]];
+			which_value_val = ['zone', 'local'][args[1]];
+			//debug('which_val:', which_value_val);
 			break;
 		case 4:
 			incremental_val = args[1]>0;

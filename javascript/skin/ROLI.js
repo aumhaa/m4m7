@@ -1,3 +1,5 @@
+var autowatch = 1;
+
 var PALETTE = [];
 
 const RGB_COLOR_TABLE = [[0, 0, 0],

@@ -18,7 +18,7 @@ var miraCell = [];
 
 function init()
 {
-	//initialize();
+	initialize();
 }
 
 function initialize()
@@ -30,6 +30,7 @@ function initialize()
 	}
 	for(var i in miraCell)
 	{
+		//miraCell[i].message('activebgcolor', 0, 0, 0);
 		miraCell[i].message('bgcolor', 0, 0, 0);
 	}
 }
@@ -38,7 +39,7 @@ function anything(){}
 
 function region(num, q, val)
 {
-	debug('region:', num, q, val);
+	//debug('region:', num, q, val);
 	var sendVal = val > 0 ? [1, 1, 1] : [0, 0, 0];
 	miraCell[num].message('bgcolor', sendVal);
 }

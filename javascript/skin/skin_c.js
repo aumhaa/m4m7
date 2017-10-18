@@ -21,8 +21,10 @@ var BLOCKS_ENABLE = false;
 
 var finder;
 var mod;
+var found_mod;
 var mod_finder;
 var Mod = ModComponent.bind(script);
+var ModProxy = ModProxyComponent.bind(script);
 
 var unique = jsarguments[1];
 var ctrlr_type = jsarguments[2];
@@ -33,6 +35,9 @@ var topKeys = [];
 var topology = {};
 var cells = [];
 var pads = [];
+var miraPads = [];
+var miraKeys = [];
+var miraShift, miraAlt;
 var KEYCOLORS = [];
 var PALETTE = ROLI.PALETTE;
 var current_pset = 1;
@@ -55,7 +60,7 @@ var PRS_DLY = 300;
 var colors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
 var PushColors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
 
-var Vars = ['input_mode', 'thru_channel', 'output_port', 'input_port', 'storage_text', 'storage_menu', 'assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings'];
+var Vars = ['mira_grid', 'mira_grid_pcontrol', 'input_mode', 'thru_channel', 'output_port', 'input_port', 'storage_text', 'storage_menu', 'assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings'];
 
 var EditorVars = ['mod_sustain', 'target_device', 'target_device_reset', 'main_port', 'main_mono', 'modA_mono', 'modB_mono', 'modC_mono', 'modA_port', 'modB_port', 'modC_port', 'mod_release', 'settings_thispatcher', 'settings_position', 'toggle_note', 'chord_assignment', 'chord_enable', 'chord_modA_assignment', 'chord_modA_enable', 'chord_modB_assignment', 'chord_modB_enable', 'chord_modC_assignment', 'chord_modC_enable', 'chord_channel', 'chordA_channel', 'chordB_channel', 'chordC_channel', 'selected', 'color', 'Mask', 'remote_name', 'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj'];
 
@@ -76,6 +81,8 @@ var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Ma
 			'NoDevice':[['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']]}
 
 
+var DEFAULT_FOLLOW = 1;
+
 var glob = new Global('skin_global');
 
 
@@ -88,35 +95,13 @@ function anything()
 
 function init()
 {
-	mod = new Mod(script, 'skin', unique, false);
+	mod = new ModProxy(script, ['Send', 'SendDirect', 'restart']);
+	found_mod = new Mod(script, 'skin', unique, false);
 	//mod.debug = debug;
 	mod_finder = new LiveAPI(mod_callback, 'this_device');
-	mod.assign_api(mod_finder);
-}
+	found_mod.assign_api(mod_finder);
 
-function mod_callback(args)
-{
-	if((args[0]=='value')&&(args[1]!='bang'))
-	{
-		//debug('mod callback:', args);
-		if(args[1] in script)
-		{
-			script[args[1]].apply(script, args.slice(2));
-		}
-		if(args[1]=='disconnect')
-		{
-			mod.restart.schedule(3000);
-		}
-	}
-}
 
-function alive(val)
-{
-	initialize(val);
-}
-
-function initialize()
-{
 	debug('skin init.');
 	//debug('dict keys:', cellDict.getkeys());
 	//outlet(1, 'clear');
@@ -155,6 +140,32 @@ function initialize()
 	}
 }
 
+function mod_callback(args)
+{
+	if((args[0]=='value')&&(args[1]!='bang'))
+	{
+		debug('mod callback:', args);
+		if(args[1] in script)
+		{
+			script[args[1]].apply(script, args.slice(2));
+		}
+		if(args[1]=='disconnect')
+		{
+			mod.restart.schedule(3000);
+		}
+	}
+}
+
+function alive(val)
+{
+	initialize(val);
+}
+
+function initialize()
+{
+	mod = found_mod;
+}
+
 function setup_translations(){}
 
 function setup_colors(){}
@@ -177,6 +188,16 @@ function setup_patchers()
 	{
 		pads[i] = new ZoneClass(i+1, this.patcher.getnamed('poly').subpatcher(i), 'Zone_'+i);
 	}
+	for(var i = 0;i < 64;i++)
+	{
+		miraPads[i] = this.patcher.getnamed('mira_grid').subpatcher().getnamed('cell['+i+']');
+	}
+	for(var i = 0;i < 8;i++)
+	{
+		miraKeys[i] = this.patcher.getnamed('mira_grid').subpatcher().getnamed('key['+i+']');
+	}
+	miraShift = this.patcher.getnamed('mira_grid').subpatcher().getnamed('shift');
+	miraAlt = this.patcher.getnamed('mira_grid').subpatcher().getnamed('alt');
 	//for(var i=0;i<64;i++)
 	//{
 	//	KEYCOLORS[i] = pads[i]._color.getvalueof();
@@ -197,6 +218,12 @@ function setup_controls()
 	script['ShiftButton'] = new ButtonClass('shift', 'Shift', function(){});
 	script['AltButton'] = new ButtonClass('alt', 'Alt', function(){});
 
+	script['miraGrid'] = new MiraGridComponent('miraGrid', {'cells':miraPads, 'keys':miraKeys, 'shift':miraShift, 'alt':miraAlt});
+	script['miraGridOutput'] = miraGrid._button_press;
+	script['miraKeyOutput'] = miraGrid._key_press;
+	script['miraShiftOutput'] = miraGrid._shift_press;
+	script['miraAltOutput'] = miraGrid._alt_press;
+
 	var make_send_func = function()
 	{
 		var args = arrayfromargs(arguments);
@@ -205,14 +232,15 @@ function setup_controls()
 		{
 			var func = function(value)
 			{
-				//debug('sending:', value);
+				//debug('sending:', args[0], args[1], args[2], args[3], value);
 				mod.Send(args[0], args[1], args[2], args[3], value);
-				//var COLOR = PALETTE[value<0?0:value];
+				var COLOR = PALETTE[value<0?0:value];
 				//outlet(1, "rectangle", pos_fix[args[2]], pos_fix[args[3]], .1, .1);
 				//outlet(1, "setcolor", 0, 0, 0, 1);
 				//outlet(1, "setcolor", COLOR[0], COLOR[1], COLOR[2], COLOR[3]);
 				//outlet(1, "fill");
 				//outlet(1, "append");
+				miraPads[args[2] + (args[3]*8)].message('bgcolor', COLOR[0], COLOR[1], COLOR[2]); //COLOR[3]);
 			}
 		}
 		else
@@ -221,6 +249,8 @@ function setup_controls()
 			{
 				//debug('value:', args, value);
 				mod.Send(args[0], args[1], args[2], value);
+				var COLOR = PALETTE[value<0?0:value];
+				miraKeys[args[2]].message('bgcolor', COLOR[0], COLOR[1], COLOR[2]);
 			}
 		}
 		return func;
@@ -323,6 +353,10 @@ function setup_modes()
 		{
 			debug('mainPage._alted');
 			Skin.assign_grid();
+			ZoneSettings._main_mono.set_control(KeyButtons[0]);
+			ZoneSettings._modA_mono.set_control(KeyButtons[1]);
+			ZoneSettings._modB_mono.set_control(KeyButtons[2]);
+			ZoneSettings._modC_mono.set_control(KeyButtons[3]);
 			//ZoneSettings._selected_zone.set_controls(Grid);
 		}
 		else if(mainPage._moded)
@@ -332,6 +366,10 @@ function setup_modes()
 		}
 		else
 		{
+			ZoneSettings._main_mono.set_control();
+			ZoneSettings._modA_mono.set_control();
+			ZoneSettings._modB_mono.set_control();
+			ZoneSettings._modC_mono.set_control();
 			Skin._transform_mode.receive(0);
 			//ZoneSettings._selected_zone.set_controls();
 			Skin.assign_grid(Grid);
@@ -955,7 +993,7 @@ function SkinModule()
 	this._pressed_color = colors.WHITE;
 
 	this._assign_mode = new ToggledParameter(this._name + '_AssignMode', {'onValue':colors.RED, 'offValue':colors.GREEN, 'value':0});   // 'callback':self.update})
-	this._follow_mode = new ToggledParameter(this._name + '_FollowMode', {'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0});   // 'callback':self.update})
+	this._follow_mode = new ToggledParameter(this._name + '_FollowMode', {'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':DEFAULT_FOLLOW});   // 'callback':self.update})
 	this._transform_mode = new ToggledParameter(this._name + '_TransformMode', {'onValue':colors.CYAN, 'offValue':colors.OFF, 'value':0});
 	SkinModule.super_.call(this, 'SkinModule');
 }
@@ -1809,12 +1847,15 @@ ExternalChordAssigner.prototype.receive = function(args)
 			break;
 		case 'assign':
 			var number = this._chord_number._value;
-			//var polyobjname = ['_note_chord', '_modA_chord', '_modB_chord', '_modC_chord'][number];
-			var poly_edit = ZoneSettings._poly_index;
-			var polyobj = ZoneSettings.current_edit()[number][polyobjname];
+			var polyobj = ZoneSettings.current_edit()._layers[number]['_chord'];
 			var new_args = args.slice(2);
+			new_args.unshift(-1);
+			debug('new_args:', new_args);
+			if(new_args.length>2)
+			{
+				ZoneSettings.chord_monos(number).set_value(1);
+			}
 			polyobj.message(new_args);
-			//storage.setstoredvalue('poly.'+(poly_edit)+'::'+polyobjname, current_pset, new_args);
 			storageTask=true;
 			var name = ZoneSettings.chord_assigners(number)['_settingsobj'];
 			//debug('name:', name);
@@ -1971,6 +2012,7 @@ TrackInputSourceComponent.prototype.update = function()
 }
 
 
+
 SkinEditorComponent = function(name, args)
 {
 	var self = this;
@@ -1988,10 +2030,10 @@ SkinEditorComponent.prototype.set_frontEnd = function()
 	if(glob.skin_editor)
 	{
 		//this._frontEnd = glob.skin_editor;
-		for(var i in glob.skin_editor)
-		{
-			debug(i, glob.skin_editor[i]);
-		}
+		//for(var i in glob.skin_editor)
+		//{
+		//	debug(i, glob.skin_editor[i]);
+		//}
 	}
 }
 
@@ -2014,29 +2056,30 @@ SkinEditorComponent.prototype.transform_pad = function(pad)
 		var current_edit = ZoneSettings.current_edit();
 		var function_selector_val = frontEnd.function_selector_val;
 		var incremental_val = frontEnd.incremental_val;
-		var which_value_val = frontEnd.which_value_val == 'local';
+		var which_value_val = frontEnd.which_value_val === 'local';
 		var note_val = frontEnd.note_val;
 		var channel_val = frontEnd.channel_val;
 		var next_value_val = frontEnd.next_value_val;
-		debug('which value:', which_value_val);
+		debug('which value:', frontEnd.which_value_val, which_value_val);
 		switch(function_selector_val)
 		{
 			case 0:
 				var val = which_value_val ? frontEnd.grab_and_advance_channel_value() : ZoneSettings._chord_channel._value;
+				//debug('value is:', val);
 				pad._layers[0]._chord_channel.message(val);
 				break;
 			case 1:
 				//pad._layers[0]._id.message(which_value_val ? frontEnd.grab_and_advance_note_value() : current_edit._note._value);
 				pad._layers[0]._mono.message(which_value_val ? 0 : ZoneSettings._main_mono._value);
-				debug('here');
-				debug('chord is:', ZoneSettings._note_chord._value);
+				//debug('chord is:', ZoneSettings._note_chord._value);
 				pad._layers[0]._chord.message(which_value_val ? [-1, frontEnd.grab_and_advance_note_value()] : ZoneSettings._note_chord._value);
-				current_edit._note_chord.update();
+				ZoneSettings._note_chord.update();
 				break;
 			case 2:
 				pad._layers[0]._chord_channel.message(0);
 				pad._layers[0]._mono.message(0);
 				pad._layers[0]._chord.message([-1, pad._number-1]);
+				ZoneSettings._note_chord.update();
 				debug('reset to default');
 				break;
 		}
@@ -2046,6 +2089,83 @@ SkinEditorComponent.prototype.transform_pad = function(pad)
 			ZoneSettings.update();
 		}
 	}
+}
+
+
+
+MiraGridComponent = function(name, args)
+{
+	var self = this;
+	this.add_bound_properties(this, ['_grid', 'set_grid', 'update', '_button_press']);
+	this._grid = undefined;
+	this._cells = undefined;
+	MiraGridComponent.super_.call(this, name, args);
+}
+
+inherits(MiraGridComponent, Bindable);
+
+MiraGridComponent.prototype.set_grid = function(grid)
+{
+	debug('MiraGridComponent set_grid', grid);
+	if(this._grid instanceof GridClass)
+	{
+		this._grid.remove_listener(this._button_press);
+	}
+	this._grid = grid;
+	if(this._grid instanceof GridClass)
+	{
+		this._grid.add_listener(this._button_press);
+	}
+	this._update();
+}
+
+MiraGridComponent.prototype.update = function()
+{
+}
+
+MiraGridComponent.prototype._button_press = function()
+{
+	var args = arrayfromargs(arguments)
+	//debug('MiraGrid._button_press:', args);
+	if(args[0] == 'region')
+	{
+		grid(args[1]%8, Math.floor(args[1]/8), args[3] ? 127 : 0);
+	}
+}
+
+MiraGridComponent.prototype._key_press = function()
+{
+	var args = arrayfromargs(arguments)
+	//debug('MiraGrid._button_press:', args);
+	if(args[0] == 'region')
+	{
+		key(args[1], args[3] ? 127 : 0);
+	}
+}
+
+MiraGridComponent.prototype._shift_press = function()
+{
+	var args = arrayfromargs(arguments)
+	//debug('MiraGrid._button_press:', args);
+	if(args[0] == 'region')
+	{
+		shift(args[3] ? 127 : 0);
+	}
+}
+
+MiraGridComponent.prototype._alt_press = function()
+{
+	var args = arrayfromargs(arguments)
+	//debug('MiraGrid._button_press:', args);
+	if(args[0] == 'region')
+	{
+		alt(args[3] ? 127 : 0);
+	}
+}
+
+MiraGridComponent.prototype.send = function(x, y, val)
+{
+	this._cells[x + (y*8)].message('bgcolor', ROLI.PALLETTE[val]);
 }
 
 
