@@ -35,6 +35,7 @@ from ableton.v2.control_surface.components.background import BackgroundComponent
 from ableton.v2.control_surface.components.session_ring import SessionRingComponent
 from ableton.v2.base.event import *
 from ableton.v2.base.task import *
+from ableton.v2.control_surface.percussion_instrument_finder import PercussionInstrumentFinder, find_drum_group_device
 
 from Push.mode_behaviours import CancellableBehaviour
 #from pushbase.instrument_component import InstrumentComponent, NoteLayout
@@ -42,7 +43,7 @@ from aumhaa.v2.control_surface.components.fixed_length_recorder import FixedLeng
 from pushbase.auto_arm_component import AutoArmComponent
 from pushbase.grid_resolution import GridResolution
 from pushbase.playhead_element import PlayheadElement
-from pushbase.percussion_instrument_finder import PercussionInstrumentFinder, find_drum_group_device
+#from pushbase.percussion_instrument_finder import PercussionInstrumentFinder, find_drum_group_device
 
 from _Generic.Devices import *
 

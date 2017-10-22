@@ -13,9 +13,10 @@ from ableton.v2.base.task import *
 from ableton.v2.control_surface.components.session_recording import *
 from ableton.v2.base import task
 from ableton.v2.control_surface.control import control_list, ButtonControl, StepEncoderControl, ToggleButtonControl, control_color, PlayableControl, control_matrix
+from ableton.v2.control_surface.percussion_instrument_finder import PercussionInstrumentFinder as DrumGroupFinderComponent, find_drum_group_device
 
 from pushbase.step_seq_component import StepSeqComponent
-from pushbase.percussion_instrument_finder import PercussionInstrumentFinder as DrumGroupFinderComponent, find_drum_group_device
+#from pushbase.percussion_instrument_finder import PercussionInstrumentFinder as DrumGroupFinderComponent, find_drum_group_device
 from pushbase.note_editor_component import NoteEditorComponent
 from pushbase.loop_selector_component import LoopSelectorComponent
 from pushbase.playhead_component import PlayheadComponent

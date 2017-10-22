@@ -16,7 +16,7 @@ from ableton.v2.control_surface.components.mixer import simple_track_assigner, r
 from ableton.v2.control_surface.mode import AddLayerMode, ModesComponent, DelayMode
 from ableton.v2.control_surface.elements.physical_display import PhysicalDisplayElement
 from ableton.v2.control_surface.components.session_recording import *
-
+from ableton.v2.control_surface.percussion_instrument_finder import PercussionInstrumentFinder, find_drum_group_device
 from ableton.v2.control_surface.control import PlayableControl, ButtonControl, control_matrix
 
 from aumhaa.v2.base import initialize_debug
@@ -35,7 +35,7 @@ from aumhaa.v2.control_surface.components.device import DeviceComponent
 from pushbase.auto_arm_component import AutoArmComponent
 from pushbase.grid_resolution import GridResolution
 from pushbase.playhead_element import PlayheadElement
-from pushbase.percussion_instrument_finder import PercussionInstrumentFinder, find_drum_group_device
+#from pushbase.percussion_instrument_finder import PercussionInstrumentFinder, find_drum_group_device
 from pushbase.drum_group_component import DrumGroupComponent
 
 from Livid_Base_v2.Base import *

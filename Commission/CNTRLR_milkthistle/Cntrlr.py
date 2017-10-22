@@ -19,6 +19,7 @@ from ableton.v2.control_surface.components.session_recording import *
 from ableton.v2.control_surface.control import PlayableControl, ButtonControl, control_matrix
 from ableton.v2.control_surface.components.scroll import ScrollComponent
 from ableton.v2.control_surface.components.view_control import BasicSceneScroller
+from ableton.v2.control_surface.percussion_instrument_finder import PercussionInstrumentFinder, find_drum_group_device
 
 from aumhaa.v2.base import initialize_debug
 from aumhaa.v2.control_surface import SendLividSysexMode, MomentaryBehaviour, ExcludingMomentaryBehaviour, DelayedExcludingMomentaryBehaviour, ShiftedBehaviour, LatchingShiftedBehaviour, FlashingBehaviour
@@ -36,7 +37,7 @@ from aumhaa.v2.control_surface.components.fixed_length_recorder import FixedLeng
 from pushbase.auto_arm_component import AutoArmComponent
 from pushbase.grid_resolution import GridResolution
 from pushbase.playhead_element import PlayheadElement
-from pushbase.percussion_instrument_finder import PercussionInstrumentFinder, find_drum_group_device
+#from pushbase.percussion_instrument_finder import PercussionInstrumentFinder, find_drum_group_device
 from pushbase.drum_group_component import DrumGroupComponent
 
 debug = initialize_debug()
