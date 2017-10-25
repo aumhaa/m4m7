@@ -18,8 +18,8 @@ ROLI = require('ROLI');
 var SHOW_STORAGE = false;
 var DISPLAY_POLY = false;
 var BLOCKS_ENABLE = true;
-var GRID_ENABLE = true;
-var SEND_ON_COLOR = false;
+var GRID_ENABLE = false;
+var SUPPRESS_BLOCK = true;
 
 var finder;
 var mod;
@@ -144,10 +144,11 @@ function init()
 	_storage_in('recall');
 	Alive = true;
 	setup_mira_interface();
+	_update_topology();
 	if(SHOW_STORAGE)
 	{
 		storage.message('clientwindow');
-		//storage.message('storagewindow');
+		storage.message('storagewindow');
 	}
 }
 
@@ -263,10 +264,11 @@ function setup_controls()
 		{
 			var func = function(value, suppress_block)
 			{
+				//debug('send:', value, suppress_block, !suppress_block);
 				//debug('sending:', args[0], args[1], args[2], args[3], value);
 				mod.Send(args[0], args[1], args[2], args[3], value);
 				var COLOR = PALETTE[value<0?0:value];
-				if(suppress_block)
+				if(!suppress_block)
 				{
 					outlet(1, "rectangle", pos_fix[args[2]], pos_fix[args[3]], .1, .1);
 					outlet(1, "setcolor", 0, 0, 0, 1);
@@ -836,7 +838,6 @@ function Editor(val)
 	else
 	{
 		settings_thispatcher.message('window', 'getsize');
-		//debug('POS:', pos);
 		skin_settings_pcontrol.close();
 		blocks_pcontrol.close();
 		mira_grid_pcontrol.close();
@@ -859,7 +860,8 @@ function settings_patcher_lock()
 {
 	//var pos = settings_thispatcher.getsize();
 	var pos = settings_position.getvalueof();
-	var pos = [300, 40, 750, 750];
+	//debug('LOCK:', pos);
+	//var pos = [300, 40, 750, 750];
 	skin_settings.window('size', pos[0], pos[1], pos[2], pos[3]);
 	skin_settings.window('flags', 'nominimize');
 	//blocks_patcher.window('flags', 'nozoom');
@@ -1150,7 +1152,10 @@ function SkinModule()
 	this._follow_mode = new ToggledParameter(this._name + '_FollowMode', {'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':DEFAULT_FOLLOW, 'callback':function(){follow_mode.message('set', this._follow_mode._value);}.bind(this)});   // 'callback':self.update})
 	this._transform_mode = new ToggledParameter(this._name + '_TransformMode', {'onValue':colors.CYAN, 'offValue':colors.OFF, 'value':0});
 	this._modify_mode = new ToggledParameter(this._name + '_ModifyMode', {'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':function(){modify_mode.message('set', this._modify_mode._value);}.bind(this)});   // 'callback':self.update})
-
+	//initialize the gui in case settings have changed on frontend
+	this._assign_mode._callback();
+	this._follow_mode._callback();
+	this._modify_mode._callback();
 	SkinModule.super_.call(this, 'SkinModule');
 }
 
@@ -1158,16 +1163,6 @@ inherits(SkinModule, Bindable);
 
 SkinModule.prototype.update = function()
 {
-	//debug('SkinModule:', 'update');
-	/*outlet(1, 'clear');
-	outlet(1, 'repaint');
-	for(var i=0;i<8;i++)
-	{
-		for(var j=0;j<8;j++)
-		{
-			cells[i][j].send(KEYCOLORS[cells[i][j].group-1]);
-		}
-	}*/
 	for(var i in pads)
 	{
 		pads[i].update_color();
@@ -1205,7 +1200,6 @@ SkinModule.prototype._button_press = function(button)
 			{
 				for(var i in pads)
 				{
-					//debug('removing:', i);
 					pads[i].remove_cell(button);
 				}
 				pads[ZoneSettings._zone_index].add_cell(button);
@@ -1218,12 +1212,9 @@ SkinModule.prototype._button_press = function(button)
 		}
 		else
 		{
-			//debug('send ZONE_ON_COLOR', button.group, pads[button.group]._name);
-			pads[button.group].send(ZONE_ON_COLOR, SEND_ON_COLOR);
-			//debug('this._transform_mode._value:', this._transform_mode._value);
+			pads[button.group].send(ZONE_ON_COLOR, SUPPRESS_BLOCK);
 			if(this._transform_mode._value>0)
 			{
-				//debug('transforming pad');
 				SkinEditor.transform_pad(pads[button.group]);
 			}
 			else if(AltButton.pressed()||this._follow_mode._value>0)
@@ -1235,9 +1226,7 @@ SkinModule.prototype._button_press = function(button)
 	}
 	else
 	{
-		//debug('button_unpress:', button._name, pads[button.group]._color);
-		//debug('update_color');
-		pads[button.group].update_color(SEND_ON_COLOR);
+		pads[button.group].update_color(SUPPRESS_BLOCK);
 	}
 }
 
@@ -1940,7 +1929,7 @@ CellClass = function(x, y, identifier, name, _send, args)
 
 inherits(CellClass, ButtonClass);
 
-CellClass.prototype.update_color = function(supress_mira)
+CellClass.prototype.update_color = function(supress_block)
 {
 	//this needs to be moved to the Pad instead.
 	//this.send(KEYCOLORS[this.group]);
@@ -1954,9 +1943,12 @@ CellClass.prototype.update_group_assignment = function()
 	//pads[cellDict.get(this._name)].add_cell(this);
 }
 
-CellClass.prototype.send_press_feedback = function(val)
+CellClass.prototype.send = function(value, suppress_block, flash)
 {
-	mod.Send(args[0], args[1], args[2], args[3], value);
+	//midiBuffer[this._type][this._id] = [this, value];
+	this.flash(flash);
+	this._last_sent_value = value;
+	this._send(value, suppress_block);
 }
 
 
@@ -2103,13 +2095,13 @@ ZoneClass.prototype.update_color = function(suppress_block)
 	}
 }
 
-ZoneClass.prototype.send = function(val)
+ZoneClass.prototype.send = function(val, suppress_block)
 {
 	//debug(this._name, 'send', val, this._cells.length);
 	for(var i in this._cells)
 	{
 		//debug(this._cells[i]._name, val);
-		this._cells[i].send(val);
+		this._cells[i].send(val, suppress_block);
 	}
 }
 
@@ -2601,10 +2593,10 @@ function _update_topology()
 	topology = dict_to_jsobj(topDict);
 	if(blocks_patcher)
 	{
-		var a = (blocks_patcher.subpatcher().getnamed('block1_scene').getvalueof())-1;
-		var b = (blocks_patcher.subpatcher().getnamed('block2_scene').getvalueof())-1;
-		var c = (blocks_patcher.subpatcher().getnamed('block3_scene').getvalueof())-1;
-		var d = (blocks_patcher.subpatcher().getnamed('block4_scene').getvalueof())-1;
+		var a = (blocks_patcher.subpatcher().getnamed('block1_scene').getvalueof());
+		var b = (blocks_patcher.subpatcher().getnamed('block2_scene').getvalueof());
+		var c = (blocks_patcher.subpatcher().getnamed('block3_scene').getvalueof());
+		var d = (blocks_patcher.subpatcher().getnamed('block4_scene').getvalueof());
 		blocks_patcher.subpatcher().getnamed('blocks_pad').message('scene', a, 1, b, 2, c, 3, d, 4);
 		debug('sending scene:', a, 1, b, 2, c, 3, d, 4);
 	}
