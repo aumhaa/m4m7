@@ -9,7 +9,7 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = false;
+var FORCELOAD = true;
 var DEBUG = false;
 aumhaa.init(this);
 
@@ -861,6 +861,8 @@ function settings_patcher_lock()
 	//var pos = settings_thispatcher.getsize();
 	var pos = settings_position.getvalueof();
 	//debug('LOCK:', pos);
+	pos[2] = pos[0] + 450;
+	pos[3] = pos[1] + 700;
 	//var pos = [300, 40, 750, 750];
 	skin_settings.window('size', pos[0], pos[1], pos[2], pos[3]);
 	skin_settings.window('flags', 'nominimize');
