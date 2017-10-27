@@ -9,7 +9,7 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = true;
+var FORCELOAD = false;
 var DEBUG = false;
 aumhaa.init(this);
 
@@ -72,7 +72,8 @@ var Vars = ['main_note_input', 'input_mode', 'thru_channel', 'output_port', 'inp
 var EditorVars = ['selected_layer_tab', 'mod_sustain', 'target_device', 'target_device_reset', 'main_port', 'main_mono', 'main_clear', 'mod_release', 'settings_thispatcher',
 			'settings_position', 'toggle_note', 'chord_assignment', 'chord_enable', 'chord_channel', 'selected', 'color', 'Mask', 'remote_name', 
 			'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp',
-			'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj', 'assign_mode', 'follow_mode', 'modify_mode', 'panel[0]', 'panel[1]', 'panel[2]', 'panel[3]', 'panel[4]'];
+			'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj', 'assign_mode', 'follow_mode', 'modify_mode', 'panel[0]', 'panel[1]', 'panel[2]', 
+			'panel[3]', 'panel[4]', 'panel[5]', 'cc_port', 'modify_target', 'kslider_offset_display', 'thru'];
 
 //'note', 'mod_A', 'mod_B', 'mod_C', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable', 
 
@@ -136,14 +137,14 @@ function init()
 	deprivatize_script_functions(this);
 	blocks_patcher_lock();
 	settings_patcher_lock();
-	update_remote_targets();
+	Device.update_remote_targets();
 	ZoneSettings.select_voice({'_value':1});
 	MainModes.push_mode(0);
 	MainModes.change_mode(0);
 	storage.message('getslotnamelist');
 	_storage_in('recall');
 	Alive = true;
-	setup_mira_interface();
+	//setup_mira_interface();
 	_update_topology();
 	if(SHOW_STORAGE)
 	{
@@ -320,6 +321,11 @@ function setup_controls()
 	script['_alt'] = function(val){AltButton.receive(val);}
 }
 
+function setup_device()
+{
+	script['Device'] = new DeviceModule('DeviceComponent', {'finder':new LiveAPI(function(){}, 'this_device')});
+}
+
 function setup_tasks()
 {
 	script['tasks'] = new TaskServer(script, 150);
@@ -359,13 +365,12 @@ function setup_modes()
 	{
 		debug('mainPage entered');
 		Skin.assign_grid(Grid);
-		Skin._assign_mode.set_control(KeyButtons[7]);
+		Skin._assign_mode.set_control(KeyButtons[0]);
+		Skin._modify_mode.set_control(KeyButtons[1]);
+		Skin._follow_mode.set_control(KeyButtons[2]);
 		mainPage.set_shift_button(AltButton);
 		mainPage.set_alt_button(ShiftButton);
-		ZoneSettings._chord_gate.set_control(KeyButtons[0]);
-		ZoneSettings._chord_modA_gate.set_control(KeyButtons[1]);
-		ZoneSettings._chord_modB_gate.set_control(KeyButtons[2]);
-		ZoneSettings._chord_modC_gate.set_control(KeyButtons[3]);
+
 	}
 	mainPage.exit_mode = function()
 	{
@@ -376,6 +381,7 @@ function setup_modes()
 		ZoneSettings._chord_modA_gate.set_control();
 		ZoneSettings._chord_modB_gate.set_control();
 		ZoneSettings._chord_modC_gate.set_control();
+		mainPage.set_alt_button();
 		mainPage.set_shift_button();
 		debug('mainPage exited');
 	}
@@ -385,7 +391,8 @@ function setup_modes()
 		if(mainPage._shifted)
 		{
 			Skin._assign_mode.set_control();
-			Skin._follow_mode.set_control(KeyButtons[7]);
+			Skin._follow_mode.set_control();
+			Skin._modify_mode.set_control();
 			ZoneSettings._main_mono.set_control(KeyButtons[0]);
 			ZoneSettings._modA_mono.set_control(KeyButtons[1]);
 			ZoneSettings._modB_mono.set_control(KeyButtons[2]);
@@ -395,7 +402,14 @@ function setup_modes()
 		{
 			debug('mainPage._alted');
 			Skin.assign_grid();
-			//ZoneSettings._selected_zone.set_controls(Grid);
+			Skin._assign_mode.set_control();
+			Skin._follow_mode.set_control();
+			Skin._modify_mode.set_control();
+			ZoneSettings._chord_gate.set_control(KeyButtons[0]);
+			ZoneSettings._chord_modA_gate.set_control(KeyButtons[1]);
+			ZoneSettings._chord_modB_gate.set_control(KeyButtons[2]);
+			ZoneSettings._chord_modC_gate.set_control(KeyButtons[3]);
+			ZoneSettings._selected_zone.set_controls(Grid);
 		}
 		else if(mainPage._moded)
 		{
@@ -404,15 +418,20 @@ function setup_modes()
 		}
 		else
 		{
+			ZoneSettings._chord_gate.set_control();
+			ZoneSettings._chord_modA_gate.set_control();
+			ZoneSettings._chord_modB_gate.set_control();
+			ZoneSettings._chord_modC_gate.set_control();
 			ZoneSettings._main_mono.set_control();
 			ZoneSettings._modA_mono.set_control();
 			ZoneSettings._modB_mono.set_control();
 			ZoneSettings._modC_mono.set_control();
 			Skin._transform_mode.receive(0);
-			//ZoneSettings._selected_zone.set_controls();
+			ZoneSettings._selected_zone.set_controls();
 			Skin.assign_grid(Grid);
-			Skin._follow_mode.set_control();
-			Skin._assign_mode.set_control(KeyButtons[7]);
+			Skin._assign_mode.set_control(KeyButtons[0]);
+			Skin._modify_mode.set_control(KeyButtons[1]);
+			Skin._follow_mode.set_control(KeyButtons[2]);
 		}
 	}
 
@@ -630,23 +649,31 @@ function _storage_in()
 	{
 		case 'recall':
 			debug('recall:', args);
-			current_pset = args[1];
-			ZoneSettings._pset = current_pset;
-			for(var i in pads)
+			if(!args[1])
 			{
-				pads[i].clear_cells();
+				storage.message('recall', 1);
 			}
-			for(var i in raw_cells)
+			else
 			{
-				raw_cells[i].update_group_assignment();
+				args[1] = args[1] ? args[1] : 1;
+				current_pset = args[1];
+				ZoneSettings._pset = current_pset;
+				for(var i in pads)
+				{
+					pads[i].clear_cells();
+				}
+				for(var i in raw_cells)
+				{
+					raw_cells[i].update_group_assignment();
+				}
+				for(var i in pads)
+				{
+					pads[i].reassign_color();
+				}
+				storage_menu.message('set', current_pset-1);
+				ZoneSettings.select_voice({'_value':ZoneSettings._poly_index});
+				ModMatrix.update();
 			}
-			for(var i in pads)
-			{
-				pads[i].reassign_color();
-			}
-			storage_menu.message('set', current_pset-1);
-			ZoneSettings.select_voice({'_value':ZoneSettings._poly_index});
-			ModMatrix.update();
 			break;
 		case 'text':
 			args.shift();
@@ -707,7 +734,7 @@ function update_preset()
 
 var target_keys = {2:'_toggle_note', 4:'_mod_sustain', 5:'_mask', 6:'_selected_zone', 7:'_color', 9:'_remote_enable', 10:'_remote_scale_lo', 11:'_remote_scale_hi', 12:'_remote_scale_exp', 
 				13:'_cc_enable', 14:'_cc_id', 15:'_cc_scale_lo', 16:'_cc_scale_hi', 17:'_cc_scale_exp', 21: '_activeLayer', 22:'_editor_channel', 23:'_editor_gate', 24:'_editor_chord',
-				27:'_editor_port', 25:'_editor_mono', 26:'_editor_clear'};
+				27:'_editor_port', 25:'_editor_mono', 26:'_editor_clear', 41:'_modify_target'};
 				//0:'_note_id', 1:'_note_gate', 2:'_modA_id', 3:'_modA_gate', 4:'_modB_id', 5:'_modB_gate', 6:'_modC_id', 7:'_modC_gate',
 
 
@@ -743,23 +770,23 @@ function _mod_assign(num, val, extra)
 				break;
 			case 8:
 				debug('set_remote_id');
-				select_parameter(current_edit);
-				remote_name.message('set', parameter_name_from_id(pad._remote_id.getvalueof()));
+				Device.select_parameter(current_edit);
+				remote_name.message('set', Device.parameter_name_from_id(pad._remote_id.getvalueof()));
 				break;
 			case 18:
 				debug('modifier_target_assignment:', val);
-				pad._modifier_assignments.message('list', mod_target.getvalueof()-1, 0, val);
+				pad._modifier_assignments.message('list', mod_target.getvalueof(), 0, val);
 				ModMatrix.update();
 				break;
 			case 19:
 				debug('modifier_target:', val);
 				pad.update_mod_assignments();
-				mod_target_assignment.message('set', pad._mod_assigns[val-1]);
+				mod_target_assignment.message('set', pad._mod_assigns[val]);
 				//ModMatrix.update();
 				break;
 			case 20:
 				debug('clear_remote_id');
-				clear_parameter(current_edit);
+				Device.clear_parameter(current_edit);
 				break;
 			case 28:
 				debug('set_parameter0');
@@ -787,12 +814,12 @@ function _mod_assign(num, val, extra)
 				break;
 			case 36:
 				debug('set_device_target');
-				//select_parameter(current_edit);
-				//remote_name.message('text', parameter_name_from_id(pad._remote_id.getvalueof()));
+				//Device.select_parameter(current_edit);
+				//remote_name.message('text', Device.parameter_name_from_id(pad._remote_id.getvalueof()));
 				break;
 			case 37:
 				debug('clear_device_target');
-				//clear_parameter(current_edit);
+				//Device.clear_parameter(current_edit);
 				break;
 			case 38:
 				debug('assign_mode');
@@ -805,6 +832,13 @@ function _mod_assign(num, val, extra)
 			case 40:
 				debug('modify_mode');
 				Skin._modify_mode.receive(val);
+				break;
+			case 42:
+				debug('cc_port');
+				break;
+			case 43:
+				debug('kslider_thru');
+				Scales._thruMode.receive(val);
 				break;
 			case 'breakpoint':
 				var args = arrayfromargs(arguments);
@@ -1000,6 +1034,7 @@ function ZoneSettingsModule()
 	}
 	this._color = new RegisteredRangedParameter(this._name + '_Color', {'polyobj':'color', 'registry':this._parameterObjs, 'range':128, 'callback':color_callback_full});
 
+	this._modify_target = new RadioComponent(this._name + '_ModifyTarget', 0, 4, 0, function(){}, color.BLUE, color.OFF, {'value':script['modify_target'].getvalueof()});
 	//this._selected_zone = new ParameterClass(this._name + '_SelectedZone', {'callback':this.select_voice, 'value':1});
 	this._selected_zone = new ColoredRadioComponent(this._name + '_SelectedZone', 1, 64, 1, this.select_voice, color.RED, color.CYAN, {'value':1});
 
@@ -1016,7 +1051,7 @@ ZoneSettingsModule.prototype.update_background_color = function()
 {
 	var value = this._color._value;
 	var COLOR = PALETTE[value<0?0:value];
-	for(var i = 0;i<5;i++)
+	for(var i = 0;i<6;i++)
 	{
 		script['panel['+i+']'].message('bgcolor', COLOR[0], COLOR[1], COLOR[2], Math.max(COLOR[3], .2));
 	}
@@ -1035,11 +1070,13 @@ ZoneSettingsModule.prototype.update = function()
 	mod_target_assignment.message('set', pad._mod_assigns[parseInt(mod_target.getvalueof())]);
 	this.update_device();
 	//select_pad_device(pad._layers[0]._id.getvalueof());
+	//Device.select_pad_device(pad._layers[0]._id.getvalueof());
 	Scales.update_program_output();
 	this.update_background_color();
 	//debug('ZoneSettings finished updating');
 }
 
+//this needs to be moved into DeviceModule?
 ZoneSettingsModule.prototype.update_device = function()
 {
 	//debug('update_device');
@@ -1048,17 +1085,17 @@ ZoneSettingsModule.prototype.update_device = function()
 	//debug('remote_id is:', remote_id);
 	if((remote_id!=undefined)&&(remote_id>0))
 	{
-		finder.id = parseInt(remote_id);
-		var lo = finder.get('min');
-		var hi = finder.get('max');
-		remote_scale_lo.message('minimum', lo);
-		remote_scale_lo.message('maximum', hi-1);
+		Device._finder.id = parseInt(remote_id);
+		//var lo = Device._finder.get('min');
+		//var hi = Device._finder.get('max');
+		//remote_scale_lo.message('minimum', lo);
+		//remote_scale_lo.message('maximum', hi-1);
 		remote_scale_lo.message('set', pad._remote_scale_lo.getvalueof());
-		remote_scale_hi.message('minimum', lo+1);
-		remote_scale_hi.message('maximum', hi);
+		//remote_scale_hi.message('minimum', lo+1);
+		//remote_scale_hi.message('maximum', hi);
 		remote_scale_hi.message('set', pad._remote_scale_hi.getvalueof());
 		remote_scale_exp.message('set', pad._remote_scale_exp.getvalueof());
-		remote_name.message('set', parameter_name_from_id(remote_id));
+		remote_name.message('set', Device.parameter_name_from_id(remote_id));
 		remote_scale_lo.message('hidden', 0);
 		remote_scale_hi.message('hidden', 0);
 		remote_scale_exp.message('hidden', 0);
@@ -1069,7 +1106,7 @@ ZoneSettingsModule.prototype.update_device = function()
 		remote_scale_lo.message('hidden', 1);
 		remote_scale_hi.message('hidden', 1);
 		remote_scale_exp.message('hidden', 1);
-		remote_name.message('set', parameter_name_from_id(remote_id));
+		remote_name.message('set', Device.parameter_name_from_id(remote_id));
 		//debug('finished hiding remote parameter');
 	}
 	breakpoint_obj.message('clear');
@@ -1151,9 +1188,9 @@ function SkinModule()
 	this._pressed_color = colors.WHITE;
 
 	this._assign_mode = new ToggledParameter(this._name + '_AssignMode', {'onValue':colors.RED, 'offValue':colors.GREEN, 'value':0, 'callback':function(){assign_mode.message('set', this._assign_mode._value);}.bind(this)});   // 'callback':self.update})
-	this._follow_mode = new ToggledParameter(this._name + '_FollowMode', {'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':DEFAULT_FOLLOW, 'callback':function(){follow_mode.message('set', this._follow_mode._value);}.bind(this)});   // 'callback':self.update})
+	this._follow_mode = new ToggledParameter(this._name + '_FollowMode', {'onValue':colors.YELLOW, 'offValue':colors.WHITE, 'value':DEFAULT_FOLLOW, 'callback':function(){follow_mode.message('set', this._follow_mode._value);}.bind(this)});   // 'callback':self.update})
 	this._transform_mode = new ToggledParameter(this._name + '_TransformMode', {'onValue':colors.CYAN, 'offValue':colors.OFF, 'value':0});
-	this._modify_mode = new ToggledParameter(this._name + '_ModifyMode', {'onValue':colors.YELLOW, 'offValue':colors.OFF, 'value':0, 'callback':function(){modify_mode.message('set', this._modify_mode._value);}.bind(this)});   // 'callback':self.update})
+	this._modify_mode = new ToggledParameter(this._name + '_ModifyMode', {'onValue':colors.MAGENTA, 'offValue':colors.CYAN, 'value':0, 'callback':function(){modify_mode.message('set', this._modify_mode._value);}.bind(this)});   // 'callback':self.update})
 	//initialize the gui in case settings have changed on frontend
 	this._assign_mode._callback();
 	this._follow_mode._callback();
@@ -1195,7 +1232,14 @@ SkinModule.prototype._button_press = function(button)
 {
 	if(button.pressed())
 	{
-		if(this._assign_mode._value>0)
+		if(this._modify_mode._value>0)
+		{
+			var pad = ZoneSettings.current_edit();
+			pad._modifier_assignments.message(button.group, 0, ZoneSettings._modify_target._value);
+			debug('to matrixctl:', button.group, 0, ZoneSettings._modify_target._value);
+			pad.update_mod_assignments();
+		}
+		else if(this._assign_mode._value>0)
 		{
 			//debug('assigning...', button._name, ZoneSettings._zone_index);
 			if(button.group!=ZoneSettings._zone_index)
@@ -1397,6 +1441,7 @@ ScalesModule = function(parameters)
 	this._octaveOffset = new OffsetComponent(this._name + '_Octave_Offset', 0, 119, 0, self._update.bind(this), colors.YELLOW, colors.OFF, 12);
 	this._outputChooser = new RadioComponent(this._name + '_Output_Chooser', 0, 3, 0, self.update_output_target.bind(this), colors.RED, colors.MAGENTA);
 	this._assignMode = new ToggledParameter(this._name + '_AssignMode', {'onValue':colors.MAGENTA, 'offValue':colors.WHITE, 'value':0});
+	this._thruMode = new ToggledParameter(this._name + '_ThruMode', {'onValue':colors.BLUE, 'offValue':colors.CYAN, 'value':script['thru'].getvalueof()});
 
 	ScalesModule.super_.call(this, 'ScalesModule');
 }
@@ -1491,7 +1536,7 @@ ScalesModule.prototype._update = function()
 					this._noteMap[note%127].push(button);
 					//debug(button._name, 'translation:', button._translation, 'eval:', ((button._translation in this.chord_display)*4), 'scale_color:', ((note%12) in this.WHITEKEYS) + (((note_pos%scale_len)==0)*2) + ((this.chord_display.indexOf(button._translation)>-1)*4));
 					button.scale_color = this.KEYCOLORS[((note%12) in this.WHITEKEYS) + (((note_pos%scale_len)==0)*2) + ((this.chord_display.indexOf(button._translation)>-1)*4)];  // + (button._chord*4)
-					button.send(button.scale_color);
+					button.send(button.scale_color, true);
 				}
 			}
 		}
@@ -1520,9 +1565,7 @@ ScalesModule.prototype.update_program_output = function()
 
 ScalesModule.prototype.update_chord_display = function()
 {
-	///wow, I really hate this :(
 	//debug('update_chord_display.......................');
-	//var polyobj = ['_note_chord', '_modA_chord', '_modB_chord', '_modC_chord'][this._outputChooser._value];
 	this.chord_display = ZoneSettings.current_edit()['_layers'][this._outputChooser._value]['_chord'].getvalueof();
 	//debug('chord_display is:', this.chord_display);
 	this._update();
@@ -2460,20 +2503,19 @@ MiraGridComponent.prototype.send = function(x, y, val)
 
 
 
-DeviceModule = function()
+DeviceModule = function(name, args)
 {
 	var self = this;
-	this.add_bound_properties(this, ['update']);
-	DeviceModule.super_.call(this, 'DeviceModule');
+	this._drumrack_id = 0;
+	this.add_bound_properties(this, ['update', 'setup_device', 'select_pad_device', 'detect_drumrack', 'select_parameter', 'clear_parameter', 'parameter_name_from_id', 'update_remote_targets']);
+	DeviceModule.super_.call(this, name, args);
 }
 
 inherits(DeviceModule, Bindable);
 
 DeviceModule.prototype.update = function(){}
 
-///Device Stuff, needs to go in its own Prototype
-
-function setup_device()
+DeviceModule.prototype.setup_device = function()
 {
 	mod.Send('receive_device', 'set_mod_device_type', 'Skin');
 	mod.Send( 'receive_device', 'set_number_params', 16);
@@ -2487,97 +2529,75 @@ function setup_device()
 	}
 	//debug('current parameters:', mod.Send('receive_device_proxy', 'current_parameters'));
 	mod.Send('code_encoders_to_device', 'value', 1);
-	detect_drumrack();
+	this.detect_drumrack();
 }
 
-function select_pad_device(note)
+DeviceModule.prototype.select_pad_device = function(note)
 {
 	//debug('select_pad_device:', note);
-	if(drumrack_id>0)
+	if(this._drumrack_id>0)
 	{
 		mod.Send( 'send_explicit', 'receive_device_proxy', 'set_mod_device_parent', 'id', drumrack_id);
 		mod.Send( 'receive_device_proxy', 'set_mod_drum_pad', note);
 	}
-	//update_bank();
 }
 
-function detect_drumrack()
+DeviceModule.prototype.detect_drumrack = function()
 {
-	if(!finder)
-	{
-		finder = new LiveAPI(function(){}, 'this_device');
-	}
-	//debug('detect_drumrack');
-	finder.goto('this_device');
+	this._finder.goto('this_device');
 	var this_id = parseInt(finder.id);
-	finder.goto('canonical_parent');
-	var track_id = parseInt(finder.id);
+	this._finder.goto('canonical_parent');
+	var track_id = parseInt(this._finder.id);
 	var found_devices = finder.getcount('devices');
 	for (var i=0;i<found_devices;i++)
 	{
-		finder.id = track_id;
-		finder.goto('devices', i);
+		this._finder.id = track_id;
+		this._finder.goto('devices', i);
 		if(finder.get('class_name')=='DrumGroupDevice')
 		{
-			//drumgroup_is_present = true;
-			//debug('DrumRack found!');
-			drumrack_id = parseInt(finder.id);
+			this._drumrack_id = parseInt(finder.id);
 			//debug('DrumRack id:', drumrack_id);
 			break;
 		}
 	}
 }
 
-function select_parameter(poly_num)
+DeviceModule.prototype.select_parameter = function(poly_num)
 {
-	finder.goto('live_set', 'view', 'selected_parameter');
-	pads[poly_num-1]._remote_id.message(parseInt(finder.id));
-	//storage.setstoredvalue('poly.'+(poly_num)+'::remote_id', current_pset, parseInt(finder.id));
-	pads[poly_num-1]._remote_scale_lo.message(parseInt(finder.get('min')));
-	//storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_lo', current_pset, parseInt(finder.get('min')));
-	pads[poly_num-1]._remote_scale_hi.message(parseInt(finder.get('max')));
-	//storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_hi', current_pset, parseInt(finder.get('max')));
+	this._finder.goto('live_set', 'view', 'selected_parameter');
+	pads[poly_num-1]._remote_id.message(parseInt(this._finder.id));
+	pads[poly_num-1]._remote_scale_lo.message(parseInt(this._finder.get('min')));
+	pads[poly_num-1]._remote_scale_hi.message(parseInt(this._finder.get('max')));
 	storageTask=true;
 	ZoneSettings.update_device();
 }
 
-function clear_parameter(poly_num)
+DeviceModule.prototype.clear_parameter = function(poly_num)
 {
 	pads[poly_num-1]._remote_id.message(0);
-	/*
-	//pads[poly_num-1]._remote_id.message('set', 0);
-	//storage.setstoredvalue('poly.'+(poly_num)+'::remote_id', current_pset, 0);
-	pads[poly_num-1]._remote_scale_lo.message(0);
-	//storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_lo', current_pset, 0);
-	pads[poly_num-1]._remote_scale_hi.message(127);
-	//storage.setstoredvalue('poly.'+(poly_num)+'::remote_scale_hi', current_pset, 127);
-	storageTask=true;
-	remote_name.message('text', parameter_name_from_id(pads[poly_num-1]._remote_id.getvalueof()));
-	*/
 	ZoneSettings.update_device();
 }
 
-function parameter_name_from_id(id)
+DeviceModule.prototype.parameter_name_from_id = function(id)
 {
 	var new_name = 'None';
-	finder.id = parseInt(id);
+	this._finder.id = parseInt(id);
 	if(id > 0)
 	{
 		var new_name = [];
-		new_name.unshift(finder.get('name'));
-		finder.goto('canonical_parent');
-		finder.goto('canonical_parent');
+		new_name.unshift(this._finder.get('name'));
+		this._finder.goto('canonical_parent');
+		this._finder.goto('canonical_parent');
 		new_name.unshift(' || ');
-		new_name.unshift(finder.get('name'));
+		new_name.unshift(this._finder.get('name'));
 		new_name = new_name.join('');
 		new_name = new_name.slice(0, 25);
 	}
 	return new_name;
 }
 
-function update_remote_targets()
+DeviceModule.prototype.update_remote_targets = function()
 {
-	//messnamed(unique+'live_remote_gate', 1);
 	for(var i in pads)
 	{
 		pads[i]._remote_id_init_gate.message(1);
@@ -2661,31 +2681,11 @@ function blocks_patcher_lock()
 
 
 
-
-INFO = "SKIN\n\n";
-SETUP_INFO = "Add this device to a MIDI Track, place a DrumRack after it.  Set the input port (top menu in device) to Push's Live port.\n";
-OVERVIEW_INFO = "64 Pads may be divided into 64 different zones.\n\n\n"+
-			"Each zone has its own output note, in addition to three alternate output notes that may be triggered when different zone assigned to modify it is held down.\n\n"+
-			"A zone has several editable parameters:\n\n"+
-			"Color: the displayed color of the zone.\n"+ 
-			"Note: the note that is output when the zone is played.\n"+ 
-			"Mod_A - Mod_C:  the alternate note that is output when another zone is set to trigger a modified output on selected zone.\n"+
-			"Mask Time: adjust to prevent double-triggering of notes within the zone.\n";
-KEY_INFO = "To select a zone for editing, change the first parameter knob to the target zone.\n"+
-			"To assign a grid cell to the zone, press the KEY 8 to toggle ASSIGN mode (ASSIGN mode = RED, PLAY mode = GREEN).\n"+
-			"Toggle FOLLOW mode with KEY 7.  This will automatically select the zone for editing whenever a zone is triggered.\n"+
-			"Toggle MODIFIER assign mode with KEY 6.\n"+
-			"In MODIFIER assign mode, each cell corresponds to one of the 64 zones.  Pressing a cell cycles through four possible states for each target zone:  Off, Mod_A, Mod_B, Mod_C. \n"+
-			"If any MOD source is assigned to a target zone and that zone is struck while the selected zone is being held, the target zone will trigger the corresponding MOD note instead of its original assigned note ID.\n"+
-			"\n"+
-			"The first four KEYS toggle output of NOTE, MOD_A, MOD_B, and MOD_C.  Make sure that MOD assignments are turned on here, or MOD targets will not trigger any note when struck.\n";
-
-
 function info()
 {
 	debug('info...');
 	info_pcontrol.message('open');
-	info_patcher.subpatcher().getnamed('info_text').message('set', [INFO, SETUP_INFO, OVERVIEW_INFO, KEY_INFO]);
+	//info_patcher.subpatcher().getnamed('info_text').message('set', [INFO, SETUP_INFO, OVERVIEW_INFO, KEY_INFO]);
 }
 
 
