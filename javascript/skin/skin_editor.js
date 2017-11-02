@@ -110,6 +110,12 @@ function _gui_input()
 	}
 }
 
+function _chord_thru(note, velocity)
+{
+	debug('_chord_thru', note, velocity);
+	messnamed('extChordAssigner', 'chord_thru', note, velocity);
+}
+
 function anything(){debug('anything:', messagename, arguments);}
 
 function test_this()

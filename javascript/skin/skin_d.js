@@ -9,15 +9,15 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = false;
-var DEBUG = false;
+var FORCELOAD = true;
+var DEBUG = true;
 aumhaa.init(this);
 
 ROLI = require('ROLI');
 
 var SHOW_STORAGE = false;
 var DISPLAY_POLY = false;
-var BLOCKS_ENABLE = true;
+var BLOCKS_ENABLE = false;
 var GRID_ENABLE = false;
 var SUPPRESS_BLOCK = true;
 
@@ -71,9 +71,9 @@ var Vars = ['main_note_input', 'input_mode', 'thru_channel', 'output_port', 'inp
 
 var EditorVars = ['selected_layer_tab', 'mod_sustain', 'target_device', 'target_device_reset', 'main_port', 'main_mono', 'main_clear', 'mod_release', 'settings_thispatcher',
 			'settings_position', 'toggle_note', 'chord_assignment', 'chord_enable', 'chord_channel', 'selected', 'color', 'Mask', 'remote_name', 
-			'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp',
+			'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'cc_channel',
 			'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj', 'assign_mode', 'follow_mode', 'modify_mode', 'panel[0]', 'panel[1]', 'panel[2]', 
-			'panel[3]', 'panel[4]', 'panel[5]', 'cc_port', 'modify_target', 'kslider_offset_display', 'thru'];
+			'panel[3]', 'panel[4]', 'panel[5]', 'cc_port', 'modify_target', 'slider', 'kslider_offset_display', 'thru'];
 
 //'note', 'mod_A', 'mod_B', 'mod_C', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable', 
 
@@ -594,11 +594,11 @@ function setup_mira_interface()
 function active_handlers()
 {
 	var args = arrayfromargs(arguments);
-	//debug('active_handlers:', args);
+	debug('active_handlers:', args);
 	var controlling = false;
 	for(var i in args)
 	{
-		if((args[i]=='AumPush2ModHandler')||(args[i]=='DefaultModHandler'))
+		if((args[i]=='AumPush2ModHandler')||(args[i]=='DefaultModHandler')||(args[i]=='MonoBlocksModHandler'))
 		{
 			controlling = true;
 		}
@@ -734,7 +734,7 @@ function update_preset()
 
 var target_keys = {2:'_toggle_note', 4:'_mod_sustain', 5:'_mask', 6:'_selected_zone', 7:'_color', 9:'_remote_enable', 10:'_remote_scale_lo', 11:'_remote_scale_hi', 12:'_remote_scale_exp', 
 				13:'_cc_enable', 14:'_cc_id', 15:'_cc_scale_lo', 16:'_cc_scale_hi', 17:'_cc_scale_exp', 21: '_activeLayer', 22:'_editor_channel', 23:'_editor_gate', 24:'_editor_chord',
-				27:'_editor_port', 25:'_editor_mono', 26:'_editor_clear', 41:'_modify_target'};
+				27:'_editor_port', 25:'_editor_mono', 26:'_editor_clear', 41:'_modify_target', 42:'_cc_port', 44:'_cc_channel'};
 				//0:'_note_id', 1:'_note_gate', 2:'_modA_id', 3:'_modA_gate', 4:'_modB_id', 5:'_modB_gate', 6:'_modC_id', 7:'_modC_gate',
 
 
@@ -832,9 +832,6 @@ function _mod_assign(num, val, extra)
 			case 40:
 				debug('modify_mode');
 				Skin._modify_mode.receive(val);
-				break;
-			case 42:
-				debug('cc_port');
 				break;
 			case 43:
 				debug('kslider_thru');
@@ -1013,8 +1010,10 @@ function ZoneSettingsModule()
 	this._cc_enable = new RegisteredToggledParameter(this._name + '_CCEnable', {'polyobj':'cc_enable', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('cc_enable', 'cc_enable')});
 	this._cc_id = new RegisteredRangedParameter(this._name + '_CCID', {'polyobj':'cc_id', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_id', 'cc_id')});
 	this._cc_scale_lo = new RegisteredRangedParameter(this._name + '_CCScaleLo', {'polyobj':'cc_scale_lo', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_scale_lo', 'cc_scale_lo')});
-	this._cc_scale_hi = new RegisteredRangedParameter(this._name + '_CCScaleHi', {'polyobj':'cc_scale_hi', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_scale_hi', 'remote_scale_hi')});
+	this._cc_scale_hi = new RegisteredRangedParameter(this._name + '_CCScaleHi', {'polyobj':'cc_scale_hi', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_scale_hi', 'cc_scale_hi')});
 	this._cc_scale_exp = new RegisteredRangedParameter(this._name + '_CCScaleExp', {'polyobj':'cc_scale_exp', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_scale_exp', 'cc_scale_exp')});
+	this._cc_channel = new RegisteredRangedParameter(this._name + '_CCChannel', {'polyobj':'cc_channel', 'registry':this._parameterObjs, 'range':127, 'callback':make_callback('cc_channel', 'cc_channel')});
+	this._cc_port = new RegisteredToggledParameter(this._name + '_CCPort', {'polyobj':'cc_port', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('cc_port', 'cc_port')});
 
 	this._remote_enable = new RegisteredToggledParameter(this._name + '_RemoteEnable', {'polyobj':'remote_enable', 'registry':this._parameterObjs, 'onValue':colors.WHITE, 'offValue':colors.OFF, 'value':0, 'callback':make_callback('remote_enable', 'remote_enable')});
 	//this._remote_id = new RegisteredRangedParameter(this._name + '_CCID', {'polyobj':'remote_id', 'registry':this._parameterObjs, 'range':128, 'callback':make_callback('remote_id', 'remote_id')});
@@ -1037,7 +1036,6 @@ function ZoneSettingsModule()
 	this._modify_target = new RadioComponent(this._name + '_ModifyTarget', 0, 4, 0, function(){}, color.BLUE, color.OFF, {'value':script['modify_target'].getvalueof()});
 	//this._selected_zone = new ParameterClass(this._name + '_SelectedZone', {'callback':this.select_voice, 'value':1});
 	this._selected_zone = new ColoredRadioComponent(this._name + '_SelectedZone', 1, 64, 1, this.select_voice, color.RED, color.CYAN, {'value':1});
-
 }
 
 inherits(ZoneSettingsModule, Bindable);
@@ -1814,7 +1812,7 @@ RegisteredChordNotifier = function(name, args)
 	var self = this;
 	this._mode = 0;
 	this._default_when_cleared = true;
-	this.add_bound_properties(this, ['update', 'toggle', 'receive', 'mode', 'update_mode', 'clear_assignment', '_default_when_cleared']);
+	this.add_bound_properties(this, ['update', 'toggle', 'receive', 'mode', 'update_mode', 'clear_assignment', '_default_when_cleared', 'update_scroll_position']);
 	RegisteredChordNotifier.super_.call(this, name, args);
 	if(this._registry)
 	{
@@ -1846,6 +1844,10 @@ RegisteredChordNotifier.prototype.relink = function(pad)
 	this.set_value(pad['_layers'][this._layer_number]['_'+this._polyobj].getvalueof());
 	this.update_mode();
 	this.update();
+	if(this._settingsobj!=undefined)
+	{
+		this.update_scroll_position();  //only if this is in the selected layer...
+	}
 
 }
 
@@ -1896,34 +1898,47 @@ RegisteredChordNotifier.prototype.update_mode = function()
 RegisteredChordNotifier.prototype.receive = function(note, value)
 {
 	//debug(this._name, 'receive:', note, value);
-	if(value)
+	if(Scales._thruMode._value)
 	{
-		switch(this._mode)
-		{
-			case 0:
-				this.set_value(note);
-				//debug('receive mono, new_value is:', ZoneSettings.current_edit()['_layers'][this._layer_number]['_'+this._polyobj].getvalueof());
-				break;
-			case 1:
-				var pad = ZoneSettings.current_edit();
-				var polyobj = pad['_layers'][this._layer_number]['_'+this._polyobj];
-				var old = polyobj.getvalueof();
-				var index = old.indexOf(note);
-				if((value>0)&&(index=-1))
-				{
-					old.push(note);
-					this.set_value(old);
-				}
-				else if((value==0)&&(index!=-1))
-				{
-					old.splice(index,1);
-					this.set_value(old);
-				}
-				//debug('receive poly, new_value is:', polyobj.getvalueof());
-				break;
-		}
-		this.update();
+		poly.message('target', ZoneSettings._poly_index);
+		poly.message('chordout', note, value);
+		poly.message('chordout', note, 0);
 	}
+	switch(this._mode)
+	{
+		case 0:
+			this.set_value(note);
+			//debug('receive mono, new_value is:', ZoneSettings.current_edit()['_layers'][this._layer_number]['_'+this._polyobj].getvalueof());
+			break;
+		case 1:
+			var pad = ZoneSettings.current_edit();
+			var polyobj = pad['_layers'][this._layer_number]['_'+this._polyobj];
+			var old = polyobj.getvalueof();
+			var index = old.indexOf(note);
+			debug('poly_mode receive:', note, value, old, index);
+			if((value>0)&&(index=-1))
+			{
+				debug('adding:', note, value, index);
+				old.push(note);
+				this.set_value(old);
+			}
+			else if((value==0)&&(index!=-1))
+			{
+				debug('removing:', note, value, index);
+				old.splice(index,1);
+				if(old.length)
+				{
+					this.set_value(old);
+				}
+				else
+				{
+					this.set_value([-1]);
+				}
+			}
+			//debug('receive poly, new_value is:', polyobj.getvalueof());
+			break;
+	}
+	this.update();
 }
 
 RegisteredChordNotifier.prototype.toggle = function(note, value)
@@ -1943,10 +1958,12 @@ RegisteredChordNotifier.prototype.toggle = function(note, value)
 
 RegisteredChordNotifier.prototype.set_value = function(value)
 {
+	//value of <undefined> here causes illegal message selector
+	debug(this._name, 'set_value:', value, typeof(value));
 	var pad = ZoneSettings.current_edit();
 	var polyobj = pad['_layers'][this._layer_number]['_'+this._polyobj];
-	this._value = value;
-	//debug('about to fail?', this._value);
+	this._value = value === undefined ? [-1] : value;
+	debug('about to fail?', this._value);
 	polyobj.message(this._value);
 	this.notify();
 	storageTask = true;
@@ -1960,6 +1977,22 @@ RegisteredChordNotifier.prototype.clear_assignment = function(value)
 	this.update();
 }
 
+RegisteredChordNotifier.prototype.update_scroll_position = function()
+{
+	//var val = ZoneSettings.current_edit()['_layers'][this._layer_number]['_'+this._polyobj].getvalueof()[0];
+	this._value.sort();
+	var val = this._value[0];
+	val = val != -1 ? val : this._value.length > 1 ? this._value[2] : 0;
+	var current_position = slider.getvalueof();
+	debug('current_kslider_position:', current_position, val);
+	var val_lo = val - 25;
+	
+	debug('update_scroll_position', val, val_lo, current_position, Math.floor(val/12)*12);
+	//if((current_position > val)||(current_position < val_lo))
+	//{
+	slider.message(Math.floor(val/12)*12);
+	//}
+}
 
 
 CellClass = function(x, y, identifier, name, _send, args)
@@ -2025,7 +2058,7 @@ inherits(LayerClass, Bindable);
 
 var PolyVars = ['target_device', 'toggled_state', 'toggle_note', 'mod_sustain', 'mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 
 				'remote_scale_hi', 'remote_scale_exp', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'remote_id_init_gate',
-				'breakpoint', 'breakpoint_obj', 'chord_flush'];
+				'breakpoint', 'breakpoint_obj', 'chord_flush', 'cc_channel', 'cc_port'];
 
 var ZONE_ON_COLOR = colors.WHITE;
 
@@ -2168,6 +2201,10 @@ ExternalChordAssigner.prototype.receive = function(args)
 	//debug('ExternalChordAssigner receive:', args);
 	switch(args[1])
 	{
+		case 'chord_thru':
+			poly.message('target', ZoneSettings._poly_index);
+			poly.message('chordout', args[2], args[3]);
+			break;
 		case 'chord_number':
 			this._chord_number.receive(args[2]);
 			break;
@@ -2627,6 +2664,8 @@ function _update_topology()
 		//tasks.addTask(_update_topology, [], 4);
 	}
 }
+
+function _update_topology(){}
 
 function _blockNote(note, val)
 {
