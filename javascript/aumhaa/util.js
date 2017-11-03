@@ -253,6 +253,76 @@ function dict_to_jsobj(dict) {
 
 exports.dict_to_jsobj = dict_to_jsobj;
 
+function jsobj_to_dict(o)
+{
+	debug('jsobj_to_dict2:', o);
+	var d = new Dict();
+
+
+	for (var keyIndex in o)
+	{
+		var value = o[keyIndex];
+		if(typeof value === "object") 
+		{
+			switch (value.constructor.name) 
+			{
+				case "String" :
+					value = value.toString();
+					break;
+				case "Number" :
+					value = value.valueOf();
+					break;
+				case "Boolean" :
+					value = (value) ?	 1 : 0;
+					break;
+			}
+		}
+		// convert primitive boolean to int 
+		if(typeof value === "boolean")
+		{
+			value = (value) ?	 1 : 0;
+		}
+		if (!(typeof value === "string" || typeof value === "number"))
+		{
+			var isEmpty = true;
+			for (var anything in value)
+			{
+				isEmpty = false;
+				break;
+			}
+			if (isEmpty)
+			{
+				value = new Dict();
+			}
+			else
+			{
+				var isArray = true;
+				for (var valueKeyIndex in value)
+				{
+					if (isNaN(parseInt(valueKeyIndex)))
+					{
+						isArray = false;
+						break;
+					}
+					else if(value[valueKeyIndex].constructor === Array)
+					{
+						isArray = false;
+						break;
+					}
+				}
+				if (!isArray)
+				{
+					value = jsobj_to_dict(value);
+				}
+			}
+		}
+		d.set(keyIndex, value);
+	}
+	return d;
+}
+
+exports.jsobj_to_dict = jsobj_to_dict;
+
 function objSort(obj)
 {
 	var arr = [];
