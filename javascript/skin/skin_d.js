@@ -9,8 +9,8 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = true;
-var DEBUG = true;
+var FORCELOAD = false;
+var DEBUG = false;
 aumhaa.init(this);
 
 ROLI = require('ROLI');
@@ -70,11 +70,12 @@ var Vars = ['device_banks', 'main_note_input', 'input_mode', 'thru_channel', 'ou
 			'assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 
 			'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings', 'mira_grid', 'mira_grid_pcontrol'];
 
-var EditorVars = ['selected_layer_tab', 'mod_sustain', 'target_device', 'target_device_reset', 'main_port', 'main_mono', 'main_clear', 'mod_release', 'settings_thispatcher',
+var EditorVars = ['primary_drumrack', 'selected_layer_tab', 'mod_sustain', 'target_device', 'target_device_reset', 'main_port', 'main_mono', 'main_clear', 'mod_release', 'settings_thispatcher',
 			'settings_position', 'toggle_note', 'chord_assignment', 'chord_enable', 'chord_channel', 'selected', 'color', 'Mask', 'remote_name', 
 			'remote_enable', 'remote_scale_lo', 'remote_scale_hi', 'remote_scale_exp',  'cc_id', 'cc_enable', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'cc_channel',
-			'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj', 'assign_mode', 'follow_mode', 'modify_mode', 'panel[0]', 'panel[1]', 'panel[2]', 
-			'panel[3]', 'panel[4]', 'panel[5]', 'cc_port', 'modify_target', 'slider', 'kslider_offset_display', 'thru'];
+			'mod_target', 'mod_target_assignment', 'breakpoint', 'breakpoint_obj', 'assign_mode', 'follow_mode', 'modify_mode', 'cc_port', 'modify_target',
+			'slider', 'kslider_offset_display', 'thru', 'panel[0]', 'panel[1]', 'panel[2]', 'panel[3]', 'panel[4]', 'panel[5]', 'param_menu[0]', 'param_menu[1]', 
+			'param_menu[2]', 'param_menu[3]', 'param_menu[4]', 'param_menu[5]', 'param_menu[6]', 'param_menu[7]' ];
 
 //'note', 'mod_A', 'mod_B', 'mod_C', 'note_enable', 'modA_enable', 'modB_enable', 'modC_enable', 
 
@@ -776,28 +777,12 @@ function _mod_assign(num, val, extra)
 				Device.clear_parameter(current_edit);
 				break;
 			case 28:
-				debug('set_parameter0');
+				debug('set_parameter', val, extra);
+				Device.set_device_bank_item(val, extra);
 				break;
 			case 29:
-				debug('set_parameter1');
-				break;
-			case 30:
-				debug('set_parameter2');
-				break;
-			case 31:
-				debug('set_parameter3');
-				break;
-			case 32:
-				debug('set_parameter4');
-				break;
-			case 33:
-				debug('set_parameter5');
-				break;
-			case 34:
-				debug('set_parameter6');
-				break;
-			case 35:
-				debug('set_parameter7');
+				debug('detect_drumrack');
+				Device.detect_drumrack();
 				break;
 			case 36:
 				debug('set_device_target');
@@ -1055,11 +1040,8 @@ ZoneSettingsModule.prototype.update = function()
 	pad.update_mod_assignments();
 	mod_target_assignment.message('set', pad._mod_assigns[parseInt(mod_target.getvalueof())]);
 	this.update_device();
-	//select_pad_device(pad._layers[0]._id.getvalueof());
-	//Device.select_pad_device(pad._layers[0]._id.getvalueof());
 	Scales.update_program_output();
 	this.update_background_color();
-	//debug('ZoneSettings finished updating');
 }
 
 //this needs to be moved into DeviceModule?
@@ -1102,6 +1084,10 @@ ZoneSettingsModule.prototype.update_device = function()
 	var device_id = pad._target_device.getvalueof();
 	target_device.message('set', Device.device_name_from_id(device_id));
 	Device.update_device_bank_options();
+	Device.update_bank_selection_display();
+	Device._build_device_bank();
+	Device.update_device_component();
+	//Device.select_pad_device(pad._layers[0]._id.getvalueof());
 }
 
 ZoneSettingsModule.prototype.select_voice = function(obj)
@@ -2531,6 +2517,49 @@ MiraGridComponent.prototype.send = function(x, y, val)
 
 
 
+DictModule = function(name, args)
+{
+	var self = this;
+	this.add_bound_properties(this, 'get');
+	DictModule.super_.call(this, name, args);
+}
+
+inherits(DictModule, Bindable);
+
+DictModule.prototype.set = function(address, value)
+{
+	try
+	{
+		this._dict.set(address, value);
+		return true;
+	}
+	catch(err)
+	{
+		return false;
+	}
+}
+
+DictModule.prototype.get = function(address)
+{
+	var value = this._dict.get(address);
+	debug(address, 'value is:', value);
+	return value;
+}
+
+DictModule.prototype.getNumberSafely = function(address)
+{
+	var value = this._dict.get(address);
+	//debug('---------', this._name+'.get:', address, value);
+	if(isNaN(parseInt(value)))
+	{
+		value = 0;
+	}
+	//debug(address, 'value is:', value);
+	return value;
+}
+
+
+
 var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
 			'DrumGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
 			'MidiEffectGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
@@ -2547,8 +2576,6 @@ var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Ma
 
 
 
-
-
 DeviceModule = function(name, args)
 {
 	var self = this;
@@ -2556,32 +2583,21 @@ DeviceModule = function(name, args)
 	this._device_id = 0;
 	this._local_menu_items = [];
 	this._menu_items = [];
-	this.add_bound_properties(this, ['_menu_items', '_local_menu_items', 'select_controlled_device', 'clear_controlled_device', 'update_device_bank_options', 'setup_banks', 'update', 'setup_device', 'select_pad_device', 'detect_drumrack', 'select_parameter', 'clear_parameter', 'parameter_name_from_id', 'update_remote_targets']);
+	this.add_bound_properties(this, ['_DrumRack_container', '_menu_items', '_local_menu_items', 'select_controlled_device', 'clear_controlled_device', 'update_device_bank_options', 'setup_banks', 'update', 'setup_device', 'select_pad_device', 'detect_drumrack', 'select_parameter', 'clear_parameter', 'parameter_name_from_id', 'update_remote_targets']);
 	DeviceModule.super_.call(this, name, args);
+	this._dict = new DictModule(this._name + '_Dict', {'dict':deviceBankDict});
 	this.setup_device();
 	this.setup_banks();
-	this._current_bank_device_selections = [];
+	this._current_bank_device_selections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	this._current_bank_definitions = [];
-	deviceBankDict.set('SKIN_BANKS', jsobj_to_dict(SKIN_BANKS));
+	this._bank_names = Object.keys(SKIN_BANKS);
+	this._finder.path = 'this_device';
+	this._this_device_id = parseInt(this._finder.id);
+	this._drumrack_id = this._dict.getNumberSafely('primaryDrumrack');
+	script['primary_drumrack'].message(this.device_name_from_id(this._drumrack_id));
 }
 
 inherits(DeviceModule, Bindable);
-
-DeviceModule.prototype.update = function(){}
-
-DeviceModule.prototype.setup_banks = function()
-{
-	debug('setup_banks');
-	this._local_menu_items = ['Automatic Assignment'];
-	this._finder.goto('this_device');
-	var params = this._finder.get('parameters').filter(function(element){return element !== 'id';});
-	for(var i in params)
-	{
-		this._finder.id = parseInt(params[i]);
-		//bank.push(this._finder.get('name'));
-		this._local_menu_items.push('Mod_Device_'+this._finder.get('name'));
-	}
-}
 
 DeviceModule.prototype.setup_device = function()
 {
@@ -2602,17 +2618,67 @@ DeviceModule.prototype.setup_device = function()
 	//this.detect_drumrack();
 }
 
+DeviceModule.prototype.update = function(){}
+
+DeviceModule.prototype.setup_banks = function()
+{
+	debug('setup_banks');
+	this._local_menu_items = ['Automatic Assignment', 'Mod_Chain_Pan', 'Mod_Chain_Vol', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3'];
+	this._finder.goto('this_device');
+	var params = this._finder.get('parameters').filter(function(element){return element !== 'id';});
+	for(var i in params)
+	{
+		this._finder.id = parseInt(params[i]);
+		this._local_menu_items.push('ModDevice_'+this._finder.get('name'));
+	}
+}
+
 DeviceModule.prototype._build_device_bank = function()
 {
-	var defs = this._current_bank_definitions;
-	for(var i in defs)
+	debug('_build_device_bank');
+	//device_banks.message('wclose');
+	var zone = ZoneSettings._zone_index;
+	debug('BUILDING DEVICE BANK:', zone);
+	for(var i in SKIN_BANKS)
 	{
-		for(var j in defs[i][0])
+		this._current_bank_definitions[i] = [];
+		for(var j in SKIN_BANKS[i][0])
 		{
-			var def = this._current_bank_device_selections[j]
-			//defs[i][0][j] = this._local_menu_items
+			var def_num = this._current_bank_device_selections[j];
+			//var def = (def_num == 0)||(def_num == undefined)||(def_num>this._menu_items.length) ? SKIN_BANKS[i][0][j] : this._menu_items[def_num] != undefined ? this._menu_items[def_num] : 'undefined';
+			var def = (def_num == 0)||(def_num == undefined)||(def_num>this._menu_items.length) ? SKIN_BANKS[i][0][j] : this._menu_items[def_num] != undefined ? this._menu_items[def_num] : 'undefined';
+			//debug('def is:', def);
+			this._current_bank_definitions[i][j] = def+'';
 		}
+		deviceBankDict.set('Zone_'+zone+':Banks', jsobj_to_dict(this._current_bank_definitions));
+		//debug('new defs:', this._current_bank_definitions[i]);
 	}
+	//device_banks.message('edit');
+}
+
+DeviceModule.prototype._retrieve_device_bank = function()
+{
+	
+}
+
+DeviceModule.prototype._send_current_device_bank = function()
+{
+	for(var dev_type in this._current_bank_definitions)
+	{
+		//debug('sending:', dev_type, this._current_bank_definitions[dev_type]);
+		mod.SendDirect('receive_device_proxy', 'set_bank_dict_entry', dev_type, 0, this._current_bank_definitions[dev_type]);
+		//mod.Send('receive_device_proxy', 'update_parameters');
+	}
+}
+
+DeviceModule.prototype.set_device_bank_item = function(num, val)
+{
+	debug('set_device_bank_item', num, val);
+	this._current_bank_device_selections[num] = val;
+	deviceBankDict.set('Zone_'+ZoneSettings._zone_index+':Menus', this._current_bank_device_selections);
+	this._build_device_bank();
+	this._send_current_device_bank();
+	this.update_device_component();
 }
 
 DeviceModule.prototype.select_pad_device = function(note)
@@ -2625,8 +2691,166 @@ DeviceModule.prototype.select_pad_device = function(note)
 	}
 }
 
-DeviceModule.prototype.detect_drumrack = function()
+DeviceModule.prototype.update_device_component = function()
 {
+	debug('update_device_component');
+	var zone = ZoneSettings._zone_index;
+	var id = this._dict.getNumberSafely('Zone_'+zone+':id');
+	var isDrumRack = this._dict.getNumberSafely('Zone_'+zone+':isDrumRack');
+	var parentDevice = this._dict.getNumberSafely('Zone_'+zone+':parentDevice');
+	var chainNumber = this._dict.getNumberSafely('Zone_'+zone+':chainNumber');
+	debug('id:', id, 'parentDevice:', parentDevice, 'isDrumRack:', isDrumRack, 'chainNumber:', chainNumber);
+	if(id>0)
+	{
+		if((chainNumber > 0)&&(parentDevice!=0))
+		{
+			mod.Send( 'send_explicit', 'receive_device_proxy', 'set_mod_device_parent', 'id', id);
+			mod.Send( 'receive_device_proxy', 'set_mod_device_chain', chainNumber); //);
+		}
+		else
+		{
+			mod.Send( 'send_explicit', 'receive_device_proxy', 'set_mod_device_parent', 'id', id, 1);
+		}
+	}
+	else if((this._drumrack_id > 0)&&(ZoneSettings.chord_monos(0)._value==0))
+	{
+		mod.Send( 'send_explicit', 'receive_device_proxy', 'set_mod_device_parent', 'id', this._drumrack_id);
+		mod.Send( 'receive_device_proxy', 'set_mod_drum_pad', parseInt(ZoneSettings.chord_assigners(0)._value[0])); 
+	}
+	else
+	{
+		mod.Send( 'send_explicit', 'receive_device_proxy', 'set_mod_device_parent', 'id', this._this_device_id, 1);
+	}
+}
+
+DeviceModule.prototype.select_controlled_device = function(poly_num)
+{
+	debug('select_controlled_device:', poly_num);
+	this._finder.goto('live_set', 'appointed_device');
+	var zone = ZoneSettings._zone_index;
+	var id = parseInt(this._finder.id);
+	pads[poly_num-1]._target_device.message(id);
+	this._dict.set('Zone_'+zone+':id', this._finder.id);
+	this._dict.set('Zone_'+zone+':isDrumRack', this._finder.get('can_have_drum_pads'));
+	this._dict.set('Zone_'+zone+':parentDevice', this._DrumRack_container(id));
+	this._dict.set('Zone_'+zone+':chainNumber', this._DrumRack_chain(id));
+	var parent = deviceBankDict.get('Zone_'+zone+':parentDevice');
+	storageTask=true;
+	ZoneSettings.update_device();
+}
+
+DeviceModule.prototype._DrumRack_container = function(id)
+{
+	var finder = this._finder;
+	finder.id = id;
+	var recurse = function(id)
+	{
+		if(id == 0)
+		{
+			return 0;
+		}
+		finder.goto('canonical_parent');
+		if(finder.type=='RackDevice')
+		{
+			if(finder.get('can_have_drum_pads'))
+			{
+				return parseInt(finder.id);
+			}
+		}
+		else if(finder.type=='Track')
+		{
+			return 0;
+		}
+		else
+		{
+			return recurse(id);
+		}
+	}
+	return recurse(id);
+}
+
+DeviceModule.prototype._DrumRack_chain = function(id)
+{
+	//debug('..........DrumRack_chain:', id);
+	var finder = this._finder;
+	finder.id = id;
+	var recurse = function(id)
+	{
+		if(id == 0)
+		{
+			return -1;
+		}
+		finder.goto('canonical_parent');
+		//debug('type is:', finder.type);
+		if(finder.type=='DrumChain')
+		{
+			var path = finder.path.split(' ');
+			//debug('path:', path);
+			return parseInt(path[path.length-1]);
+		}
+		else if(finder.type=='Track')
+		{
+			return -1;
+		}
+		else
+		{
+			return recurse(id);
+		}
+	}
+	return recurse(id);
+}
+
+DeviceModule.prototype.update_device_bank_options = function()
+{
+	debug('update_device_bank_options');
+	//debug('local menu items:', this._local_menu_items);
+	var bank = [];
+	var id = ZoneSettings.current_edit()._target_device.getvalueof();
+	debug('id is:', id);
+	if(id>0)
+	{
+		this._finder.id = parseInt(id);
+		//var param_count = this._finder.getcount('parameters');
+		var params = this._finder.get('parameters').filter(function(element){return element !== 'id';});
+		for(var i in params)
+		{
+			this._finder.id = parseInt(params[i]);
+			bank.push(this._finder.get('name'));
+			
+		}
+	}
+	params && debug('params are:', params.length, bank);
+	this._menu_items = this._local_menu_items.concat(bank);
+	messnamed(unique+'device_menu', 'clear');
+	for(var i in this._menu_items)
+	{
+		messnamed(unique+'device_menu', 'append', this._menu_items[i]);
+	}
+}
+
+DeviceModule.prototype.update_bank_selection_display = function()
+{
+	debug('update_bank_selection_display');
+	var bank = deviceBankDict.get('Zone_'+ZoneSettings._zone_index+':Menus');
+	//debug('bank is:', bank, bank == undefined);
+	bank = bank != undefined ? bank : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	for(var i=0;i<8;i++)
+	{
+		script['param_menu['+i+']'].message('set', bank[i] ? bank[i] : 0);
+	}
+}
+
+DeviceModule.prototype.clear_controlled_device = function(poly_num)
+{
+	pads[poly_num-1]._target_device.message(0);
+	storageTask=true;
+	ZoneSettings.update_device();
+	this._build_device_bank();
+}
+
+DeviceModule.prototype.original_detect_drumrack = function()
+{
+	debug('detect_drumrack');
 	this._finder.goto('this_device');
 	var this_id = parseInt(finder.id);
 	this._finder.goto('canonical_parent');
@@ -2643,6 +2867,15 @@ DeviceModule.prototype.detect_drumrack = function()
 			break;
 		}
 	}
+}
+
+DeviceModule.prototype.detect_drumrack = function()
+{
+	debug('detect_drumrack');
+	this._finder.goto('live_set', 'appointed_device');
+	this._drumrack_id = (this._finder.type == 'RackDevice')&&(this._finder.get('can_have_drum_pads')) ? parseInt(this._finder.id) : 0;
+	this._dict.set('primaryDrumrack', this._drumrack_id);
+	script['primary_drumrack'].message('set', this.device_name_from_id(this._drumrack_id));
 }
 
 DeviceModule.prototype.select_parameter = function(poly_num)
@@ -2707,50 +2940,6 @@ DeviceModule.prototype.update_remote_targets = function()
 	}
 }
 
-DeviceModule.prototype.select_controlled_device = function(poly_num)
-{
-	debug('select_controlled_device:', poly_num);
-	this._finder.goto('live_set', 'appointed_device');
-	debug('device id =', this._finder.id);
-	pads[poly_num-1]._target_device.message(parseInt(this._finder.id));
-	storageTask=true;
-	ZoneSettings.update_device();
-}
-
-DeviceModule.prototype.update_device_bank_options = function()
-{
-	debug('update_device_bank_options');
-	debug('local menu items:', this._local_menu_items);
-	var bank = [];
-	var id = ZoneSettings.current_edit()._target_device.getvalueof();
-	debug('id is:', id);
-	if(id>0)
-	{
-		this._finder.id = parseInt(id);
-		//var param_count = this._finder.getcount('parameters');
-		var params = this._finder.get('parameters').filter(function(element){return element !== 'id';});
-		for(var i in params)
-		{
-			this._finder.id = parseInt(params[i]);
-			bank.push(this._finder.get('name'));
-			
-		}
-	}
-	params && debug('params are:', params.length, bank);
-	this._menu_items = this._local_menu_items.concat(bank);
-	messnamed(unique+'device_menu', 'clear');
-	for(var i in this._menu_items)
-	{
-		messnamed(unique+'device_menu', 'append', this._menu_items[i]);
-	}
-}
-
-DeviceModule.prototype.clear_controlled_device = function(poly_num)
-{
-	pads[poly_num-1]._target_device.message(0);
-	storageTask=true;
-	ZoneSettings.update_device();
-}
 
 
 ///  Blocks Lightpad Stuff

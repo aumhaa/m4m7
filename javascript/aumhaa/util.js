@@ -255,7 +255,7 @@ exports.dict_to_jsobj = dict_to_jsobj;
 
 function jsobj_to_dict(o)
 {
-	debug('jsobj_to_dict2:', o);
+	//debug('jsobj_to_dict2:', o);
 	var d = new Dict();
 
 
@@ -304,7 +304,7 @@ function jsobj_to_dict(o)
 						isArray = false;
 						break;
 					}
-					else if(value[valueKeyIndex].constructor === Array)
+					else if((value[valueKeyIndex]!=undefined)&&(value[valueKeyIndex].constructor === Array))
 					{
 						isArray = false;
 						break;
