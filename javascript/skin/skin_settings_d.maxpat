@@ -40,6 +40,32 @@
 		"subpatcher_template" : "",
 		"boxes" : [ 			{
 				"box" : 				{
+					"id" : "obj-75",
+					"maxclass" : "newobj",
+					"numinlets" : 1,
+					"numoutlets" : 3,
+					"outlettype" : [ "int", "", "int" ],
+					"patching_rect" : [ 202.416626, 412.0, 40.0, 22.0 ],
+					"style" : "",
+					"text" : "t 1 l 0"
+				}
+
+			}
+, 			{
+				"box" : 				{
+					"id" : "obj-67",
+					"maxclass" : "newobj",
+					"numinlets" : 2,
+					"numoutlets" : 1,
+					"outlettype" : [ "" ],
+					"patching_rect" : [ 186.499969, 563.0, 54.0, 22.0 ],
+					"style" : "",
+					"text" : "gate 1 1"
+				}
+
+			}
+, 			{
+				"box" : 				{
 					"bgcolor" : [ 0.011765, 0.396078, 0.752941, 0.0 ],
 					"fontsize" : 10.0,
 					"id" : "obj-52",
@@ -3087,6 +3113,13 @@
 			}
 , 			{
 				"patchline" : 				{
+					"destination" : [ "obj-15", 3 ],
+					"source" : [ "obj-67", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
 					"destination" : [ "obj-15", 5 ],
 					"source" : [ "obj-69", 0 ]
 				}
@@ -3101,7 +3134,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-33", 0 ],
+					"destination" : [ "obj-75", 0 ],
 					"source" : [ "obj-70", 0 ]
 				}
 
@@ -3110,6 +3143,27 @@
 				"patchline" : 				{
 					"destination" : [ "obj-6", 5 ],
 					"source" : [ "obj-74", 0 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-33", 0 ],
+					"source" : [ "obj-75", 1 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-67", 0 ],
+					"source" : [ "obj-75", 2 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-67", 0 ],
+					"source" : [ "obj-75", 0 ]
 				}
 
 			}
@@ -3139,7 +3193,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-15", 3 ],
+					"destination" : [ "obj-67", 1 ],
 					"source" : [ "obj-8", 0 ]
 				}
 
@@ -3195,54 +3249,54 @@
 			}
  ],
 		"parameters" : 		{
-			"obj-36" : [ "cc_channel", "cc_channel", 0 ],
-			"obj-44" : [ "mod_sustain", "sustain", 6 ],
-			"obj-4" : [ "remote_scale_hi", "remote_scale_hi", 0 ],
-			"obj-18" : [ "main_port", "main_port", 0 ],
 			"obj-24" : [ "cc_enable", "cc_enable", 0 ],
-			"obj-43" : [ "selected_layer_tab", "selected_layer_tab", 0 ],
-			"obj-19" : [ "chord_enable", "chord_enable", 0 ],
 			"obj-123" : [ "param_menu[4]", "param_menu[4]", 0 ],
-			"obj-87" : [ "color", "color", 2 ],
+			"obj-48" : [ "cc_port", "cc_port", 0 ],
 			"obj-98" : [ "param_menu[2]", "param_menu[2]", 0 ],
-			"obj-32" : [ "follow_mode", "follow", 4 ],
-			"obj-49" : [ "main_clear[1]", "main_clear", 0 ],
-			"obj-42" : [ "kslider_offset_display", "kslider_offset_display", 0 ],
 			"obj-116" : [ "toggle_note", "toggle_note", 4 ],
-			"obj-12" : [ "assign_mode", "assign_zone", 4 ],
+			"obj-74" : [ "thru", "thru", 0 ],
 			"obj-120" : [ "param_menu[7]", "param_menu[7]", 0 ],
+			"obj-26" : [ "modify_target", "modify_target", 0 ],
+			"obj-29" : [ "selected", "zone", 1 ],
+			"obj-49" : [ "main_clear[1]", "main_clear", 0 ],
+			"obj-22" : [ "cc_scale_lo", "cc_scale_lo", 0 ],
+			"obj-69" : [ "main_clear", "main_clear", 0 ],
+			"obj-96" : [ "param_menu[0]", "param_menu[0]", 0 ],
+			"obj-36" : [ "cc_channel", "cc_channel", 0 ],
+			"obj-41" : [ "settings_position", "settings_position", 0 ],
+			"obj-4" : [ "remote_scale_hi", "remote_scale_hi", 0 ],
+			"obj-122" : [ "param_menu[5]", "param_menu[5]", 0 ],
+			"obj-99" : [ "param_menu[3]", "param_menu[3]", 0 ],
+			"obj-14" : [ "target_parameter_reset", "target_device_reset", 0 ],
+			"obj-42" : [ "kslider_offset_display", "kslider_offset_display", 0 ],
+			"obj-5" : [ "mod_target_assignment", "mod_target_assignment", 0 ],
+			"obj-87" : [ "color", "color", 2 ],
+			"obj-33" : [ "chord_assignment", "chord_assignment", 0 ],
+			"obj-34" : [ "modify_mode", "modify", 4 ],
+			"obj-113" : [ "mod_target", "mod_target", 0 ],
+			"obj-31" : [ "chord_channel", "chord_channel", 0 ],
 			"obj-3" : [ "remote_scale_lo", "remote_scale_lo", 0 ],
 			"obj-21" : [ "cc_scale_hi", "cc_scale_hi", 0 ],
-			"obj-79" : [ "slider", "slider", 0 ],
-			"obj-26" : [ "modify_target", "modify_target", 0 ],
-			"obj-96" : [ "param_menu[0]", "param_menu[0]", 0 ],
-			"obj-10" : [ "cc_id", "cc_id", 0 ],
-			"obj-122" : [ "param_menu[5]", "param_menu[5]", 0 ],
-			"obj-41" : [ "settings_position", "settings_position", 0 ],
-			"obj-99" : [ "param_menu[3]", "param_menu[3]", 0 ],
-			"obj-33" : [ "chord_assignment", "chord_assignment", 0 ],
-			"obj-14" : [ "target_parameter_reset", "target_device_reset", 0 ],
-			"obj-5" : [ "mod_target_assignment", "mod_target_assignment", 0 ],
-			"obj-31" : [ "chord_channel", "chord_channel", 0 ],
-			"obj-113" : [ "mod_target", "mod_target", 0 ],
-			"obj-9" : [ "Mask", "mask", 7 ],
 			"obj-23" : [ "remote_enable", "remote_enable", 0 ],
-			"obj-48" : [ "cc_port", "cc_port", 0 ],
-			"obj-34" : [ "modify_mode", "modify", 4 ],
-			"obj-74" : [ "thru", "thru", 0 ],
-			"obj-20" : [ "cc_scale_exp", "cc_scale_exp", 0 ],
-			"obj-7" : [ "remote_scale_exp", "remote_scale_exp", 0 ],
+			"obj-17" : [ "capture", "capture", 0 ],
 			"obj-97" : [ "param_menu[1]", "param_menu[1]", 0 ],
 			"obj-54" : [ "target_device_reset", "target_device_reset", 0 ],
-			"obj-17" : [ "capture", "capture", 0 ],
+			"obj-79" : [ "slider", "slider", 0 ],
 			"obj-81" : [ "multislider", "multislider", 0 ],
-			"obj-29" : [ "selected", "zone", 1 ],
 			"obj-62" : [ "selected_scale", "selected_scale", 3 ],
 			"obj-121" : [ "param_menu[6]", "param_menu[6]", 0 ],
+			"obj-9" : [ "Mask", "mask", 7 ],
+			"obj-10" : [ "cc_id", "cc_id", 0 ],
 			"obj-58" : [ "main_mono", "main_mono", 0 ],
-			"obj-22" : [ "cc_scale_lo", "cc_scale_lo", 0 ],
 			"obj-64" : [ "capture2", "capture2", 0 ],
-			"obj-69" : [ "main_clear", "main_clear", 0 ]
+			"obj-44" : [ "mod_sustain", "sustain", 6 ],
+			"obj-19" : [ "chord_enable", "chord_enable", 0 ],
+			"obj-18" : [ "main_port", "main_port", 0 ],
+			"obj-43" : [ "selected_layer_tab", "selected_layer_tab", 0 ],
+			"obj-20" : [ "cc_scale_exp", "cc_scale_exp", 0 ],
+			"obj-7" : [ "remote_scale_exp", "remote_scale_exp", 0 ],
+			"obj-32" : [ "follow_mode", "follow", 4 ],
+			"obj-12" : [ "assign_mode", "assign_zone", 4 ]
 		}
 ,
 		"dependency_cache" : [  ],

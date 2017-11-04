@@ -1771,10 +1771,10 @@ RegisteredChordNotifier.prototype.register = function(registry)
 
 RegisteredChordNotifier.prototype.relink = function(pad)
 {
-	//debug('relink polyobj:', this._polyobj, pad['_'+this._polyobj].getvalueof());
+	//debug('relink polyobj:', this._polyobj, pad._layers[this._layer_number]['_'+this._polyobj].getvalueof());
 	//if(!pad['_'+this._polyobj]){debug('missing target for:', this._polyobj)}
-	this.set_value(pad['_layers'][this._layer_number]['_'+this._polyobj].getvalueof());
 	this.update_mode();
+	this.set_value(pad._layers[this._layer_number]['_'+this._polyobj].getvalueof());
 	this.update();
 	if(this._settingsobj!=undefined)
 	{
@@ -1805,72 +1805,67 @@ RegisteredChordNotifier.prototype.update = function()
 
 RegisteredChordNotifier.prototype.update_mode = function()
 {
-	//debug('update_mode');
+	//debug(this._name, 'update_mode');
 	var oldMode = Math.floor(this._mode);
 	var newMode = Math.floor(ZoneSettings.chord_monos(this._layer_number)._value);
-	//if(Math.floor(oldMode)!=Math.floor(newMode))
-	//{
 	this._mode = newMode;
 	//debug( unique+this._settingsobj, 'mode', this._mode);
 	if(this._settingsobj!=undefined)
 	{
 		messnamed(unique+this._settingsobj, 'mode', this._mode);
 	}
-	//else{debug('bad settingsobj:', unique+this._settingsobj, 'mode', this._mode);}
-	/*if(this._mode==0)
-	{
-		debug('setting:', Math.max.apply(Math, this._value));
-		this.set_value(Math.max.apply(Math, this._value));
-	}*/
-	//debug('updated', this._name, 'mode', newMode);
 	this.update();
-	//}
 }
 
 RegisteredChordNotifier.prototype.receive = function(note, value)
 {
-	//debug(this._name, 'receive:', note, value);
-	if(Scales._thruMode._value)
+	var args = arrayfromargs(arguments);
+	//debug(this._name, 'receive:', note, value, 'arguments?:', args);
+	//debug(arguments.callee.caller.toString());
+	if(value!=undefined)
 	{
-		poly.message('target', ZoneSettings._poly_index);
-		poly.message('chordout', note, value);
-		poly.message('chordout', note, 0);
-	}
-	switch(this._mode)
-	{
-		case 0:
-			this.set_value(note);
-			//debug('receive mono, new_value is:', ZoneSettings.current_edit()['_layers'][this._layer_number]['_'+this._polyobj].getvalueof());
-			break;
-		case 1:
-			var pad = ZoneSettings.current_edit();
-			var polyobj = pad['_layers'][this._layer_number]['_'+this._polyobj];
-			var old = polyobj.getvalueof();
-			var index = old.indexOf(note);
-			debug('poly_mode receive:', note, value, old, index);
-			if((value>0)&&(index=-1))
-			{
-				debug('adding:', note, value, index);
-				old.push(note);
-				this.set_value(old);
-			}
-			else if((value==0)&&(index!=-1))
-			{
-				debug('removing:', note, value, index);
-				old.splice(index,1);
-				if(old.length)
+		if(Scales._thruMode._value)
+		{
+			poly.message('target', ZoneSettings._poly_index);
+			poly.message('chordout', note, value);
+			poly.message('chordout', note, 0);
+		}
+		switch(this._mode)
+		{
+			case 0:
+				this.set_value(note);
+				//debug('receive mono, new_value is:', ZoneSettings.current_edit()['_layers'][this._layer_number]['_'+this._polyobj].getvalueof());
+				break;
+			case 1:
+				var pad = ZoneSettings.current_edit();
+				var polyobj = pad['_layers'][this._layer_number]['_'+this._polyobj];
+				var old = polyobj.getvalueof();
+				var index = old.indexOf(note);
+				debug('poly_mode receive note:', note, 'value:', value, 'old:', old, 'index:', index);
+				if((value>0)&&(index=-1))
 				{
+					//debug('adding note:', note, 'value:', value, 'index:', index);
+					old.push(note);
 					this.set_value(old);
 				}
-				else
+				else if((value==0)&&(index!=-1))
 				{
-					this.set_value([-1]);
+					//debug('removing note:', note, 'value:', value, 'index:', index);
+					old.splice(index,1);
+					if(old.length)
+					{
+						this.set_value(old);
+					}
+					else
+					{
+						this.set_value([-1]);
+					}
 				}
-			}
-			//debug('receive poly, new_value is:', polyobj.getvalueof());
-			break;
+				//debug('receive poly, new_value is:', polyobj.getvalueof());
+				break;
+		}
+		this.update();
 	}
-	this.update();
 }
 
 RegisteredChordNotifier.prototype.toggle = function(note, value)
@@ -1893,11 +1888,11 @@ RegisteredChordNotifier.prototype.set_value = function(value)
 	//value of <undefined> here causes illegal message selector
 	//debug(this._name, 'set_value:', value, typeof(value));
 	var pad = ZoneSettings.current_edit();
-	var polyobj = pad['_layers'][this._layer_number]['_'+this._polyobj];
+	var polyobj = pad._layers[this._layer_number]['_'+this._polyobj];
 	this._value = value === undefined ? [-1] : value;
-	//debug('about to fail?', this._value);
 	polyobj.message(this._value);
-	this.notify();
+	//debug('about to fail?', this._value);
+	//this.notify();
 	storageTask = true;
 	//debug('set_value, new_value is:', polyobj.getvalueof());
 }
@@ -1916,14 +1911,8 @@ RegisteredChordNotifier.prototype.update_scroll_position = function()
 	var val = this._value[0];
 	val = val != -1 ? val : this._value.length > 1 ? this._value[2] : 0;
 	var current_position = slider.getvalueof();
-	//debug('current_kslider_position:', current_position, val);
 	var val_lo = val - 25;
-	
-	//debug('update_scroll_position', val, val_lo, current_position, Math.floor(val/12)*12);
-	//if((current_position > val)||(current_position < val_lo))
-	//{
 	slider.message(Math.floor(val/12)*12);
-	//}
 }
 
 
