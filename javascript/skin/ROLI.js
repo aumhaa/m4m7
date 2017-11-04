@@ -1,12 +1,13 @@
 var autowatch = 1;
 
 var PALETTE = [];
+var intPALETTE = [];
 
 const RGB_COLOR_TABLE = [[0, 0, 0],
- [1, 15865344, 2],
- [2, 16728114, 4],
- [3, 16541952, 6],
- [4, 9331486, 8],
+ [1, 15865344, 10],
+ [2, 16728114, 10],
+ [3, 16541952, 10],
+ [4, 9331486, 10],
  [5, 16440379, 10],
  [6, 16762134, 12],
  [7, 11992846, 14],
@@ -137,7 +138,16 @@ function make_rgb(raw)
 	var r = (raw[1] >> 16)/255;
 	var g = (raw[1] >> 8 & 255)/255;
 	var b = (raw[1] & 255)/255;
-	var a = raw[2]/127;
+	var a = (raw[2])/127;
+	return [r, g, b, a];
+}
+
+function make_8bit_rgb(raw)
+{
+	var r = (raw[1] >> 16);
+	var g = (raw[1] >> 8 & 255);
+	var b = (raw[1] & 255);
+	var a = (raw[2]);
 	return [r, g, b, a];
 }
 
@@ -146,4 +156,11 @@ for(var i in RGB_COLOR_TABLE)
 	PALETTE[i] = make_rgb(RGB_COLOR_TABLE[i]);
 }
 
+for(var i in RGB_COLOR_TABLE)
+{
+	intPALETTE[i] = make_8bit_rgb(RGB_COLOR_TABLE[i]);
+}
+
 exports.PALETTE = PALETTE;
+
+exports.intPALETTE = intPALETTE;

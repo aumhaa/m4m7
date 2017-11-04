@@ -9,7 +9,7 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = false;
+var FORCELOAD = true;
 var DEBUG = true;
 aumhaa.init(this);
 
@@ -128,6 +128,7 @@ function init()
 	settings_patcher_lock();
 	update_remote_targets();
 	ZoneSettings.select_voice({'_value':1});
+	MainModes.push_mode(0);
 	MainModes.change_mode(0);
 	storage.message('getslotnamelist');
 	_storage_in('recall');
@@ -144,7 +145,7 @@ function mod_callback(args)
 {
 	if((args[0]=='value')&&(args[1]!='bang'))
 	{
-		debug('mod callback:', args);
+		//debug('mod callback:', args);
 		if(args[1] in script)
 		{
 			script[args[1]].apply(script, args.slice(2));
@@ -348,15 +349,15 @@ function setup_modes()
 		{
 			Skin._assign_mode.set_control();
 			Skin._follow_mode.set_control(KeyButtons[7]);
+			ZoneSettings._main_mono.set_control(KeyButtons[0]);
+			ZoneSettings._modA_mono.set_control(KeyButtons[1]);
+			ZoneSettings._modB_mono.set_control(KeyButtons[2]);
+			ZoneSettings._modC_mono.set_control(KeyButtons[3]);
 		}
 		else if(mainPage._alted)
 		{
 			debug('mainPage._alted');
 			Skin.assign_grid();
-			ZoneSettings._main_mono.set_control(KeyButtons[0]);
-			ZoneSettings._modA_mono.set_control(KeyButtons[1]);
-			ZoneSettings._modB_mono.set_control(KeyButtons[2]);
-			ZoneSettings._modC_mono.set_control(KeyButtons[3]);
 			//ZoneSettings._selected_zone.set_controls(Grid);
 		}
 		else if(mainPage._moded)
@@ -690,7 +691,7 @@ function _mod_assign(num, val, extra)
 			case 11:
 				debug('set_remote_id');
 				select_parameter(current_edit);
-				remote_name.message('text', parameter_name_from_id(pad._remote_id.getvalueof()));
+				remote_name.message('set', parameter_name_from_id(pad._remote_id.getvalueof()));
 				break;
 			case 23:
 				debug('clear_remote_id');
@@ -947,7 +948,7 @@ ZoneSettingsModule.prototype.update_device = function()
 		remote_scale_hi.message('maximum', hi);
 		remote_scale_hi.message('set', pad._remote_scale_hi.getvalueof());
 		remote_scale_exp.message('set', pad._remote_scale_exp.getvalueof());
-		remote_name.message('text', parameter_name_from_id(remote_id));
+		remote_name.message('set', parameter_name_from_id(remote_id));
 		remote_scale_lo.message('hidden', 0);
 		remote_scale_hi.message('hidden', 0);
 		remote_scale_exp.message('hidden', 0);
@@ -958,7 +959,7 @@ ZoneSettingsModule.prototype.update_device = function()
 		remote_scale_lo.message('hidden', 1);
 		remote_scale_hi.message('hidden', 1);
 		remote_scale_exp.message('hidden', 1);
-		remote_name.message('text', parameter_name_from_id(remote_id));
+		remote_name.message('set', parameter_name_from_id(remote_id));
 		//debug('finished hiding remote parameter');
 	}
 	breakpoint_obj.message('clear');
@@ -1072,11 +1073,8 @@ SkinModule.prototype._button_press = function(button)
 			}
 			else if(AltButton.pressed()||this._follow_mode._value>0)
 			{
-				if(button.group!=ZoneSettings._poly_index)
-				{
-					//debug('select:', button.group + 1);
-					ZoneSettings.select_voice({'_value':button.group + 1});
-				}
+				tasks.removeTask(ZoneSettings.select_voice, [], 'select_zone');
+				tasks.addTask(ZoneSettings.select_voice, [{'_value':button.group + 1}], 1, false, 'select_zone');
 			}
 		}
 	}
