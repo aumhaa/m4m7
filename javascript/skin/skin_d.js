@@ -9,8 +9,8 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = false;
-var DEBUG = false;
+var FORCELOAD = true;
+var DEBUG = true;
 aumhaa.init(this);
 
 ROLI = require('ROLI');
@@ -929,9 +929,9 @@ function ZoneSettingsModule()
 	this.chord_gates = function(index){return [this._chord_gate, this._chord_modA_gate, this._chord_modB_gate, this._chord_modC_gate][index];}.bind(this);
 
 	this._note_chord = new RegisteredChordNotifier(this._name + '_NoteChord', {'mode':0, 'layer_number':0, 'polyobj':'chord', 'settingsobj':'chord_assignment', 'registry':this._parameterObjs});
-	this._modA_chord = new RegisteredChordNotifier(this._name + '_ModAChord', {'mode':0, 'layer_number':1, 'polyobj':'chord', 'settingsobj':'chord_modA_assignment', 'registry':this._parameterObjs});
-	this._modB_chord = new RegisteredChordNotifier(this._name + '_ModBChord', {'mode':0, 'layer_number':2, 'polyobj':'chord', 'settingsobj':'chord_modB_assignment', 'registry':this._parameterObjs});
-	this._modC_chord = new RegisteredChordNotifier(this._name + '_ModCChord', {'mode':0, 'layer_number':3, 'polyobj':'chord', 'settingsobj':'chord_modC_assignment', 'registry':this._parameterObjs});
+	this._modA_chord = new RegisteredChordNotifier(this._name + '_ModAChord', {'mode':0, 'layer_number':1, 'polyobj':'chord', 'settingsobj':undefined, 'registry':this._parameterObjs});
+	this._modB_chord = new RegisteredChordNotifier(this._name + '_ModBChord', {'mode':0, 'layer_number':2, 'polyobj':'chord', 'settingsobj':undefined, 'registry':this._parameterObjs});
+	this._modC_chord = new RegisteredChordNotifier(this._name + '_ModCChord', {'mode':0, 'layer_number':3, 'polyobj':'chord', 'settingsobj':undefined, 'registry':this._parameterObjs});
 	this.chord_assigners = function(index){return [this._note_chord, this._modA_chord, this._modB_chord, this._modC_chord][index];}.bind(this);
 
 	this._main_port = new RegisteredToggledParameterForLayer(this._name + '_MainPort', {'layer_number':0, 'polyobj':'port', 'registry':this._parameterObjs, 'onValue':colors.BLUE, 'offValue':colors.OFF, 'value':0, 'callback':make_layer_callback(0, 'port', 'main_port')});
@@ -944,9 +944,10 @@ function ZoneSettingsModule()
 	{
 		var func = function(obj)
 		{
-			self.current_edit()['_layers'][layer_number]['_'+polyname].message(obj._value);
+			self.current_edit()._layers[layer_number]['_'+polyname].message(obj._value);
 			//script[settingsname].message('set', obj._value);
 			chordassigner.update_mode();
+			chordassigner.update();
 			storageTask=true;
 		}
 		return func;
@@ -965,7 +966,7 @@ function ZoneSettingsModule()
 	this.chord_clears = function(index){return [this._main_clear, this._modA_clear, this._modB_clear, this._modC_clear][index];}.bind(this);
 
 	this._layerChooser = new LayerChooser(this._name + '_LayerChooser', {'parent':this});
-	this._layerChooser._editor_mono._additional_callbacks = [self._note_chord.update_mode];
+	this._layerChooser._editor_mono._additional_callbacks = [self._note_chord.update_mode, self._note_chord.update];
 
 	var make_callback = function(polyname, settingsname)
 	{
@@ -1099,6 +1100,7 @@ LayerChooser.prototype.update_layer = function()
 		//assigner.update_mode();
 	}
 	this._parent.chord_assigners(layer).update_mode();
+	this._parent.chord_assigners(layer).update();
 	for(var i in this._aliases)
 	{
 		this._aliases[i].update_linked_parameter(this._aliases[i]._chooser(layer));
@@ -1433,7 +1435,7 @@ ScalesModule.prototype._button_press = function(button)
 
 ScalesModule.prototype._update = function()
 {
-	//debug('Scales update', this, Scales);
+	//debug('Scales._update'); //\n', arguments.callee.caller.toString());//, this, Scales);
 	this._update_request = false;
 	this._noteMap = [];
 	for(var i=0;i<128;i++)
@@ -1495,10 +1497,13 @@ ScalesModule.prototype.update_program_output = function()
 
 ScalesModule.prototype.update_chord_display = function()
 {
-	//debug('update_chord_display.......................');
-	this.chord_display = ZoneSettings.current_edit()['_layers'][this._outputChooser._value]['_chord'].getvalueof();
-	//debug('chord_display is:', this.chord_display);
-	this._update();
+	//debug('update_chord_display.......................', this.update_chord_display.caller.toString());
+	var chord_display = ZoneSettings.current_edit()._layers[this._outputChooser._value]._chord.getvalueof();
+	if(chord_display!=this.chord_display)
+	{
+		this.chord_display = chord_display;
+		this._update();
+	}
 }
 
 
@@ -1758,7 +1763,7 @@ RegisteredChordNotifier.prototype.set_settingsobj = function(name)
 {
 	//debug(this._name, 'set_settingsobj:', name);
 	this._settingsobj = name;
-	this.update();
+	//this.update();
 }
 
 RegisteredChordNotifier.prototype.register = function(registry)
@@ -1771,13 +1776,13 @@ RegisteredChordNotifier.prototype.register = function(registry)
 
 RegisteredChordNotifier.prototype.relink = function(pad)
 {
-	//debug('relink polyobj:', this._polyobj, pad._layers[this._layer_number]['_'+this._polyobj].getvalueof());
+	//debug(this._name+'.relink:  polyobj:', this._polyobj, 'value:', pad._layers[this._layer_number]['_'+this._polyobj].getvalueof());
 	//if(!pad['_'+this._polyobj]){debug('missing target for:', this._polyobj)}
 	this.update_mode();
 	this.set_value(pad._layers[this._layer_number]['_'+this._polyobj].getvalueof());
-	this.update();
 	if(this._settingsobj!=undefined)
 	{
+		this.update();
 		this.update_scroll_position();  //only if this is in the selected layer...
 	}
 
@@ -1785,9 +1790,11 @@ RegisteredChordNotifier.prototype.relink = function(pad)
 
 RegisteredChordNotifier.prototype.update = function()
 {
+	//debug(this._name+'.update():', arguments.callee.caller.toString());
 	var pad = ZoneSettings.current_edit();
 	var assgn = pad._layers[this._layer_number]._chord.getvalueof();
 	var chord_assignment = script[this._settingsobj];
+	//debug('settingsobj:', this._settingsobj, chord_assignment);
 	if(chord_assignment!=undefined)
 	{
 		chord_assignment.message('clear');
@@ -1799,8 +1806,8 @@ RegisteredChordNotifier.prototype.update = function()
 				chord_assignment.message('set', assgn[i], 127);
 			}
 		}
+		Scales.update_chord_display();
 	}
-	Scales.update_chord_display();
 }
 
 RegisteredChordNotifier.prototype.update_mode = function()
@@ -1814,7 +1821,7 @@ RegisteredChordNotifier.prototype.update_mode = function()
 	{
 		messnamed(unique+this._settingsobj, 'mode', this._mode);
 	}
-	this.update();
+	//this.update();
 }
 
 RegisteredChordNotifier.prototype.receive = function(note, value)
@@ -1870,13 +1877,13 @@ RegisteredChordNotifier.prototype.receive = function(note, value)
 
 RegisteredChordNotifier.prototype.toggle = function(note, value)
 {
-	debug('toggle', note, value);
-	var pad = ZoneSettings.current_edit();
-	var polyobj = pad['_layers'][this._layer_number]['_'+this._polyobj];
-	var old = polyobj.getvalueof();
-	var index = old.indexOf(note);
+	//debug('toggle', note, value);
 	if(value>0)
 	{
+		var pad = ZoneSettings.current_edit();
+		var polyobj = pad._layers[this._layer_number]['_'+this._polyobj];
+		var old = polyobj.getvalueof();
+		var index = old.indexOf(note);
 		messnamed(unique+this._settingsobj, note, index < 0 ? value : 0);
 		//debug('sent chord...', note, index = -1 ? value : 0);
 	}
@@ -2650,7 +2657,7 @@ DeviceModule.prototype.update_device_component = function()
 	var isDrumRack = this._dict.getNumberSafely('Zone_'+zone+':isDrumRack');
 	var parentDevice = this._dict.getNumberSafely('Zone_'+zone+':parentDevice');
 	var chainNumber = this._dict.getNumberSafely('Zone_'+zone+':chainNumber');
-	debug('id:', id, 'parentDevice:', parentDevice, 'isDrumRack:', isDrumRack, 'chainNumber:', chainNumber);
+	//debug('id:', id, 'parentDevice:', parentDevice, 'isDrumRack:', isDrumRack, 'chainNumber:', chainNumber);
 	if(id>0)
 	{
 		if((chainNumber > 0)&&(parentDevice!=0))
