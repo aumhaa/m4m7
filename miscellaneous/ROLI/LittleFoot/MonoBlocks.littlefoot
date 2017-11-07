@@ -1,5 +1,16 @@
 /*
 <metadata description="Play drums with your Lightpad Block." details="This App loads a drum grid onto your Lightpad Block with multiple MIDI modes and layouts for use with clip launchers and drum instruments." target="Lightpad" tags="MPE;MIDI;Drum">
+<modes>
+  <mode name="Default">
+    <variable name="fixedStrikeOn" value="false"/>
+    <variable name="fixedStrikeValue" value="127"/>
+  </mode>
+  <mode name="BlocksSkin">
+    <variable name="fixedStrikeOn" value="false"/>
+    <variable name="fixedStrikeValue" value="127"/>
+    <variable name="user0" value="0"/>
+  </mode>
+</modes>
 
 
 	<variables>
@@ -7,57 +18,8 @@
 	  <variable name="fixedStrikeOn" displayName="Fixed strike" type="bool"/>
 	  <variable name="fixedStrikeValue" displayName="Fixed strike value" type="int" min="1" max="127" value="127" displayMode="slider"/>
 
+   </variables>
 
-	</variables>
-
-	<script onChange="midiMode">
-	<![CDATA[
-	  if (midiMode.value == 0)
-	  {
-		if (channelFirst.value == 0)
-			channelFirst.value = 1;
-
-		channelFirst.min = 1;
-		channelLast.min = channelFirst.value;
-		channelLast.max = 15;
-		channelLast.enabled = true;
-
-		if (channelLast.value < channelLast.min)
-		  channelLast.value = channelLast.min;
-	  }
-	  else if (midiMode.value == 1)
-	  {
-		channelFirst.min = 0;
-		channelLast.min = channelFirst.value;
-		channelLast.max = 15;
-		channelLast.enabled = true;
-	  }
-	  else if (midiMode.value == 2)
-	  {
-		channelFirst.min = 0;
-		channelLast.value = channelFirst.value;
-		channelLast.min = channelFirst.value;
-		channelLast.max = channelFirst.value;
-		channelLast.enabled = false;
-	  }
-	]]>
-	</script>
-
-	<script onChange="channelFirst">
-	<![CDATA[
-	  channelLast.min = channelFirst.value;
-
-	  if (midiMode.value == 2)
-	  {
-		channelLast.value = channelFirst.value;
-		channelLast.max = channelFirst.value;
-	  }
-	  else if (channelLast.value < channelLast.min)
-	  {
-		channelLast.value = channelLast.min;
-	  }
-	]]>
-	</script>
 </metadata>
 */
 
@@ -85,40 +47,11 @@
 */
 //==============================================================================
 
-//	<groups>
-//	  <group name="colours" displayName="Colours" />
-//	</groups>
-//	  <variable name="baseNote" displayName="Base note" type="midiNote" min="C-2" max="E7" value="C0"/>
-//	  <variable name="midiMode" displayName="MIDI Mode" type="option" value="Legacy" options="MPE;Legacy;Single Channel;" />
-//	  <variable name="channelFirst" displayName="Note channel first" type="option" min="0" max="15" value="2" //options="1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16"/>
-//	  <variable name="channelLast" displayName="Note channel last" type="option" min="0" max="15" value="16" //options="1;2;3;4;5;6;7;8;9;10;11;12;13;14;15;16"/>
-//	  <variable name="gridSize" displayName="Grid size" type="int" min="1" max="4" value="4"/>
-//	  <variable name="pressType" displayName="Press type" type="option" displayMode="multiline" value="Poly Aftertouch" options="Channel //Pressure;Poly Aftertouch" />
-//	  <variable name="trackingMode" displayName="Tracking Mode" type="option" displayMode="multiline" value="Last note played" options="Last //note on channel;Highest note on channel;Lowest note on channel;" />
-
-//	  <variable name="slideCc" displayName="Slide CC no." type="int" value="74" min="0" max="127" displayMode="menu" />
-//	  <variable name="slideCoef" displayName="Slide curve" type="float" value="0.0" min="-1.0" max="1.0" displayMode="bipolar" />
-//	  <variable name="shouldSendPitchBend" displayName="Send Pitch Bend" type="bool" value="false" />
-//	  <variable name="pitchBendCurve" displayName="Pitch bend curve" type="float" value="0.5" min="0.0" max="1.0" displayMode="slider" />
-
-//	  <variable name="padColour1"  displayName="Pad 1 Colour" group="colours" type="colour" value="0xfff9a366" />
-//	  <variable name="padColour2"  displayName="Pad 2 Colour" group="colours" type="colour" value="0xfff9a366" />
-//	  <variable name="padColour3"  displayName="Pad 3 Colour" group="colours" type="colour" value="0xff4dbdf8" />
-//	  <variable name="padColour4"  displayName="Pad 4 Colour" group="colours" type="colour" value="0xff4dbdf8" />
-//	  <variable name="padColour5"  displayName="Pad 5 Colour" group="colours" type="colour" value="0xffe557da" />
-//	  <variable name="padColour6"  displayName="Pad 6 Colour" group="colours" type="colour" value="0xfff9a366" />
-//	  <variable name="padColour7"  displayName="Pad 7 Colour" group="colours" type="colour" value="0xff4288f7" />
-//	  <variable name="padColour8"  displayName="Pad 8 Colour" group="colours" type="colour" value="0xff4dbdf8" />
-//	  <variable name="padColour9"  displayName="Pad 9 Colour" group="colours" type="colour" value="0xffe557da" />
-//	  <variable name="padColour10" displayName="Pad 10 Colour" group="colours" type="colour" value="0xfff9a366" />
-//	  <variable name="padColour11" displayName="Pad 11 Colour" group="colours" type="colour" value="0xffc38ff8" />
-//	  <variable name="padColour12" displayName="Pad 12 Colour" group="colours" type="colour" value="0xffc38ff8" />
-//	  <variable name="padColour13" displayName="Pad 13 Colour" group="colours" type="colour" value="0xff4288f7" />
-//	  <variable name="padColour14" displayName="Pad 14 Colour" group="colours" type="colour" value="0xff4288f7" />
-//	  <variable name="padColour15" displayName="Pad 15 Colour" group="colours" type="colour" value="0xffc38ff8" />
-//	  <variable name="padColour16" displayName="Pad 16 Colour" group="colours" type="colour" value="0xff4dbdf8" />
 
 
+int entry;
+int thisID;
+int masterID;
 int gridSize;
 float slideCoef;
 int shouldSendPitchBend;
@@ -149,134 +82,77 @@ int pad14c;
 int pad15c;
 int pad16c;
 
-int palette0;
-int palette1;
-int palette2;
-int palette3;
-int palette4;
-int palette5;
-int palette6;
-int palette7;
-int palette8;
-int palette9;
-int palette10;
-int palette11;
-int palette12;
-int palette13;
-int palette14;
-int palette15;
-int palette16;
-int palette17;
-int palette18;
-int palette19;
-int palette20;
-int palette21;
-int palette22;
-int palette23;
-int palette24;
-int palette25;
-int palette26;
-int palette27;
-int palette28;
-int palette29;
-int palette30;
-int palette31;
-int palette32;
-int palette33;
-int palette34;
-int palette35;
-int palette36;
-int palette37;
-int palette38;
-int palette39;
-int palette40;
-int palette41;
-int palette42;
-int palette43;
-int palette44;
-int palette45;
-int palette46;
-int palette47;
-int palette48;
-int palette49;
-int palette50;
-int palette51;
-int palette52;
-int palette53;
-int palette54;
-int palette55;
-int palette56;
-int palette57;
-int palette58;
-int palette59;
-int palette60;
-int palette61;
-int palette62;
-int palette63;
-int palette64;
-int palette65;
-int palette66;
-int palette67;
-int palette68;
-int palette69;
-int palette70;
-int palette71;
-int palette72;
-int palette73;
-int palette74;
-int palette75;
-int palette76;
-int palette77;
-int palette78;
-int palette79;
-int palette80;
-int palette81;
-int palette82;
-int palette83;
-int palette84;
-int palette85;
-int palette86;
-int palette87;
-int palette88;
-int palette89;
-int palette90;
-int palette91;
-int palette92;
-int palette93;
-int palette94;
-int palette95;
-int palette96;
-int palette97;
-int palette98;
-int palette99;
-int palette100;
-int palette101;
-int palette102;
-int palette103;
-int palette104;
-int palette105;
-int palette106;
-int palette107;
-int palette108;
-int palette109;
-int palette110;
-int palette111;
-int palette112;
-int palette113;
-int palette114;
-int palette115;
-int palette116;
-int palette117;
-int palette118;
-int palette119;
-int palette120;
-int palette121;
-int palette122;
-int palette123;
-int palette124;
-int palette125;
-int palette126;
-int palette127;
+int a;
+
+void debug(int num1, int num2, int num3)
+{
+	drawNumber(num1, 0xffffffff, 1, 0);
+	drawNumber(num2, 0xffffffff, 1, 5);
+	drawNumber(num3, 0xffffffff, 1, 10);
+}
+
+void initialise()
+{
+	//setStatusOverlayActive(true);
+    setLocalConfigActiveState (64, false, false);
+	updateCluster();
+
+	gridSize = 4;
+	slideCoef = 0.0;
+	shouldSendPitchBend = false;
+	pitchBendCurve = 0.5;
+	trackingMode = 0;
+
+	padWidth = 15 / gridSize;
+	padSpacing = gridSize > 1 ? (15 - gridSize * padWidth) / (gridSize - 1) : 0;
+	padWidth += padSpacing;
+
+	dimFactor = 0;
+	dimDelta = 0;
+	dimDelay = 12;
+
+	initialisePads();
+	initialiseTouches();
+	initialiseChannels();
+
+	useMPEDuplicateFilter (false);
+	setChannelRange (false, 0, 0);
+	for (int i = 0; i < 32; ++i)
+		setLocalConfigActiveState (i, false, false);
+
+}
+
+//==============================================================================
+void initialisePads()
+{
+	for (int padIndex = 0; padIndex < 25; ++padIndex)
+	{
+		int addNote = int(padIndex/4)*4;
+		Pad_setNote (padIndex, baseNote + padIndex + addNote);
+	}
+}
+
+void initialiseTouches()
+{
+	for (int touchIndex = 0; touchIndex < 24; ++touchIndex)
+	{
+		Touch_setPad (touchIndex, 0xff);
+		Touch_setChannel (touchIndex, 0xff);
+	}
+}
+
+void initialiseChannels()
+{
+	for (int channel = 0; channel < 16; ++channel)
+	{
+		Channel_setTrackedTouch (channel, 0xff);
+
+		// Send note-offs for all channels & notes to avoid stuck notes
+		// when modifying dynamic variables from the sidepanel.
+		sendMIDI (0xb0 | channel, 120, 0); // All sound off msg
+		sendMIDI (0xb0 | channel, 123, 0); // All notes off msg
+	}
+}
 
 
 //==============================================================================
@@ -297,27 +173,201 @@ void updateCluster()
 	clusterWidth  = getClusterWidth();
 	clusterHeight = getClusterHeight();
 
-	if (clusterWidth == 1 && clusterHeight == 1)
-		baseNote = 68;
-		return;
-
-	int x = getClusterXpos() % 4;
-	int y = getClusterYpos() % 4;
-	
-	int numPadsInGrid = (gridSize * gridSize);
-	
-	if (clusterWidth == 2 && clusterHeight == 1)
-		baseNote = 68 + (x*4);
-	else if (clusterWidth == 1 && clusterHeight == 2)
-		baseNote = 68 - (y*32);
+	thisID = getBlockIDForIndex (getClusterIndex());
+	int numBlocksInCluster = getNumBlocksInCurrentCluster();
+	if(isMasterBlock())
+	{
+		masterID = thisID;
+		setLocalConfig(64, thisID);
+		for (int i = 0; i < numBlocksInCluster; ++i)
+	    {
+			int id = getBlockIdForBlockInCluster(i);
+			setRemoteConfig (id, 64, thisID);
+	    }
+	}
 	else
-		//baseNote = 68 + (x * 4) - (y * 32);
-		int correct = (clusterHeight == 0 ? 32 : 0);  //this is needed due to getClusterYpos() bug in Blocks firmware?
-		int y_offset = (y == 1 ? 68 : 36);
-		baseNote = 36 + x*4 + y_offset;  // + correct;
+	{
+		for (int i = 0; i < numBlocksInCluster; ++i)
+		{
+			int id = getBlockIdForBlockInCluster(i);
+			if (id != thisID)
+				requestRemoteConfig(id, 64);
+				masterID = getLocalConfig(64);
+		}
+	}
+	if (clusterWidth == 1 && clusterHeight == 1)
+	{
+		baseNote = 68;
+		//debug(999, 0, 0);
+		entry = 1;
+	}
+	else
+	{
+		int x = getClusterXpos() % 4;
+		int y = getClusterYpos() % 4;
 
+		if (clusterWidth == 2 && clusterHeight == 1)
+		{
+			baseNote = 68 + (x*4);
+			entry = 2;
+		}
+		else if (clusterWidth == 1 && clusterHeight == 2)
+		{
+			baseNote = 36 + (y*32);
+			entry = 3;
+		}
+		else
+		{
+			//baseNote = 68 + (x * 4) - (y * 32);
+			int correct = (clusterHeight == 0 ? 32 : 0);  //this is needed due to getClusterYpos() bug in Blocks firmware?
+			int y_offset = (y == 1 ? 68 : 36);
+			baseNote = 36 + x*4 + y_offset;	 // + correct;
+			entry = 4;
+		}
+	}
+	int numPadsInGrid = (gridSize * gridSize);
 	baseNote = min (baseNote, 127 - numPadsInGrid);
+	//debug(thisID, baseNote, 0);
 }
+
+void handleMessage(int type, int byte1, int byte2)
+{
+	//debug(222, 222, type);
+	if(type == 1)
+	{
+		handleNoteMessage(0, byte1, byte2);
+	}
+	if(type == 126)
+	{
+		if(isMasterBlock())
+		{
+			sendNoteOn(0, byte1, byte2);
+		}
+	}
+	else if(type == 125)
+	{
+		if(isMasterBlock())
+		{
+			sendNoteOff(0, byte1, byte2);
+		}
+	}
+}
+
+
+/* -----------------------------------------------------------------------------
+ * MIDI HANDLERS
+ * ---------------------------------------------------------------------------*/ 
+
+
+void forwardMIDIToOtherBlocks (int data0, int data1, int data2)
+{
+	int channel = data0 & 0x0F;
+	if(channel == 0)
+		for (int clusterIndex = 0; clusterIndex < getNumBlocksInCurrentCluster(); ++clusterIndex)
+		{
+			int outID = getBlockIdForBlockInCluster (clusterIndex);
+			if (getBlockIdForBlockInCluster (clusterIndex) != thisID)
+				sendMessageToBlock (getBlockIdForBlockInCluster (clusterIndex), 1, data1, data2);
+				//debug(thisID, 999, getBlockIdForBlockInCluster (clusterIndex));
+		}
+}
+
+void handleMIDI (int byte0, int byte1, int byte2)
+{
+	int status = byte0 & 0xF0;
+
+	//if (status == 0x90 && byte2 == 0)
+	//	  status = 0x80;
+
+	if (status == 0xB0)
+		handleCCMessage (byte0 & 0x0F, byte1, byte2);
+
+	if (status == 0x90)
+		handleNoteMessage (byte0 & 0x0F, byte1, byte2);
+
+        if (isMasterBlock() && (getClusterWidth() != 1 || getClusterHeight() != 1))
+            //forwardMIDIToOtherBlocks (byte0, byte1, byte2);
+            for (int clusterIndex = 0; clusterIndex < getNumBlocksInCurrentCluster(); ++clusterIndex)
+            {
+                //int outID = getBlockIdForBlockInCluster (clusterIndex);
+                if (getBlockIdForBlockInCluster (clusterIndex) != getBlockIdForBlockInCluster(getClusterIndex()))
+                    fix(777, 0, 777);	
+                    sendMessageToBlock (getBlockIdForBlockInCluster (clusterIndex), 1, byte1, byte2);
+            }
+}
+
+void fix(int a, int b, int c)
+{
+
+}
+
+void localSendNoteOn (int channel, int note, int velocity)
+{
+	if(isMasterBlock())
+	{
+		sendNoteOn(0, note, velocity);
+		//debug(126, note, velocity);
+	}
+	else
+	{
+		sendMessageToBlock (getBlockIDOnPort(getPortToMaster()), 126, note, velocity);
+		//debug(126, note, velocity);
+	}
+}
+
+void localSendNoteOff (int channel, int note, int velocity)
+{
+	if(isMasterBlock())
+	{
+		sendNoteOff(0, note, velocity);
+		//debug(125, note, velocity);
+	}
+	else
+	{
+		sendMessageToBlock (getBlockIDOnPort(getPortToMaster()), 125, note, velocity);
+		//debug(125, note, velocity);
+	}
+}
+
+void localSendCC (int channel, int note, int pressure)
+{
+	if(isMasterBlock())
+	{
+		sendMIDI(0, note, pressure);
+	}
+	else
+	{
+		sendMessageToBlock (getBlockIDOnPort(getPortToMaster()), 124, note, pressure);
+	}
+}
+
+void handleCCMessage (int channel, int cc, int value)
+{
+	return;
+}
+
+void handleNoteMessage (int channel, int note, int velocity)
+{
+	int padIndex = (note - baseNote);
+	int addNote = (padIndex/8)*4;
+	int realIndex = int(padIndex - addNote);
+	int next = mod(padIndex, 8);
+	bool isnt_adjacent_block = next < 4;
+	if(channel == 0)
+	{
+		if(padIndex > -1)
+		{
+			if(padIndex < 28)
+			{
+				if(isnt_adjacent_block)
+				{
+					Pad_setColour(realIndex, velocity);
+				}
+			}
+		}
+	}
+}
+
 
 //==============================================================================
 int Pad_getColour (int padIndex)
@@ -366,134 +416,136 @@ void Pad_setColour (int padIndex, int color)
 
 int getPalletteColor (int color)
 {
-	if (color == 0)	 return	 palette0;
-	if (color == 1)	 return	 palette1;
-	if (color == 2)	 return	 palette2;
-	if (color == 3)	 return	 palette3;
-	if (color == 4)	 return	 palette4;
-	if (color == 5)	 return	 palette5;
-	if (color == 6)	 return	 palette6;
-	if (color == 7)	 return	 palette7;
-	if (color == 8)	 return	 palette8;
-	if (color == 9)	 return	 palette9;
-	if (color == 10) return	 palette10;
-	if (color == 11) return	 palette11;
-	if (color == 12) return	 palette12;
-	if (color == 13) return	 palette13;
-	if (color == 14) return	 palette14;
-	if (color == 15) return	 palette15;
-	if (color == 16)  return  palette16;
-	if (color == 17)  return  palette17;
-	if (color == 18)  return  palette18;
-	if (color == 19)  return  palette19;
-	if (color == 20)  return  palette20;
-	if (color == 21)  return  palette21;
-	if (color == 22)  return  palette22;
-	if (color == 23)  return  palette23;
-	if (color == 24)  return  palette24;
-	if (color == 25)  return  palette25;
-	if (color == 26) return	 palette26;
-	if (color == 27) return	 palette27;
-	if (color == 28) return	 palette28;
-	if (color == 29) return	 palette29;
-	if (color == 30) return	 palette30;
-	if (color == 31) return	 palette31;
-	if (color == 31)  return  palette32;
-	if (color == 33)  return  palette33;
-	if (color == 34)  return  palette34;
-	if (color == 35)  return  palette35;
-	if (color == 36)  return  palette36;
-	if (color == 37)  return  palette37;
-	if (color == 38)  return  palette38;
-	if (color == 39)  return  palette39;
-	if (color == 40)  return  palette40;
-	if (color == 41)  return  palette41;
-	if (color == 42) return	 palette42;
-	if (color == 43) return	 palette43;
-	if (color == 44) return	 palette44;
-	if (color == 45) return	 palette45;
-	if (color == 46) return	 palette46;
-	if (color == 47) return	 palette47;
-	if (color == 48)  return  palette48;
-	if (color == 49)  return  palette49;
-	if (color == 50)  return  palette50;
-	if (color == 51)  return  palette51;
-	if (color == 52)  return  palette52;
-	if (color == 53)  return  palette53;
-	if (color == 54)  return  palette54;
-	if (color == 55)  return  palette55;
-	if (color == 56)  return  palette56;
-	if (color == 57)  return  palette57;
-	if (color == 58) return	 palette58;
-	if (color == 59) return	 palette59;
-	if (color == 60) return	 palette60;
-	if (color == 61) return	 palette61;
-	if (color == 62) return	 palette62;
-	if (color == 63) return	 palette63;
-	if (color == 64)  return  palette64;
-	if (color == 65)  return  palette65;
-	if (color == 66)  return  palette66;
-	if (color == 67)  return  palette67;
-	if (color == 68)  return  palette68;
-	if (color == 69)  return  palette69;
-	if (color == 70)  return  palette70;
-	if (color == 71)  return  palette71;
-	if (color == 72)  return  palette72;
-	if (color == 73)  return  palette73;
-	if (color == 74) return	 palette74;
-	if (color == 75) return	 palette75;
-	if (color == 76) return	 palette76;
-	if (color == 77) return	 palette77;
-	if (color == 78) return	 palette78;
-	if (color == 79) return	 palette79;
-	if (color == 80)  return  palette80;
-	if (color == 81)  return  palette81;
-	if (color == 82)  return  palette82;
-	if (color == 83)  return  palette83;
-	if (color == 84)  return  palette84;
-	if (color == 85)  return  palette85;
-	if (color == 86)  return  palette86;
-	if (color == 87)  return  palette87;
-	if (color == 88)  return  palette88;
-	if (color == 89)  return  palette89;
-	if (color == 90) return	 palette90;
-	if (color == 91) return	 palette91;
-	if (color == 92) return	 palette92;
-	if (color == 93) return	 palette93;
-	if (color == 94) return	 palette94;
-	if (color == 95) return	 palette95;
-	if (color == 96)  return  palette96;
-	if (color == 97)  return  palette97;
-	if (color == 98)  return  palette98;
-	if (color == 99)  return  palette99;
-	if (color == 100)  return  palette100;
-	if (color == 101)  return  palette101;
-	if (color == 102)  return  palette102;
-	if (color == 103)  return  palette103;
-	if (color == 104)  return  palette104;
-	if (color == 105)  return  palette105;
-	if (color == 106) return  palette106;
-	if (color == 107) return  palette107;
-	if (color == 108) return  palette108;
-	if (color == 109) return  palette109;
-	if (color == 110) return  palette110;
-	if (color == 111) return  palette111;
-	if (color == 112)  return  palette112;
-	if (color == 113)  return  palette113;
-	if (color == 114)  return  palette114;
-	if (color == 115)  return  palette115;
-	if (color == 116)  return  palette116;
-	if (color == 117)  return  palette117;
-	if (color == 118)  return  palette118;
-	if (color == 119)  return  palette119;
-	if (color == 120)  return  palette120;
-	if (color == 121)  return  palette121;
-	if (color == 122) return  palette122;
-	if (color == 123) return  palette123;
-	if (color == 124) return  palette124;
-	if (color == 125) return  palette125;
-	if (color == 126) return  palette126;
-	if (color == 127) return  palette127;
+	if (color == 0)	 return makeARGB( 76, 0, 0, 0 );
+	if (color == 1)	 return makeARGB( 76, 242, 22, 0 );
+	if (color == 2)	 return makeARGB( 76, 255, 64, 50 );
+	if (color == 3)	 return makeARGB( 76, 252, 105, 0 );
+	if (color == 4)	 return makeARGB( 76, 142, 99, 30 );
+	if (color == 5)	 return makeARGB( 76, 250, 220, 59 );
+	if (color == 6)	 return makeARGB( 76, 255, 197, 22 );
+	if (color == 7)	 return makeARGB( 76, 182, 255, 14 );
+	if (color == 8)	 return makeARGB( 76, 121, 255, 24 );
+	if (color == 9)	 return makeARGB( 76, 52, 194, 22 );
+	if (color == 10)  return makeARGB( 76, 79, 138, 4 );
+	if (color == 11)  return makeARGB( 76, 98, 255, 85 );
+	if (color == 12)  return makeARGB( 76, 41, 125, 83 );
+	if (color == 13)  return makeARGB( 76, 43, 100, 51 );
+	if (color == 14)  return makeARGB( 76, 49, 173, 255 );
+	if (color == 15)  return makeARGB( 76, 54, 99, 252 );
+	if (color == 16)  return makeARGB( 76, 26, 52, 255 );
+	if (color == 17)  return makeARGB( 76, 21, 57, 153 );
+	if (color == 18)  return makeARGB( 76, 28, 12, 230 );
+	if (color == 19)  return makeARGB( 76, 57, 55, 255 );
+	if (color == 20)  return makeARGB( 80, 87, 34, 255 );
+	if (color == 21)  return makeARGB( 84, 151, 43, 255 );
+	if (color == 22)  return makeARGB( 88, 133, 33, 120 );
+	if (color == 23)  return makeARGB( 92, 255, 16, 50 );
+	if (color == 24)  return makeARGB( 96, 168, 48, 60 );
+	if (color == 25)  return makeARGB( 100, 255, 43, 212 );
+	if (color == 26)  return makeARGB( 104, 235, 101, 249 );
+	if (color == 27)  return makeARGB( 108, 166, 52, 33 );
+	if (color == 28)  return makeARGB( 112, 153, 86, 40 );
+	if (color == 29)  return makeARGB( 116, 135, 103, 0 );
+	if (color == 30)  return makeARGB( 120, 144, 130, 31 );
+	if (color == 31)  return makeARGB( 124, 74, 135, 0 );
+	if (color == 32)  return makeARGB( 128, 0, 127, 18 );
+	if (color == 33)  return makeARGB( 132, 24, 83, 178 );
+	if (color == 34)  return makeARGB( 136, 98, 75, 173 );
+	if (color == 35)  return makeARGB( 140, 115, 58, 103 );
+	if (color == 36)  return makeARGB( 144, 248, 188, 175 );
+	if (color == 37)  return makeARGB( 148, 255, 155, 118 );
+	if (color == 38)  return makeARGB( 152, 255, 191, 95 );
+	if (color == 39)  return makeARGB( 156, 217, 175, 113 );
+	if (color == 40)  return makeARGB( 160, 255, 244, 128 );
+	if (color == 41)  return makeARGB( 160, 191, 186, 105 );
+	if (color == 42)  return makeARGB( 162, 188, 204, 136 );
+	if (color == 43)  return makeARGB( 162, 174, 255, 153 );
+	if (color == 44)  return makeARGB( 164, 124, 221, 159 );
+	if (color == 45)  return makeARGB( 164, 137, 180, 125 );
+	if (color == 46)  return makeARGB( 166, 128, 243, 255 );
+	if (color == 47)  return makeARGB( 166, 122, 206, 252 );
+	if (color == 48)  return makeARGB( 168, 104, 161, 211 );
+	if (color == 49)  return makeARGB( 170, 133, 143, 194 );
+	if (color == 50)  return makeARGB( 170, 187, 170, 242 );
+	if (color == 51)  return makeARGB( 172, 205, 187, 228 );
+	if (color == 52)  return makeARGB( 172, 239, 139, 176 );
+	if (color == 53)  return makeARGB( 174, 133, 157, 140 );
+	if (color == 54)  return makeARGB( 174, 107, 117, 110 );
+	if (color == 55)  return makeARGB( 176, 132, 144, 155 );
+	if (color == 56)  return makeARGB( 176, 106, 112, 117 );
+	if (color == 57)  return makeARGB( 178, 136, 133, 157 );
+	if (color == 58)  return makeARGB( 180, 108, 106, 117 );
+	if (color == 59)  return makeARGB( 180, 157, 133, 156 );
+	if (color == 60)  return makeARGB( 182, 116, 106, 116 );
+	if (color == 61)  return makeARGB( 182, 156, 157, 133 );
+	if (color == 62)  return makeARGB( 184, 116, 117, 106 );
+	if (color == 63)  return makeARGB( 184, 157, 132, 132 );
+	if (color == 64)  return makeARGB( 186, 117, 106, 106 );
+	if (color == 65)  return makeARGB( 186, 96, 8, 0 );
+	if (color == 66)  return makeARGB( 188, 31, 2, 0 );
+	if (color == 67)  return makeARGB( 188, 102, 25, 20 );
+	if (color == 68)  return makeARGB( 190, 33, 8, 6 );
+	if (color == 69)  return makeARGB( 192, 100, 42, 0 );
+	if (color == 70)  return makeARGB( 192, 32, 13, 0 );
+	if (color == 71)  return makeARGB( 194, 71, 49, 15 );
+	if (color == 72)  return makeARGB( 194, 28, 19, 6 );
+	if (color == 73)  return makeARGB( 196, 100, 88, 23 );
+	if (color == 74)  return makeARGB( 196, 32, 28, 7 );
+	if (color == 75)  return makeARGB( 198, 102, 78, 8 );
+	if (color == 76)  return makeARGB( 198, 33, 25, 2 );
+	if (color == 77)  return makeARGB( 200, 72, 102, 5 );
+	if (color == 78)  return makeARGB( 202, 23, 33, 1 );
+	if (color == 79)  return makeARGB( 202, 48, 102, 9 );
+	if (color == 80)  return makeARGB( 204, 15, 33, 3 );
+	if (color == 81)  return makeARGB( 204, 20, 77, 8 );
+	if (color == 82)  return makeARGB( 206, 6, 25, 2 );
+	if (color == 83)  return makeARGB( 206, 31, 55, 1 );
+	if (color == 84)  return makeARGB( 208, 10, 17, 0 );
+	if (color == 85)  return makeARGB( 208, 39, 102, 34 );
+	if (color == 86)  return makeARGB( 210, 12, 33, 11 );
+	if (color == 87)  return makeARGB( 212, 20, 62, 41 );
+	if (color == 88)  return makeARGB( 212, 8, 25, 16 );
+	if (color == 89)  return makeARGB( 214, 21, 50, 25 );
+	if (color == 90)  return makeARGB( 214, 8, 20, 10 );
+	if (color == 91)  return makeARGB( 216, 19, 69, 102 );
+	if (color == 92)  return makeARGB( 216, 6, 22, 33 );
+	if (color == 93)  return makeARGB( 218, 21, 39, 100 );
+	if (color == 94)  return makeARGB( 218, 7, 12, 32 );
+	if (color == 95)  return makeARGB( 220, 10, 20, 102 );
+	if (color == 96)  return makeARGB( 220, 3, 6, 33 );
+	if (color == 97)  return makeARGB( 222, 10, 28, 76 );
+	if (color == 98)  return makeARGB( 224, 4, 11, 30 );
+	if (color == 99)  return makeARGB( 224, 11, 4, 92 );
+	if (color == 100)  return makeARGB( 226, 3, 1, 29 );
+	if (color == 101)  return makeARGB( 226, 22, 22, 102 );
+	if (color == 102)  return makeARGB( 228, 7, 7, 33 );
+	if (color == 103)  return makeARGB( 228, 34, 13, 102 );
+	if (color == 104)  return makeARGB( 230, 11, 4, 33 );
+	if (color == 105)  return makeARGB( 230, 60, 17, 102 );
+	if (color == 106)  return makeARGB( 232, 19, 5, 33 );
+	if (color == 107)  return makeARGB( 234, 53, 13, 48 );
+	if (color == 108)  return makeARGB( 234, 17, 4, 15 );
+	if (color == 109)  return makeARGB( 236, 102, 6, 20 );
+	if (color == 110)  return makeARGB( 236, 33, 2, 6 );
+	if (color == 111)  return makeARGB( 238, 67, 19, 24 );
+	if (color == 112)  return makeARGB( 238, 21, 6, 7 );
+	if (color == 113)  return makeARGB( 240, 102, 17, 84 );
+	if (color == 114)  return makeARGB( 240, 33, 5, 27 );
+	if (color == 115)  return makeARGB( 242, 94, 40, 99 );
+	if (color == 116)  return makeARGB( 244, 30, 13, 32 );
+	if (color == 117)  return makeARGB( 244, 0, 0, 0 );
+	if (color == 118)  return makeARGB( 246, 89, 89, 89 );
+	if (color == 119)  return makeARGB( 246, 26, 26, 26 );
+	if (color == 120)  return makeARGB( 248, 255, 255, 255 );
+	if (color == 121)  return makeARGB( 248, 89, 89, 89 );
+	if (color == 122)  return makeARGB( 250, 204, 204, 204 );
+	if (color == 123)  return makeARGB( 250, 64, 64, 64 );
+	if (color == 124)  return makeARGB( 252, 20, 20, 20 );
+	if (color == 125)  return makeARGB( 252, 0, 0, 255 );
+	if (color == 126)  return makeARGB( 254, 0, 255, 0 );
+	if (color == 127)  return makeARGB( 254, 255, 0, 0 );
+
+
 
 	return 0xffffffff;
 }
@@ -636,22 +688,24 @@ void updateDimFactor()
 //==============================================================================
 void drawPad (int x, int y, int colour, int bottomRightCornerDarkeningAmount)
 {
-	int dark = blendARGB (colour, bottomRightCornerDarkeningAmount << 24);
-	int mid	 = blendARGB (colour, (bottomRightCornerDarkeningAmount / 2) << 24);
+	//int dark = blendARGB (colour, bottomRightCornerDarkeningAmount << 24);
+	//int mid	 = blendARGB (colour, (bottomRightCornerDarkeningAmount / 2) << 24);
 
 	int w = padWidth - padSpacing;
-	blendGradientRect (colour, mid, dark, mid, x * padWidth, y * padWidth, w, w);
+	//blendGradientRect (colour, mid, dark, mid, x * padWidth, y * padWidth, w, w);
+	fillRect(colour, x * padWidth, y * padWidth, w, w);
 }
 
 void drawPads()
 {
+	//clearDisplay();
 	int padIndex = 0;
 
 	for (int padY = 0; padY < gridSize; ++padY)
 	{
 		for (int padX = 0; padX < gridSize; ++padX)
 		{
-			int overlayColour = Pad_isActive (padIndex) ? 0x33ffffff : (dimFactor << 24);
+			//int overlayColour = Pad_isActive (padIndex) ? 0x33ffffff : (dimFactor << 24);
 
 			drawPad (padX, gridSize - padY - 1, Pad_getColour (padIndex), 0);
 
@@ -661,213 +715,26 @@ void drawPads()
 }
 
 //==============================================================================
-void initialisePads()
-{
-	for (int padIndex = 0; padIndex < 25; ++padIndex)
-	{
-		int addNote = int(padIndex/4)*4;
-		Pad_setNote (padIndex, baseNote + padIndex + addNote);
-	}
-
-	palette0 = makeARGB( 0, 0, 0, 0 );
-	palette1 = makeARGB( 10, 242, 22, 0 );
-	palette2 = makeARGB( 10, 255, 64, 50 );
-	palette3 = makeARGB( 10, 252, 105, 0 );
-	palette4 = makeARGB( 10, 142, 99, 30 );
-	palette5 = makeARGB( 10, 250, 220, 59 );
-	palette6 = makeARGB( 12, 255, 197, 22 );
-	palette7 = makeARGB( 14, 182, 255, 14 );
-	palette8 = makeARGB( 16, 121, 255, 24 );
-	palette9 = makeARGB( 18, 52, 194, 22 );
-	palette10 = makeARGB( 20, 79, 138, 4 );
-	palette11 = makeARGB( 22, 98, 255, 85 );
-	palette12 = makeARGB( 24, 41, 125, 83 );
-	palette13 = makeARGB( 26, 43, 100, 51 );
-	palette14 = makeARGB( 28, 49, 173, 255 );
-	palette15 = makeARGB( 30, 54, 99, 252 );
-	palette16 = makeARGB( 32, 26, 52, 255 );
-	palette17 = makeARGB( 34, 21, 57, 153 );
-	palette18 = makeARGB( 36, 28, 12, 230 );
-	palette19 = makeARGB( 38, 57, 55, 255 );
-	palette20 = makeARGB( 40, 87, 34, 255 );
-	palette21 = makeARGB( 42, 151, 43, 255 );
-	palette22 = makeARGB( 44, 133, 33, 120 );
-	palette23 = makeARGB( 46, 255, 16, 50 );
-	palette24 = makeARGB( 48, 168, 48, 60 );
-	palette25 = makeARGB( 50, 255, 43, 212 );
-	palette26 = makeARGB( 52, 235, 101, 249 );
-	palette27 = makeARGB( 54, 166, 52, 33 );
-	palette28 = makeARGB( 56, 153, 86, 40 );
-	palette29 = makeARGB( 58, 135, 103, 0 );
-	palette30 = makeARGB( 60, 144, 130, 31 );
-	palette31 = makeARGB( 62, 74, 135, 0 );
-	palette32 = makeARGB( 64, 0, 127, 18 );
-	palette33 = makeARGB( 66, 24, 83, 178 );
-	palette34 = makeARGB( 68, 98, 75, 173 );
-	palette35 = makeARGB( 70, 115, 58, 103 );
-	palette36 = makeARGB( 72, 248, 188, 175 );
-	palette37 = makeARGB( 74, 255, 155, 118 );
-	palette38 = makeARGB( 76, 255, 191, 95 );
-	palette39 = makeARGB( 78, 217, 175, 113 );
-	palette40 = makeARGB( 80, 255, 244, 128 );
-	palette41 = makeARGB( 80, 191, 186, 105 );
-	palette42 = makeARGB( 81, 188, 204, 136 );
-	palette43 = makeARGB( 81, 174, 255, 153 );
-	palette44 = makeARGB( 82, 124, 221, 159 );
-	palette45 = makeARGB( 82, 137, 180, 125 );
-	palette46 = makeARGB( 83, 128, 243, 255 );
-	palette47 = makeARGB( 83, 122, 206, 252 );
-	palette48 = makeARGB( 84, 104, 161, 211 );
-	palette49 = makeARGB( 85, 133, 143, 194 );
-	palette50 = makeARGB( 85, 187, 170, 242 );
-	palette51 = makeARGB( 86, 205, 187, 228 );
-	palette52 = makeARGB( 86, 239, 139, 176 );
-	palette53 = makeARGB( 87, 133, 157, 140 );
-	palette54 = makeARGB( 87, 107, 117, 110 );
-	palette55 = makeARGB( 88, 132, 144, 155 );
-	palette56 = makeARGB( 88, 106, 112, 117 );
-	palette57 = makeARGB( 89, 136, 133, 157 );
-	palette58 = makeARGB( 90, 108, 106, 117 );
-	palette59 = makeARGB( 90, 157, 133, 156 );
-	palette60 = makeARGB( 91, 116, 106, 116 );
-	palette61 = makeARGB( 91, 156, 157, 133 );
-	palette62 = makeARGB( 92, 116, 117, 106 );
-	palette63 = makeARGB( 92, 157, 132, 132 );
-	palette64 = makeARGB( 93, 117, 106, 106 );
-	palette65 = makeARGB( 93, 96, 8, 0 );
-	palette66 = makeARGB( 94, 31, 2, 0 );
-	palette67 = makeARGB( 94, 102, 25, 20 );
-	palette68 = makeARGB( 95, 33, 8, 6 );
-	palette69 = makeARGB( 96, 100, 42, 0 );
-	palette70 = makeARGB( 96, 32, 13, 0 );
-	palette71 = makeARGB( 97, 71, 49, 15 );
-	palette72 = makeARGB( 97, 28, 19, 6 );
-	palette73 = makeARGB( 98, 100, 88, 23 );
-	palette74 = makeARGB( 98, 32, 28, 7 );
-	palette75 = makeARGB( 99, 102, 78, 8 );
-	palette76 = makeARGB( 99, 33, 25, 2 );
-	palette77 = makeARGB( 100, 72, 102, 5 );
-	palette78 = makeARGB( 101, 23, 33, 1 );
-	palette79 = makeARGB( 101, 48, 102, 9 );
-	palette80 = makeARGB( 102, 15, 33, 3 );
-	palette81 = makeARGB( 102, 20, 77, 8 );
-	palette82 = makeARGB( 103, 6, 25, 2 );
-	palette83 = makeARGB( 103, 31, 55, 1 );
-	palette84 = makeARGB( 104, 10, 17, 0 );
-	palette85 = makeARGB( 104, 39, 102, 34 );
-	palette86 = makeARGB( 105, 12, 33, 11 );
-	palette87 = makeARGB( 106, 20, 62, 41 );
-	palette88 = makeARGB( 106, 8, 25, 16 );
-	palette89 = makeARGB( 107, 21, 50, 25 );
-	palette90 = makeARGB( 107, 8, 20, 10 );
-	palette91 = makeARGB( 108, 19, 69, 102 );
-	palette92 = makeARGB( 108, 6, 22, 33 );
-	palette93 = makeARGB( 109, 21, 39, 100 );
-	palette94 = makeARGB( 109, 7, 12, 32 );
-	palette95 = makeARGB( 110, 10, 20, 102 );
-	palette96 = makeARGB( 110, 3, 6, 33 );
-	palette97 = makeARGB( 111, 10, 28, 76 );
-	palette98 = makeARGB( 112, 4, 11, 30 );
-	palette99 = makeARGB( 112, 11, 4, 92 );
-	palette100 = makeARGB( 113, 3, 1, 29 );
-	palette101 = makeARGB( 113, 22, 22, 102 );
-	palette102 = makeARGB( 114, 7, 7, 33 );
-	palette103 = makeARGB( 114, 34, 13, 102 );
-	palette104 = makeARGB( 115, 11, 4, 33 );
-	palette105 = makeARGB( 115, 60, 17, 102 );
-	palette106 = makeARGB( 116, 19, 5, 33 );
-	palette107 = makeARGB( 117, 53, 13, 48 );
-	palette108 = makeARGB( 117, 17, 4, 15 );
-	palette109 = makeARGB( 118, 102, 6, 20 );
-	palette110 = makeARGB( 118, 33, 2, 6 );
-	palette111 = makeARGB( 119, 67, 19, 24 );
-	palette112 = makeARGB( 119, 21, 6, 7 );
-	palette113 = makeARGB( 120, 102, 17, 84 );
-	palette114 = makeARGB( 120, 33, 5, 27 );
-	palette115 = makeARGB( 121, 94, 40, 99 );
-	palette116 = makeARGB( 122, 30, 13, 32 );
-	palette117 = makeARGB( 122, 0, 0, 0 );
-	palette118 = makeARGB( 123, 89, 89, 89 );
-	palette119 = makeARGB( 123, 26, 26, 26 );
-	palette120 = makeARGB( 124, 255, 255, 255 );
-	palette121 = makeARGB( 124, 89, 89, 89 );
-	palette122 = makeARGB( 125, 204, 204, 204 );
-	palette123 = makeARGB( 125, 64, 64, 64 );
-	palette124 = makeARGB( 126, 20, 20, 20 );
-	palette125 = makeARGB( 126, 0, 0, 255 );
-	palette126 = makeARGB( 127, 0, 255, 0 );
-	palette127 = makeARGB( 127, 255, 0, 0 );
-
-
-}
-
-void initialiseTouches()
-{
-	for (int touchIndex = 0; touchIndex < 24; ++touchIndex)
-	{
-		Touch_setPad (touchIndex, 0xff);
-		Touch_setChannel (touchIndex, 0xff);
-	}
-}
-
-void initialiseChannels()
-{
-	for (int channel = 0; channel < 16; ++channel)
-	{
-		Channel_setTrackedTouch (channel, 0xff);
-
-		// Send note-offs for all channels & notes to avoid stuck notes
-		// when modifying dynamic variables from the sidepanel.
-		sendMIDI (0xb0 | channel, 120, 0); // All sound off msg
-		sendMIDI (0xb0 | channel, 123, 0); // All notes off msg
-	}
-}
-
-void initialise()
-{
-	updateCluster();
-
-	gridSize = 4;
-	slideCoef = 0.0;
-	shouldSendPitchBend = false;
-	pitchBendCurve = 0.5;
-	trackingMode = 0;
-
-	padWidth = 15 / gridSize;
-	padSpacing = gridSize > 1 ? (15 - gridSize * padWidth) / (gridSize - 1) : 0;
-	padWidth += padSpacing;
-
-	dimFactor = 0;
-	dimDelta = 0;
-	dimDelay = 12;
-
-	initialisePads();
-	initialiseTouches();
-	initialiseChannels();
-
-	useMPEDuplicateFilter (false);
-	setChannelRange (false, 0, 0);
-	for (int i = 0; i < 32; ++i)
-		setLocalConfigActiveState (i, false, false);
-}
-
-//==============================================================================
 void repaint()
 {
 	clearDisplay();
-	updateDimFactor();
+	//updateDimFactor();
 
 	if (isConnectedToHost())
 		drawPads();
 
 	// Overlay heatmap
-	drawPressureMap();
-	fadePressureMap();
+	//drawPressureMap();
+	//fadePressureMap();
 
 	checkAndUpdateCluster();
+	//debug(entry, getClusterYpos(), baseNote);
+	//if(masterID==0)
+	//	updateCluster();
 }
 
 //==============================================================================
+
 int getPitchwheelValue (int touchIndex, float x)
 {
 	if (! shouldSendPitchBend)
@@ -1044,167 +911,6 @@ void touchEnd (int touchIndex, float x, float y, float z, float vz)
 	Channel_setTrackedTouch (channel, 0xff);
 
 	deassignChannel (note, channel);
-}
-
-/* -----------------------------------------------------------------------------
- * MIDI HANDLERS
- * ---------------------------------------------------------------------------*/ 
-void handleMIDI (int byte0, int byte1, int byte2)
-{
-	int status = byte0 & 0xF0;
-
-	//if (status == 0x90 && byte2 == 0)
-	//	  status = 0x80;
-
-	if (status == 0xB0)
-		handleCCMessage (byte0 & 0x0F, byte1, byte2);
-
-	if (status == 0x90)
-		handleNoteMessage (byte0 & 0x0F, byte1, byte2);
-
-// TODO: Clustering 
-	if (isMasterBlock() && (getClusterWidth() != 1 || getClusterHeight() != 1))
-		forwardMIDIToOtherBlocks (byte0, byte1, byte2);
-}
-
-void handleMessage(int type, int byte1, int byte2)
-{
-	int pretty_type = type % 100;
-	//drawNumber(pretty_type, 0xffffffff, 1, 10);
-	if(type == 127)
-	{
-		handleNoteMessage(0, byte1, byte2);
-	}
-	else if(type == 126)
-	{
-		if(isMasterBlock())
-		{
-			sendNoteOn(0, byte1, byte2);
-		}
-	}
-	else if(type == 125)
-	{
-		if(isMasterBlock())
-		{
-			sendNoteOff(0, byte1, byte2);
-		}
-	}
-	else
-	{
-		//drawNumber(99, 0xffff0000, 1, 0);
-	}
-}
-
-void localSendNoteOn (int channel, int note, int velocity)
-{
-	if(isMasterBlock())
-	{
-		sendNoteOn(0, note, velocity);
-	}
-	else
-	{
-		int ourID = getBlockIDForIndex (0);
-		for (int clusterIndex = 0; clusterIndex < getNumBlocksInCurrentCluster(); ++clusterIndex)
-		{
-			int id = getBlockIdForBlockInCluster (clusterIndex);
-		
-			if (id == ourID)
-				continue;
-			sendMessageToBlock (id, 126, note, velocity);
-		}
-		//handleMessage(126, note, velocity);
-	}
-}
-
-void localSendNoteOff (int channel, int note, int velocity)
-{
-	if(isMasterBlock())
-	{
-		sendNoteOff(0, note, velocity);
-	}
-	else
-	{
-		int ourID = getBlockIDForIndex (0);
-		for (int clusterIndex = 0; clusterIndex < getNumBlocksInCurrentCluster(); ++clusterIndex)
-		{
-			int id = getBlockIdForBlockInCluster (clusterIndex);
-		
-			if (id == ourID)
-				continue;
-			sendMessageToBlock (id, 125, note, velocity);
-		}
-	}
-}
-
-void localSendCC (int channel, int note, int pressure)
-{
-	if(isMasterBlock())
-	{
-		sendMIDI(0, note, pressure);
-	}
-	else
-	{
-		int ourID = getBlockIDForIndex (0);
-		for (int clusterIndex = 0; clusterIndex < getNumBlocksInCurrentCluster(); ++clusterIndex)
-		{
-			int id = getBlockIdForBlockInCluster (clusterIndex);
-		
-			if (id == ourID)
-				continue;
-			sendMessageToBlock (id, 124, note, pressure);
-		}
-	}
-}
-
-void handleCCMessage (int channel, int cc, int value)
-{
-	return;
-}
-
-void handleNoteMessage (int channel, int note, int velocity)
-{
-	int padIndex = (note - baseNote);
-	int addNote = (padIndex/8)*4;
-	int realIndex = int(padIndex - addNote);
-	int next = mod(padIndex, 8);
-	bool isnt_adjacent_block = next < 4;
-	//drawNumber(baseNote, 0xffffffff, 1, 10);
-	//drawNumber(padIndex, 0xffffffff, 1, 0);
-	//drawNumber(int(isnt_adjacent_block), 0xffffffff, 1, 5);
-	if(channel == 0)
-	{
-		if(padIndex > -1)
-		{
-			if(padIndex < 28)
-			{
-				if(isnt_adjacent_block)
-				{
-					Pad_setColour(realIndex, velocity);
-					//drawNumber(realIndex, 0xffffffff, 1, 10);
-				}
-			}
-		}
-	}
-}
-
-void forwardMIDIToOtherBlocks (int data0, int data1, int data2)
-{
-	// TODO: Clustering
-	// try to forward this to other blocks in the cluster
-	int ourID = getBlockIDForIndex (0);
-	int channel = data0 & 0x0F;
-	//drawNumber(channel, 0xffffffff, 1, 1);
-	if(channel == 0)
-	{
-		for (int clusterIndex = 0; clusterIndex < getNumBlocksInCurrentCluster(); ++clusterIndex)
-		{
-			int id = getBlockIdForBlockInCluster (clusterIndex);
-		
-			if (id == ourID)
-				continue;
-			sendMessageToBlock (id, 127, data1, data2);
-		}
-	}
 }
 
 

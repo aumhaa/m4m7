@@ -131,6 +131,7 @@ const RGB_COLOR_TABLE = [[0, 0, 0],
  [125, 255, 126],
  [126, 65280, 127],
  [127, 16711680, 127]];
+// [128, 16711680, 127]];
 
 
 function make_rgb(raw)
@@ -147,7 +148,7 @@ function make_8bit_rgb(raw)
 	var r = (raw[1] >> 16);
 	var g = (raw[1] >> 8 & 255);
 	var b = (raw[1] & 255);
-	var a = (raw[2]);
+	var a = (Math.max(38, raw[2]) * 2);
 	return [r, g, b, a];
 }
 
