@@ -102,7 +102,7 @@ class MonoBlocksModHandler(ModHandler):
 		self._push_colors[1:8] = [120, 30, 12, 20, 65, 11, 125]
 		self._push_colors[127] = 125
 		self._shifted = False
-		debug(BLOCKS_PADS)
+		#debug(BLOCKS_PADS)
 	
 
 	def select_mod(self, mod):
@@ -259,6 +259,7 @@ class MonoBlocks(ControlSurface):
 		with self.component_guard():
 			self._setup_monobridge()
 			self._setup_controls()
+			#self._setup_device()
 			self._setup_mod()
 			#self._setup_modes()
 			self._setup_modswitcher()
@@ -285,6 +286,12 @@ class MonoBlocks(ControlSurface):
 		for button in self._pad:
 			button.set_color_map(tuple(range(128))) 
 		self._matrix = ButtonMatrixElement(name = 'Matrix', rows = [self._pad[(index*8):(index*8)+8] for index in range(8)])
+	
+
+	#def _setup_device(self):
+	#	self._device_selection_follows_track_selection = True 
+	#	self._device = DeviceComponent(name = 'Device_Component', device_bank_registry = DeviceBankRegistry(), device_provider = self._device_provider)
+	#	self._device.set_enabled(True)
 	
 
 	def _setup_monobridge(self):

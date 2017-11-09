@@ -9,8 +9,8 @@ var script = this;
 script._name = 'skin';
 
 aumhaa = require('_base');
-var FORCELOAD = true;
-var DEBUG = true;
+var FORCELOAD = false;
+var DEBUG = false;
 aumhaa.init(this);
 
 ROLI = require('ROLI');
@@ -112,6 +112,7 @@ function init()
 	setup_patchers();
 	setup_controls();
 	setup_device();
+	setup_parameter_controls();
 	setup_zonesettingsmodule();
 	setup_skinmodule();
 	setup_modmatrix();
@@ -313,6 +314,17 @@ function setup_controls()
 function setup_device()
 {
 	script['Device'] = new DeviceModule('DeviceComponent', {'finder':new LiveAPI(function(){}, 'this_device')});
+}
+
+function setup_parameter_controls()
+{
+	var pcontrol = this.patcher.getnamed('parameter_controls_pcontrol');
+	var obj = this.patcher.getnamed('parameter_controls');
+	script['Parameters'] = new ParameterControlModule('ParameterControls', {'pcontrol':pcontrol, 'obj':obj});
+	script['paramControl_in'] = Parameters.receive;
+	script['_lcd'] = Parameters._lcd;
+	Parameters.open();
+
 }
 
 function setup_tasks()
@@ -644,6 +656,7 @@ function _storage_in()
 			}
 			else
 			{
+				Device._dict._initialize();
 				args[1] = args[1] ? args[1] : 1;
 				current_pset = args[1];
 				ZoneSettings._pset = current_pset;
@@ -784,6 +797,10 @@ function _mod_assign(num, val, extra)
 			case 29:
 				debug('detect_drumrack');
 				Device.detect_drumrack();
+				break;
+			case 30:
+				debug('set global flag');
+				Device.set_global_flag(val, extra);
 				break;
 			case 36:
 				debug('set_device_target');
@@ -2471,17 +2488,46 @@ MiraGridComponent.prototype.send = function(x, y, val)
 DictModule = function(name, args)
 {
 	var self = this;
-	this.add_bound_properties(this, 'get');
+	this.add_bound_properties(this, ['get', 'set', 'getNumberSafely', 'keys', '_dict', 'initialize']);
 	DictModule.super_.call(this, name, args);
+	this._dict = new Dict(this._dict_name);
+	this._dict.quiet = this._quiet ? this._quiet : false;
+	this._initialize();
 }
 
 inherits(DictModule, Bindable);
+
+DictModule.prototype._initialize = function() 
+{
+	//this._dict.clear();
+	debug('names:', this._dict.getnames());
+	debug('size:', this._dict.getsize());
+	var default_zone = '{ "Menus" : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }';
+	for(var i=0;i<64;i++)
+	{
+		if(!this._dict.contains('Zone_'+i))
+		{
+			//debug('making Zone_'+i);
+			this._dict.replace('Zone_'+i, new Dict('Zone_'+i));
+			this._dict.setparse('Zone_'+i, default_zone);
+		}
+	}
+	if(!this._dict.contains('Global_Flags'))
+	{
+		//debug('making Global_Flags');
+		this._dict.set('Global_Flags', new Dict('Global_Flags'));
+		this._dict.setparse("Global_Flags", '{ "parameter0" : false, "parameter1" : false, "parameter2" : false, "parameter3" : false, "parameter4" : false, "parameter5" : false, "parameter6" : false, "parameter7" : false }');
+	}
+	this._keys = this._dict.getkeys();
+	debug('new_keys:', this._keys);
+}
 
 DictModule.prototype.set = function(address, value)
 {
 	try
 	{
-		this._dict.set(address, value);
+		this._dict.replace(address, value);
+		this.refresh_window();
 		return true;
 	}
 	catch(err)
@@ -2493,20 +2539,28 @@ DictModule.prototype.set = function(address, value)
 DictModule.prototype.get = function(address)
 {
 	var value = this._dict.get(address);
-	debug(address, 'value is:', value);
 	return value;
 }
 
 DictModule.prototype.getNumberSafely = function(address)
 {
 	var value = this._dict.get(address);
-	//debug('---------', this._name+'.get:', address, value);
 	if(isNaN(parseInt(value)))
 	{
 		value = 0;
 	}
-	//debug(address, 'value is:', value);
 	return value;
+}
+
+DictModule.prototype.hasKey = function(address)
+{
+	return this._dict.contains(address);
+}
+
+DictModule.prototype.refresh_window = function()
+{
+	VIEW_DEVICEDICT&&this._obj.message('wclose');
+	VIEW_DEVICEDICT&&this._obj.message('edit');
 }
 
 
@@ -2534,10 +2588,13 @@ DeviceModule = function(name, args)
 	this._device_id = 0;
 	this._local_menu_items = [];
 	this._menu_items = [];
-	this.add_bound_properties(this, ['_DrumRack_container', '_menu_items', '_local_menu_items', 'select_controlled_device', 'clear_controlled_device', 'update_device_bank_options', 'setup_banks', 'update', 'setup_device', 'select_pad_device', 'detect_drumrack', 'select_parameter', 'clear_parameter', 'parameter_name_from_id', 'update_remote_targets']);
+	this.add_bound_properties(this, ['_dict', '_DrumRack_container', '_menu_items', '_local_menu_items', 'select_controlled_device', 'clear_controlled_device', 'update_device_bank_options', 'setup_banks', 'update', 'setup_device', 'select_pad_device', 'detect_drumrack', 'select_parameter', 'clear_parameter', 'parameter_name_from_id', 'update_remote_targets']);
 	DeviceModule.super_.call(this, name, args);
-	this._dict = new DictModule(this._name + '_Dict', {'dict':deviceBankDict});
+	this._dict = new DictModule(this._name + '_Dict', {'dict_name':'device_banks', 'obj':device_banks});
+	this._global_flags = this._dict.get('Global_Flags');
 	this._current_bank_device_selections = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	this._global_flags = [false, false, false, false, false, false, false, false];
+	this._default_bank_assignments = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 	this._current_bank_definitions = [];
 	this._bank_names = Object.keys(SKIN_BANKS);
 	this._drumrack_id = this._dict.getNumberSafely('primaryDrumrack');
@@ -2622,7 +2679,7 @@ DeviceModule.prototype.update = function()
 DeviceModule.prototype._build_device_bank = function()
 {
 	//debug('_build_device_bank');
-	VIEW_DEVICEDICT&&device_banks.message('wclose');
+
 	var zone = ZoneSettings._zone_index;
 	for(var i in SKIN_BANKS)
 	{
@@ -2633,17 +2690,21 @@ DeviceModule.prototype._build_device_bank = function()
 			var def = (def_num == 0)||(def_num == undefined)||(def_num>this._menu_items.length) ? SKIN_BANKS[i][0][j] : this._menu_items[def_num] != undefined ? this._menu_items[def_num] : 'undefined';
 			this._current_bank_definitions[i][j] = def+'';
 		}
-		deviceBankDict.set('Zone_'+zone+':Banks', jsobj_to_dict(this._current_bank_definitions));
+		//deviceBankDict.set('Zone_'+zone+'::Banks', jsobj_to_dict(this._current_bank_definitions));
 		//debug('new defs:', this._current_bank_definitions[i]);
 	}
-	VIEW_DEVICEDICT&&device_banks.message('edit');
+	this._dict.refresh_window();
 }
 
 DeviceModule.prototype.set_device_bank_item = function(num, val)
 {
 	//debug('set_device_bank_item', num, val);
 	this._current_bank_device_selections[num] = val;
-	deviceBankDict.set('Zone_'+ZoneSettings._zone_index+':Menus', this._current_bank_device_selections);
+	this._dict.set('Zone_'+ZoneSettings._zone_index+'::Menus', this._current_bank_device_selections);
+	if(this._global_flags[num])
+	{
+		this.set_global_assignments(num);
+	}
 	this._build_device_bank();
 	this._send_current_device_bank();
 	this.update_device_component();
@@ -2654,9 +2715,9 @@ DeviceModule.prototype.update_device_component = function()
 	//debug('update_device_component');
 	var zone = ZoneSettings._zone_index;
 	var id = this._dict.getNumberSafely('Zone_'+zone+':id');
-	var isDrumRack = this._dict.getNumberSafely('Zone_'+zone+':isDrumRack');
-	var parentDevice = this._dict.getNumberSafely('Zone_'+zone+':parentDevice');
-	var chainNumber = this._dict.getNumberSafely('Zone_'+zone+':chainNumber');
+	var isDrumRack = this._dict.getNumberSafely('Zone_'+zone+'::isDrumRack');
+	var parentDevice = this._dict.getNumberSafely('Zone_'+zone+'::parentDevice');
+	var chainNumber = this._dict.getNumberSafely('Zone_'+zone+'::chainNumber');
 	//debug('id:', id, 'parentDevice:', parentDevice, 'isDrumRack:', isDrumRack, 'chainNumber:', chainNumber);
 	if(id>0)
 	{
@@ -2685,7 +2746,7 @@ DeviceModule.prototype.update_device_bank_options = function()
 {
 	//debug('update_device_bank_options');
 	var bank = [];
-	var id = this._dict.getNumberSafely('Zone_'+ZoneSettings._zone_index+':id');
+	var id = this._dict.getNumberSafely('Zone_'+ZoneSettings._zone_index+'::id');
 	if(id>0)
 	{
 		this._finder.id = parseInt(id);
@@ -2717,9 +2778,9 @@ DeviceModule.prototype.update_bank_selection_display = function()
 
 DeviceModule.prototype._retrieve_device_bank = function()
 {
-	var bank = deviceBankDict.get('Zone_'+ZoneSettings._zone_index+':Menus');
-	//debug('bank is:', bank, bank == undefined);
-	bank = bank != undefined ? bank : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	var bank = this._dict.get('Zone_'+ZoneSettings._zone_index+'::Menus');
+	bank = bank != undefined ? bank : this._default_bank_assignments;
+	//debug('bank is:', bank);
 	this._current_bank_device_selections = bank;
 }
 
@@ -2740,11 +2801,11 @@ DeviceModule.prototype.select_controlled_device = function(poly_num)
 	var zone = ZoneSettings._zone_index;
 	var id = parseInt(this._finder.id);
 	pads[poly_num-1]._target_device.message(id);
-	this._dict.set('Zone_'+zone+':id', this._finder.id);
-	this._dict.set('Zone_'+zone+':isDrumRack', this._finder.get('can_have_drum_pads'));
-	this._dict.set('Zone_'+zone+':parentDevice', this._DrumRack_container(id));
-	this._dict.set('Zone_'+zone+':chainNumber', this._DrumRack_chain(id));
-	var parent = deviceBankDict.get('Zone_'+zone+':parentDevice');
+	this._dict.set('Zone_'+zone+'::id', this._finder.id);
+	this._dict.set('Zone_'+zone+'::isDrumRack', this._finder.get('can_have_drum_pads'));
+	this._dict.set('Zone_'+zone+'::parentDevice', this._DrumRack_container(id));
+	this._dict.set('Zone_'+zone+'::chainNumber', this._DrumRack_chain(id));
+	var parent = this._dict.get('Zone_'+zone+'::parentDevice');
 	storageTask=true;
 	//ZoneSettings.update_device();
 	this.update();
@@ -2753,7 +2814,7 @@ DeviceModule.prototype.select_controlled_device = function(poly_num)
 DeviceModule.prototype.clear_controlled_device = function(poly_num)
 {
 	pads[poly_num-1]._target_device.message(0);
-	this._dict.set('Zone_'+(poly_num-1)+':id');
+	this._dict.set('Zone_'+(poly_num-1)+'::id');
 	storageTask=true;
 	//ZoneSettings.update_device();
 	this.update();
@@ -2894,6 +2955,39 @@ DeviceModule.prototype.update_remote_targets = function()
 	}
 }
 
+DeviceModule.prototype.set_global_flag = function(num, val)
+{
+	debug('set_global_flag:', num, val);
+	if(val!=this._global_flags[num])
+	{
+		this._global_flags[num] = val>0;
+		this._dict.set('Global_Flags::parameter'+num, val);
+		this._global_flags[num] = val>0;
+		if(val>0)
+		{
+			this.set_global_assignments(num);
+		}
+	}
+} 
+
+DeviceModule.prototype.set_global_assignments = function(num)
+{
+	var numOptions = this._local_menu_items.length;
+	var curAssign = this._current_bank_device_selections[num];
+	debug('set_global_assignments:', num, numOptions, curAssign, curAssign<numOptions);
+	if(curAssign<numOptions)
+	{
+		this._default_bank_assignments[num] = curAssign;
+		for(var i=0;i<64;i++)
+		{
+			var bank = this._dict.hasKey('Zone_'+i+'::Menus') ? this._dict.get('Zone_'+i+'::Menus') : this._default_bank_assignments.slice();
+			bank[num] = curAssign;
+			deviceBankDict.set('Zone_'+i+'::Menus', bank);
+			//debug('set global item:', i, bank);
+		}
+	}
+}
+
 
 //old stuff
 DeviceModule.prototype.original_detect_drumrack = function()
@@ -2926,6 +3020,78 @@ DeviceModule.prototype.select_pad_device = function(note)
 		mod.Send( 'receive_device_proxy', 'set_mod_drum_pad', note);
 	}
 }
+
+
+
+var Encoders = ['Encoder_0', 'Encoder_1', 'Encoder_2', 'Encoder_3', 'Encoder_4', 'Encoder_5', 'Encoder_6', 'Encoder_7', 'Encoder_8', 'Encoder_9', 'Encoder_10', 'Encoder_11', 'Encoder_12', 'Encoder_13', 'Encoder_14', 'Encoder_15'];
+
+function ParameterControlModule(name, args)
+{
+	var self = this;
+	this._controlsObjs = [];
+	this._nameObjs = [];
+	this._valueObjs = [];
+	this._defs = [];
+	this.add_bound_properties(this, ['_initialize', 'open', 'close', 'receive', 'controls', '_lcd']);
+	ParameterControlModule.super_.call(this, name, args);
+	this._initialize();
+}
+
+inherits(ParameterControlModule, Bindable);
+
+ParameterControlModule.prototype._initialize = function()
+{
+	for(var i=0;i<16;i++)
+	{
+		this._controlsObjs[Encoders[i]] = this._obj.subpatcher().getnamed('paramDial['+i+']');
+		this._nameObjs[Encoders[i]] = this._obj.subpatcher().getnamed('name['+i+']');
+		this._valueObjs[Encoders[i]] = this._obj.subpatcher().getnamed('value['+i+']');
+	}
+}
+
+ParameterControlModule.prototype.open = function()
+{
+	this._pcontrol.open();
+}
+
+ParameterControlModule.prototype.close = function()
+{
+	this._pcontrol.close();
+}
+
+ParameterControlModule.prototype.receive = function(num, val)
+{
+	debug(this._name, 'receive:', num, val);
+	mod.Send('receive_device_proxy', 'set_mod_parameter_value', num, val);
+}
+
+ParameterControlModule.prototype._lcd = function(obj, type, val)
+{
+	//post('new_lcd', obj, type, val, '\n');
+	debug('lcd', obj, type, val, '\n');
+	if((type=='lcd_name')&&(val!=undefined))
+	{
+		if(this._nameObjs[obj])
+		{
+			this._nameObjs[obj].message('set', val.replace(/_/g, ' '));
+		}
+	}
+	else if((type == 'lcd_value')&&(val!=undefined))
+	{
+		if(this._valueObjs[obj])
+		{
+			this._valueObjs[obj].message('set', val.replace(/_/g, ' '));
+		}
+	}
+	else if((type == 'encoder_value')&&(val!=undefined))
+	{
+		if(this._controlsObjs[obj])
+		{
+			this._controlsObjs[obj].message('set', val);
+		}
+	}
+}
+
 
 
 

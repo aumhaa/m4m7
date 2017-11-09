@@ -13,6 +13,9 @@
 </modes>
 
 
+
+
+
 	<variables>
 
 	  <variable name="fixedStrikeOn" displayName="Fixed strike" type="bool"/>
@@ -285,15 +288,16 @@ void handleMIDI (int byte0, int byte1, int byte2)
 	if (status == 0x90)
 		handleNoteMessage (byte0 & 0x0F, byte1, byte2);
 
-        if (isMasterBlock() && (getClusterWidth() != 1 || getClusterHeight() != 1))
-            //forwardMIDIToOtherBlocks (byte0, byte1, byte2);
-            for (int clusterIndex = 0; clusterIndex < getNumBlocksInCurrentCluster(); ++clusterIndex)
-            {
-                //int outID = getBlockIdForBlockInCluster (clusterIndex);
-                if (getBlockIdForBlockInCluster (clusterIndex) != getBlockIdForBlockInCluster(getClusterIndex()))
-                    fix(777, 0, 777);	
-                    sendMessageToBlock (getBlockIdForBlockInCluster (clusterIndex), 1, byte1, byte2);
-            }
+		if (isMasterBlock() && (getClusterWidth() != 1 || getClusterHeight() != 1))
+			//forwardMIDIToOtherBlocks (byte0, byte1, byte2);
+			for (int clusterIndex = 0; clusterIndex < getNumBlocksInCurrentCluster(); ++clusterIndex)
+			{
+				//int outID = getBlockIdForBlockInCluster (clusterIndex);
+				//if (getBlockIdForBlockInCluster (clusterIndex) != getBlockIdForBlockInCluster(getClusterIndex()))
+				if (clusterIndex != getClusterIndex())
+					fix(777, 0, 777);	
+					sendMessageToBlock (getBlockIdForBlockInCluster (clusterIndex), 1, byte1, byte2);
+			}
 }
 
 void fix(int a, int b, int c)
@@ -845,7 +849,8 @@ void touchStart (int touchIndex, float x, float y, float z, float vz)
 	//sendMIDI (0xb0 | channel, slideCc, 64);	 // initial Y in relative mode
 	localSendNoteOn (channel, note, velocity);
 	//localSendCC (channel, note, pressure);
-	sendMIDI (0xa0 | channel, note, pressure);
+	//sendMIDI (0xa0 | channel, note, pressure);
+	localSendCC (channel, note, pressure);
 
 	//addPressurePoint (getTrailColour (colour), x, y, z * 10.0);
 
@@ -874,7 +879,8 @@ void touchMove (int touchIndex, float x, float y, float z, float vz)
 
 	int pressure = clamp (0, 127, int (z * 127.0));
 	//localSendCC (channel, note, pressure);
-	sendMIDI (0xa0 | channel, note, pressure);
+	//sendMIDI (0xa0 | channel, note, pressure);
+	localSendCC (channel, note, pressure);
 
 	//if (pressType == 0) // channel pressure
 	//	sendMIDI (0xd0 | channel, pressure);
@@ -902,6 +908,7 @@ void touchEnd (int touchIndex, float x, float y, float z, float vz)
 	int velocity = clamp (0, 127, int (vz * 127.0));
 
 	localSendNoteOff (channel, note, velocity);
+	localSendCC (channel, note, velocity);
 
 	Pad_setActive (padIndex, false);
 
