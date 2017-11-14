@@ -379,11 +379,10 @@ class AumPush2(Push2):
 																			channel_buttons = self.elements.matrix.submatrix[:, 1:2], 
 																			nav_matrix = self.elements.matrix.submatrix[4:8, 2:6],
 																			))
-		self.modhandler.shift_layer = AddLayerMode( self.modhandler, Layer( priority = 7, 
-																			device_selector_matrix = self.elements.matrix.submatrix[:, :1],
+		self.modhandler.shift_layer = AddLayerMode( self.modhandler, Layer( priority = 7,
+																			lock_button = self.elements.master_select_button,
 																			))
-																			#lock_button = self.elements.master_select_button,
-																			#))
+																			#device_selector_matrix = self.elements.matrix.submatrix[:, :1],
 		self.modhandler.alt_layer = AddLayerMode( self.modhandler, Layer( priority = 7, 
 																			))
 																			#key_buttons = self.elements.select_buttons))

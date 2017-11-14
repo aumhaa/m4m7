@@ -694,17 +694,18 @@ class AumPush(Push):
 																			Alt_button = self.elements.select_button,
 																			key_buttons = self.elements.side_buttons)
 		self.modhandler.legacy_shift_layer = AddLayerMode( self.modhandler, Layer(priority = 6, 
+																			lock_button = self.elements.master_select_button, 
 																			nav_up_button = self.elements.nav_up_button, 
 																			nav_down_button = self.elements.nav_down_button, 
 																			nav_left_button = self.elements.nav_left_button, 
 																			nav_right_button = self.elements.nav_right_button,
 																			channel_buttons = self.elements.matrix.submatrix[:, 1:2], 
 																			nav_matrix = self.elements.matrix.submatrix[4:8, 2:6] ))
-		self.modhandler.shift_layer = AddLayerMode( self.modhandler, Layer( priority = 6, 
-																			device_selector_matrix = self.elements.matrix.submatrix[:, :1],
+		self.modhandler.shift_layer = AddLayerMode( self.modhandler, Layer( priority = 6,,
 																			lock_button = self.elements.master_select_button, 
 																			name_display_line = self.elements.display_line3, 
 																			value_display_line = self.elements.display_line4 ))
+																			#device_selector_matrix = self.elements.matrix.submatrix[:, :1]
 		self.modhandler.alt_layer = AddLayerMode( self.modhandler, Layer( priority = 6, 
 																			alt_name_display_line = self.elements.display_line3, 
 																			alt_value_display_line = self.elements.display_line4 )) 

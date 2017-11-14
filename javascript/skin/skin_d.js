@@ -21,6 +21,7 @@ var BLOCKS_ENABLE = false;
 var GRID_ENABLE = false;
 var SUPPRESS_BLOCK = true;
 var VIEW_DEVICEDICT = false;
+var PARAMETERS_ENABLE = true;
 
 var finder;
 var mod;
@@ -51,6 +52,8 @@ var follow_mode = false;
 var mod_assign_mode = false;
 var chord_assign_mode = false;
 var blocks_page_visible = false;
+var paramsVisible = false;
+var editorVisible = false;
 var drumrack_id = 0;
 var this_device_id = -1;
 var current_device;
@@ -67,7 +70,7 @@ var PRS_DLY = 300;
 var colors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
 var PushColors = {OFF : 0, WHITE : 1, YELLOW : 2, CYAN : 3, MAGENTA : 4, RED : 5, GREEN : 6, BLUE : 7};
 
-var Vars = ['device_banks', 'main_note_input', 'input_mode', 'thru_channel', 'output_port', 'input_port', 'storage_text', 'storage_menu', 
+var Vars = ['mira_enable', 'device_banks', 'main_note_input', 'input_mode', 'thru_channel', 'output_port', 'input_port', 'storage_text', 'storage_menu', 
 			'assignments', 'matrix', 'push_notes', 'storage', 'preset', 'poly', 'Mask', 'midiInputGate', 'info_pcontrol', 'info_patcher', 
 			'blocks_pad', 'blocks_pcontrol', 'blocks_patcher', 'skin_settings_pcontrol', 'skin_settings', 'mira_grid', 'mira_grid_pcontrol'];
 
@@ -126,21 +129,19 @@ function init()
 	setup_global_link();
 	deprivatize_script_functions(this);
 	blocks_patcher_lock();
-	settings_patcher_lock();
-	Device.update_remote_targets();
 	ZoneSettings.select_voice({'_value':1});
 	MainModes.push_mode(0);
 	MainModes.change_mode(0);
 	storage.message('getslotnamelist');
 	_storage_in('recall');
 	Alive = true;
-	//setup_mira_interface();
 	_update_topology();
 	if(SHOW_STORAGE)
 	{
 		storage.message('clientwindow');
 		storage.message('storagewindow');
 	}
+	setup_mira_interface();
 }
 
 function mod_callback(args)
@@ -314,17 +315,8 @@ function setup_controls()
 function setup_device()
 {
 	script['Device'] = new DeviceModule('DeviceComponent', {'finder':new LiveAPI(function(){}, 'this_device')});
-}
-
-function setup_parameter_controls()
-{
-	var pcontrol = this.patcher.getnamed('parameter_controls_pcontrol');
-	var obj = this.patcher.getnamed('parameter_controls');
-	script['Parameters'] = new ParameterControlModule('ParameterControls', {'pcontrol':pcontrol, 'obj':obj});
-	script['paramControl_in'] = Parameters.receive;
-	script['_lcd'] = Parameters._lcd;
-	Parameters.open();
-
+	script['_assigned_device'] = Device._assigned_device;
+	Device.update_remote_targets();
 }
 
 function setup_tasks()
@@ -332,9 +324,32 @@ function setup_tasks()
 	script['tasks'] = new TaskServer(script, 150);
 }
 
+function setup_parameter_controls()
+{
+	//debug('making parameters');
+	var obj = this.patcher.getnamed('parameter_controls');
+	var pcontrol = this.patcher.getnamed('parameter_controls_pcontrol');
+	var thispatcher = obj.subpatcher().getnamed('parameter_controls_thispatcher');
+	var window_position = obj.subpatcher().getnamed('window_position');
+	window_position = window_position.length ? window_position : [0, 0, 200, 200];
+	script['Parameters'] = new ParameterControlModule('ParameterControls', {'window_position':window_position, 'thispatcher':thispatcher, 'pcontrol':pcontrol, 'obj':obj, 'sizeX':450, 'sizeY':700, 'nominimize':true, 'nozoom':false, 'noclose':true, 'nogrow':true, 'notitle':false, 'float':true});
+	script['paramControl_in'] = Parameters.receive;
+	script['_lcd'] = Parameters._lcd;
+	Parameters.lock();
+}
+
 function setup_zonesettingsmodule()
 {
-	script['ZoneSettings'] = new ZoneSettingsModule();
+	debug('making settings');
+	var obj = this.patcher.getnamed('skin_settings');
+	var thispatcher = obj.subpatcher().getnamed('settings_thispatcher');
+	var window_position = obj.subpatcher().getnamed('settings_position');
+	debug('window position:', window_position.getvalueof());
+	var pcontrol = this.patcher.getnamed('skin_settings_pcontrol');
+	script['ZoneSettings'] = new ZoneSettingsModule('ZoneSettings', {'window_position':window_position, 'thispatcher':thispatcher, 'pcontrol':pcontrol, 'obj':obj, 'sizeX':450, 'sizeY':700, 'nominimize':true, 'nozoom':false, 'noclose':true, 'nogrow':true, 'notitle':false, 'float':true});
+	ZoneSettings._window_position = window_position;
+	ZoneSettings._note_chord.add_listener(Device.update_note_assignment);
+	ZoneSettings.lock();
 }
 
 function setup_skinmodule()
@@ -345,7 +360,8 @@ function setup_skinmodule()
 
 function setup_modmatrix()
 {
-	script['ModMatrix'] = new ModifierMatrixModule();
+	script['ModMatrix'] = new ModifierMatrixModule('ModMatrix', {});
+	ModMatrix.update();
 }
 
 function setup_scalesmodule()
@@ -361,23 +377,27 @@ function setup_external_chord_assigner()
 function setup_modes()
 {
 	//Page 1:  mainPage
-	mainPage = new ModeSwitchablePage('mainPage');
+	script['mainPage'] = new ModeSwitchablePage('mainPage');
 	mainPage.enter_mode = function()
 	{
 		debug('mainPage entered');
 		Skin.assign_grid(Grid);
-		Skin._assign_mode.set_control(KeyButtons[0]);
-		Skin._modify_mode.set_control(KeyButtons[1]);
-		Skin._follow_mode.set_control(KeyButtons[2]);
+		Skin._assign_mode.set_control(KeyButtons[3]);
+		Skin._modify_mode.set_control(KeyButtons[4]);
+		Skin._follow_mode.set_control(KeyButtons[5]);
+		Skin._transform_mode.set_control(KeyButtons[2]);
 		mainPage.set_shift_button(AltButton);
 		mainPage.set_alt_button(ShiftButton);
 
 	}
 	mainPage.exit_mode = function()
 	{
+		ModMatrix.assign_grid();
 		Skin.assign_grid();
 		Skin._assign_mode.set_control();
 		Skin._follow_mode.set_control();
+		Skin._modify_mode.set_control();
+		Skin._transform_mode.set_control();
 		ZoneSettings._chord_gate.set_control();
 		ZoneSettings._chord_modA_gate.set_control();
 		ZoneSettings._chord_modB_gate.set_control();
@@ -389,6 +409,7 @@ function setup_modes()
 	mainPage.update_mode = function()
 	{
 		debug('mainPage updated');
+		
 		if(mainPage._shifted)
 		{
 			Skin._assign_mode.set_control();
@@ -415,10 +436,13 @@ function setup_modes()
 		else if(mainPage._moded)
 		{
 			debug('mainPage is moded');
-			Skin._transform_mode.receive(1);
+			Skin.assign_grid();
+			ModMatrix.assign_grid(Grid);
+			//Skin._transform_mode.receive(1);
 		}
 		else
 		{
+			
 			ZoneSettings._chord_gate.set_control();
 			ZoneSettings._chord_modA_gate.set_control();
 			ZoneSettings._chord_modB_gate.set_control();
@@ -427,24 +451,27 @@ function setup_modes()
 			ZoneSettings._modA_mono.set_control();
 			ZoneSettings._modB_mono.set_control();
 			ZoneSettings._modC_mono.set_control();
-			Skin._transform_mode.receive(0);
+			//Skin._transform_mode.receive(0);
 			ZoneSettings._selected_zone.set_controls();
+			ModMatrix.assign_grid();
 			Skin.assign_grid(Grid);
-			Skin._assign_mode.set_control(KeyButtons[0]);
-			Skin._modify_mode.set_control(KeyButtons[1]);
-			Skin._follow_mode.set_control(KeyButtons[2]);
+			Skin._assign_mode.set_control(KeyButtons[3]);
+			Skin._modify_mode.set_control(KeyButtons[4]);
+			Skin._follow_mode.set_control(KeyButtons[5]);
+			Skin._transform_mode.set_control(KeyButtons[2]);
 		}
+		update_input_gate();
 	}
 
 	//Page 2:  chordPage
-	chordPage = new ModeSwitchablePage('chordPage');
+	script['chordPage'] = new ModeSwitchablePage('chordPage');
 	chordPage.enter_mode = function()
 	{
 		debug('chordPage entered');
 		chordPage.set_shift_button(ShiftButton);
 		chordPage.set_alt_button(AltButton);
 		Scales._outputChooser.set_controls([KeyButtons[0], KeyButtons[1], KeyButtons[2], KeyButtons[3]]);
-		Scales._assignMode.set_control(KeyButtons[7]);
+		Scales._assignMode.set_control(KeyButtons[5]);
 		Scales.assign_grid(Grid);
 	}
 	chordPage.exit_mode = function()
@@ -453,6 +480,7 @@ function setup_modes()
 		Scales._noteOffset.set_inc_dec_buttons();
 		Scales._octaveOffset.set_inc_dec_buttons();
 		Scales._outputChooser.set_controls();
+		Scales._assignMode.set_control();
 		chordPage.set_shift_button();
 		chordPage.set_alt_button();
 		debug('chordPage exited');
@@ -468,6 +496,8 @@ function setup_modes()
 			Scales._octaveOffset.set_inc_dec_buttons(KeyButtons[2], KeyButtons[3]);
 			//Scales._scaleOffset.set_inc_dec_buttons();
 			//Scales._noteOffset.set_inc_dec_buttons();
+
+			
 		}
 		else if(chordPage._alted)
 		{
@@ -488,7 +518,7 @@ function setup_modes()
 		else
 		{
 			ZoneSettings._selected_zone.set_controls();
-			Scales._assignMode.receive(0);
+			//Scales._assignMode.receive(0);
 			chordPage.set_shift_button(ShiftButton);
 			chordPage.set_alt_button(AltButton);
 			Scales._noteOffset.set_inc_dec_buttons();
@@ -505,7 +535,7 @@ function setup_modes()
 	}
 
 	//Page 3:  modPage
-	modPage = new ModeSwitchablePage('modPage');
+	script['modPage'] = new ModeSwitchablePage('modPage');
 	modPage.enter_mode = function()
 	{
 		debug('modPage entered');
@@ -540,12 +570,11 @@ function setup_modes()
 		}
 	}
 
-	script["MainModes"] = new PageStack(3, 'Main Modes', {'behaviour':DefaultPageStackBehaviourWithModeShift});
+	script["MainModes"] = new PageStack(2, 'Main Modes', {'behaviour':DefaultPageStackBehaviourWithModeShift});
 	MainModes.add_mode(0, mainPage);
 	MainModes.add_mode(1, chordPage);
-	MainModes.add_mode(2, modPage);
-	//MainModes.add_mode(3, seqPage);
-	MainModes.set_mode_buttons([KeyButtons[4], KeyButtons[5], KeyButtons[6]]);
+	//MainModes.add_mode(2, modPage);
+	MainModes.set_mode_buttons([KeyButtons[6], KeyButtons[7]]);  //KeyButtons[4],
 }
 
 function setup_track_input_component()
@@ -589,6 +618,7 @@ function setup_global_link()
 function setup_mira_interface()
 {
 	debug('setup_mira_interface');
+	miraEnable = mira_enable.getvalueof();
 	messnamed(unique+'mira_enable', miraEnable);
 }
 
@@ -622,7 +652,7 @@ function output(val)
 
 function update_input_gate()
 {
-	var enabled = (MainModes._value == 0) && (Skin._assign_mode._value == 0);// && (controlling);
+	var enabled = (MainModes._value == 0) && (Skin._assign_mode._value == 0) && (!mainPage._alted) && (!mainPage._moded);// && (controlling);
 	//debug('update_input_gate:', enabled);
 	set_input_gate(enabled);
 }
@@ -632,6 +662,7 @@ function set_input_gate(val)
 	//debug('set_input_gate', val);
 	if(midiInputGate)
 	{
+		miraGrid._input_gate = val;
 		midiInputGate.message('int',  val);
 	}
 }
@@ -648,6 +679,16 @@ function _storage_in()
 	var args = arrayfromargs(arguments);
 	switch(args[0])
 	{
+		case 'del':
+			if(current_pset)
+			{
+				storage.message('remove', current_pset);
+				storage.message('getslotnamelist');
+			}
+			break;
+		case 'clear':
+			//Alive&&Device.hilight_current_device();
+			break;
 		case 'recall':
 			debug('recall:', args);
 			if(!args[1])
@@ -742,7 +783,7 @@ var target_keys = {2:'_toggle_note', 4:'_mod_sustain', 5:'_mask', 6:'_selected_z
 
 function _mod_assign(num, val, extra)
 {
-	//debug('mod_assign', num, val);
+	debug('mod_assign', num, val);
 	var current_edit = ZoneSettings._poly_index;
 	var pad = ZoneSettings.current_edit();
 	if(current_edit)
@@ -754,11 +795,6 @@ function _mod_assign(num, val, extra)
 				//debug('target_key:', target_keys[num]);
 				ZoneSettings[target_keys[num]].receive(val, extra);
 				dirtyStorage();
-				break;
-			case 0:
-				var args = arrayfromargs(arguments);
-				debug('settings_position', args.slice(-4));
-				settings_position.message(args.slice(-4));
 				break;
 			case 1:
 				debug('r chordAssigner', val, extra);
@@ -802,6 +838,14 @@ function _mod_assign(num, val, extra)
 				debug('set global flag');
 				Device.set_global_flag(val, extra);
 				break;
+			case 31:
+				debug('transpose up');
+				this.ZoneSettings.chord_assigners(this.ZoneSettings._activeLayer._value).transpose_up();
+				break;
+			case 32:
+				debug('transpose down');
+				this.ZoneSettings.chord_assigners(this.ZoneSettings._activeLayer._value).transpose_down();
+				break;
 			case 36:
 				debug('set_device_target');
 				Device.select_controlled_device(current_edit);
@@ -841,6 +885,11 @@ function _mod_assign(num, val, extra)
 					pad._breakpoint.message('bang');
 				}
 				break;
+			case 'position':
+				var args = arrayfromargs(arguments);
+				debug('settings_position', args.slice(-4));
+				settings_position.message(args.slice(-4));
+				break;
 		}
 		dirtyStorage();
 	}
@@ -853,47 +902,31 @@ function Editor(val)
 	editorVisible = val > 0;
 	if(editorVisible)
 	{
-		skin_settings_pcontrol.open();
-		BLOCKS_ENABLE&&blocks_pcontrol.open();
-		GRID_ENABLE&&mira_grid_pcontrol.open();
+		ZoneSettings.open();
+		//BLOCKS_ENABLE&&blocks_pcontrol.open();
+		//GRID_ENABLE&&mira_grid_pcontrol.open();
 	}
 	else
 	{
-		settings_thispatcher.message('window', 'getsize');
-		skin_settings_pcontrol.close();
-		blocks_pcontrol.close();
-		mira_grid_pcontrol.close();
+		ZoneSettings.store_window_position();
+		ZoneSettings.close();
+		//blocks_pcontrol.close();
+		//mira_grid_pcontrol.close();
 	}
 }
 
-function settings_patcher_unlock()
+function Params(val)
 {
-	skin_settings.window('size', 0, 400, 1190, 800);
-	skin_settings.window('flags', 'minimize');
-	skin_settings.window('flags', 'zoom');
-	skin_settings.window('flags', 'close');
-	skin_settings.window('flags', 'grow');
-	skin_settings.window('flags', 'title');
-	skin_settings.window('flags', 'nofloat');
-	skin_settings.window('exec');
-}
-
-function settings_patcher_lock()
-{
-	//var pos = settings_thispatcher.getsize();
-	var pos = settings_position.getvalueof();
-	//debug('LOCK:', pos);
-	pos[2] = pos[0] + 450;
-	pos[3] = pos[1] + 700;
-	//var pos = [300, 40, 750, 750];
-	skin_settings.window('size', pos[0], pos[1], pos[2], pos[3]);
-	skin_settings.window('flags', 'nominimize');
-	//blocks_patcher.window('flags', 'nozoom');
-	skin_settings.window('flags', 'noclose');
-	skin_settings.window('flags', 'nogrow');
-	//blocks_patcher.window('flags', 'notitle');
-	skin_settings.window('flags', 'float');
-	skin_settings.window('exec');
+	paramsVisible = val > 0;
+	if(paramsVisible)
+	{
+		PARAMETERS_ENABLE&&Parameters.open();
+	}
+	else
+	{
+		Parameters.store_window_position();
+		Parameters.close();
+	}
 }
 
 function mira_enable(val)
@@ -908,9 +941,145 @@ function mira_enable(val)
 
 
 
-function ZoneSettingsModule()
+function FloatingWindowModule(name, args)
+{
+	debug('way in:', name, args);
+	var self = this;
+	this._sizeX = 450;
+	this._sizeY = 700;
+	this._nominimize = false;
+	this._noclose = false;
+	this._nozoom = false;
+	this._nogrow = false;
+	this._notitle = false;
+	this._float = false;
+	this._window_position = undefined;
+	this.add_bound_properties(this, ['_obj', '_window_position', '_pcontrol', '_thispatcher', 'lock', 'unlock', 'open', 'close', 'store_window_position']);
+	FloatingWindowModule.super_.call(this, name, args);
+}
+
+inherits(FloatingWindowModule, Bindable);
+
+FloatingWindowModule.prototype.open = function()
+{
+	this._pcontrol.open();
+}
+
+FloatingWindowModule.prototype.close = function()
+{
+	this._pcontrol.close();
+}
+
+FloatingWindowModule.prototype.lock = function()
+{
+	debug(this._name, 'lock');
+	//var pos = settings_thispatcher.getsize();
+	var pos = this._window_position.getvalueof();
+	pos[2] = pos[0] + this._sizeX;
+	pos[3] = pos[1] + this._sizeY;
+	this._obj.window('size', pos[0], pos[1], pos[2], pos[3]);
+	this._obj.window('flags', this._nominimize ? 'nominimize' : 'minimize');
+	this._obj.window('flags', this._nozoom ? 'nozoom' : 'zoom');
+	this._obj.window('flags', this._noclose ? 'noclose' : 'close');
+	this._obj.window('flags', this._nogrow ? 'nogrow' : 'grow');
+	this._obj.window('flags', this._notitle ? 'notitle' : 'title');
+	this._obj.window('flags', this._float ? 'float' : 'nofloat');
+	this._obj.window('exec');
+}
+
+FloatingWindowModule.prototype.unlock = function()
+{
+	this._pcontrol.close();
+}
+
+FloatingWindowModule.prototype.store_window_position = function()
+{
+	this._thispatcher.message('window', 'getsize');
+}
+
+
+
+function ParameterControlModule(name, args)
+{
+	//debug('making parameters');
+	var self = this;
+	this._controlsObjs = [];
+	this._nameObjs = [];
+	this._valueObjs = [];
+	this._defs = [];
+	this.add_bound_properties(this, ['_initialize', 'receive', 'controls', '_lcd']);
+	ParameterControlModule.super_.call(this, name, args);
+	this._initialize();
+}
+
+inherits(ParameterControlModule, FloatingWindowModule);
+
+ParameterControlModule.prototype._initialize = function()
+{
+	this._window_position = this._obj.subpatcher().getnamed('window_position');
+	this._thispatcher = this._obj.subpatcher().getnamed('parameter_controls_thispatcher');
+	var Encoders = ['Encoder_0', 'Encoder_1', 'Encoder_2', 'Encoder_3', 'Encoder_4', 'Encoder_5', 'Encoder_6', 'Encoder_7', 'Encoder_8', 'Encoder_9', 'Encoder_10', 'Encoder_11', 'Encoder_12', 'Encoder_13', 'Encoder_14', 'Encoder_15'];
+	for(var i=0;i<16;i++)
+	{
+		this._controlsObjs[Encoders[i]] = this._obj.subpatcher().getnamed('paramDial['+i+']');
+		this._nameObjs[Encoders[i]] = this._obj.subpatcher().getnamed('name['+i+']');
+		this._valueObjs[Encoders[i]] = this._obj.subpatcher().getnamed('value['+i+']');
+	}
+	this._nameObjs.device_name = this._obj.subpatcher().getnamed('device_name');
+}
+
+ParameterControlModule.prototype.receive = function(num, val)
+{
+	//debug(this._name, 'receive:', num, val);
+	if(num=='position')
+	{
+		var args = arrayfromargs(arguments);
+		//debug(this._name, 'setting window position:', args.slice(1));
+		this._window_position.message('set', args.slice(1));
+	}
+	else if(num=='goto')
+	{
+		Device.hilight_current_device();
+	}
+	else
+	{
+		mod.Send('receive_device_proxy', 'set_mod_parameter_value', num, val);
+	}
+}
+
+ParameterControlModule.prototype._lcd = function(obj, type, val)
+{
+	//debug('lcd', obj, type, val, '\n');
+	if((type=='lcd_name')&&(val!=undefined))
+	{
+		if(this._nameObjs[obj])
+		{
+			this._nameObjs[obj].message('set', val.replace(/_/g, ' '));
+		}
+	}
+	else if((type == 'lcd_value')&&(val!=undefined))
+	{
+		if(this._valueObjs[obj])
+		{
+			this._valueObjs[obj].message('set', val.replace(/_/g, ' '));
+		}
+	}
+	else if((type == 'encoder_value')&&(val!=undefined))
+	{
+		if(this._controlsObjs[obj])
+		{
+			this._controlsObjs[obj].message('set', val);
+		}
+	}
+}
+
+
+
+function ZoneSettingsModule(name, args)
 {
 	var self = this;
+	//this._pcontrol = skin_settings_pcontrol;
+	//this._thispatcher = settings_thispatcher;
 	this.add_bound_properties(this, ['update_background_color', '_poly_index', '_zone_index', 'update', 'select_voice', 'current_edit', '_edit_index', '_parameterObjs', 'change_color', 'chord_assigners']);
 	this._name = 'ZoneSettings';
 	this._pset = 1;
@@ -919,7 +1088,7 @@ function ZoneSettingsModule()
 	this.current_edit = function(){return pads[this._zone_index];}
 	this._parameterObjs = [];
 
-	ZoneSettingsModule.super_.call(this, 'ZoneSettingsModule');
+	ZoneSettingsModule.super_.call(this, name, args);
 
 	var make_layer_callback = function(layer_number, polyname, settingsname)
 	{
@@ -1030,7 +1199,7 @@ function ZoneSettingsModule()
 	this._selected_zone = new ColoredRadioComponent(this._name + '_SelectedZone', 1, 64, 1, this.select_voice, color.RED, color.CYAN, {'value':1});
 }
 
-inherits(ZoneSettingsModule, Bindable);
+inherits(ZoneSettingsModule, FloatingWindowModule);
 
 ZoneSettingsModule.prototype.change_color = function(obj)
 {
@@ -1136,10 +1305,10 @@ function SkinModule()
 	this._keys = undefined;
 	this._pressed_color = colors.WHITE;
 
-	this._assign_mode = new ToggledParameter(this._name + '_AssignMode', {'onValue':colors.RED, 'offValue':colors.GREEN, 'value':0, 'callback':function(){assign_mode.message('set', this._assign_mode._value);}.bind(this)});   // 'callback':self.update})
+	this._assign_mode = new LatchingToggledParameter(this._name + '_AssignMode', {'onValue':colors.RED, 'offValue':colors.GREEN, 'value':0, 'callback':function(){assign_mode.message('set', this._assign_mode._value);}.bind(this)});   // 'callback':self.update})
 	this._follow_mode = new ToggledParameter(this._name + '_FollowMode', {'onValue':colors.YELLOW, 'offValue':colors.WHITE, 'value':DEFAULT_FOLLOW, 'callback':function(){follow_mode.message('set', this._follow_mode._value);}.bind(this)});   // 'callback':self.update})
-	this._transform_mode = new ToggledParameter(this._name + '_TransformMode', {'onValue':colors.CYAN, 'offValue':colors.OFF, 'value':0});
-	this._modify_mode = new ToggledParameter(this._name + '_ModifyMode', {'onValue':colors.MAGENTA, 'offValue':colors.CYAN, 'value':0, 'callback':function(){modify_mode.message('set', this._modify_mode._value);}.bind(this)});   // 'callback':self.update})
+	this._transform_mode = new LatchingToggledParameter(this._name + '_TransformMode', {'onValue':colors.CYAN, 'offValue':colors.OFF, 'value':0});
+	this._modify_mode = new LatchingToggledParameter(this._name + '_ModifyMode', {'onValue':colors.MAGENTA, 'offValue':colors.CYAN, 'value':0, 'callback':function(){modify_mode.message('set', this._modify_mode._value);}.bind(this)});   // 'callback':self.update})
 	//initialize the gui in case settings have changed on frontend
 	this._assign_mode._callback();
 	this._follow_mode._callback();
@@ -1227,13 +1396,12 @@ SkinModule.prototype._button_press = function(button)
 
 
 
-function ModifierMatrixModule()
+function ModifierMatrixModule(name, args)
 {
 	var self = this;
 	this._grid = undefined;
-	this._keys = undefined;
-	this.add_bound_properties(this, ['update', 'assign_grid', 'assign_keys', '_grid', '_keys']);
-	ModifierMatrixModule.super_.call(this, 'ModifierMatrixModule');
+	this.add_bound_properties(this, ['update', 'assign_grid', '_grid', '_button_press']);
+	ModifierMatrixModule.super_.call(this, name, args);
 }
 
 inherits(ModifierMatrixModule, Bindable);
@@ -1241,9 +1409,6 @@ inherits(ModifierMatrixModule, Bindable);
 ModifierMatrixModule.prototype.update = function()
 {
 	//debug('ModifierMatrixModule.update');
-	//var modArray = pads[SkinSettings
-	//outlet(1, 'clear');
-	//outlet(1, 'repaint');
 	if(this._grid)
 	{
 		var pad= ZoneSettings.current_edit();
@@ -1273,37 +1438,19 @@ ModifierMatrixModule.prototype.assign_grid = function(grid)
 	this.update();
 }
 
-ModifierMatrixModule.prototype.assign_keys = function(keys)
-{
-	this._keys = keys;
-}
-
 ModifierMatrixModule.prototype._button_press = function(button)
 {
 	if(button.pressed())
 	{
-		//debug('button_press:', button._name);
-		//button.send(this._pressed_color);
+		//debug('button_press:', button._name, this._name); //arguments.callee.caller.toString());
 		var pad = ZoneSettings.current_edit();
 		var coords = button.get_coords(Grid);
 		var pos = (coords[0]+(coords[1]*8));
 		var old_val = pad._mod_assigns[pos];
 		pad._modifier_assignments.message(pos, 0, (old_val+1)%4);
-		//this.update();
-		update_mod_matrix();
+		this.update();
 		
 	}
-	else
-	{
-		//debug('button_unpress:', button._name, pads[button.group]._color);
-		//button.send(pads[button.group]._color);
-	}
-}
-
-//for some reason ModMatrix is losing its binding in _button_press, so this is a workaround
-function update_mod_matrix()
-{
-	ModMatrix.update();
 }
 
 
@@ -1389,7 +1536,7 @@ ScalesModule = function(parameters)
 	this._noteOffset = new OffsetComponent(this._name + '_Note_Offset', 0, 12, 0, self._update.bind(this), colors.CYAN);
 	this._octaveOffset = new OffsetComponent(this._name + '_Octave_Offset', 0, 119, 0, self._update.bind(this), colors.YELLOW, colors.OFF, 12);
 	this._outputChooser = new RadioComponent(this._name + '_Output_Chooser', 0, 3, 0, self.update_output_target.bind(this), colors.RED, colors.MAGENTA);
-	this._assignMode = new ToggledParameter(this._name + '_AssignMode', {'onValue':colors.MAGENTA, 'offValue':colors.WHITE, 'value':0});
+	this._assignMode = new LatchingToggledParameter(this._name + '_AssignMode', {'onValue':colors.MAGENTA, 'offValue':colors.WHITE, 'value':0});
 	this._thruMode = new ToggledParameter(this._name + '_ThruMode', {'onValue':colors.BLUE, 'offValue':colors.CYAN, 'value':script['thru'].getvalueof()});
 
 	ScalesModule.super_.call(this, 'ScalesModule');
@@ -1523,6 +1670,76 @@ ScalesModule.prototype.update_chord_display = function()
 	}
 }
 
+
+
+LatchingToggledParameterBehaviour = function(parent_parameter_object)
+{
+	var self = this;
+	var parent = parent_parameter_object;
+	this.press_immediate = function(button)
+	{
+		parent.receive(Math.abs(parent._value-1));
+	}
+	this.press_delayed = function(button)
+	{
+	}
+	this.release_immediate = function(button)
+	{
+	}
+	this.release_delayed = function(button)
+	{
+		parent.receive(0);
+	}
+}
+
+
+LatchingToggledParameter = function(name, args)
+{
+	var self = this;
+	this._timered = function()
+	{
+		//debug('timered...', arguments[0]._name);
+		button = arguments[0];
+		if(button&&button.pressed())
+		{
+			this._behaviour.press_delayed(button);
+		}
+	}
+	this._behaviour_timer = new Task(this._timered, this);
+	this.add_bound_properties(this, ['_behaviour_timer', '_timered', ]);
+	this._behaviour = this._behaviour!= undefined ? new this._behaviour(this) : new LatchingToggledParameterBehaviour(this);
+	this._press_delay = this._press_delay ? this._press_delay : PRS_DLY;
+	LatchingToggledParameter.super_.call(this, name, args);
+}
+
+inherits(LatchingToggledParameter, ToggledParameter);
+
+LatchingToggledParameter.prototype._Callback = function(button)
+{
+	if(button.pressed())
+	{
+		if(this._behaviour_timer.running)
+		{
+			this._behaviour_timer.cancel();
+		}
+		this._behaviour.press_immediate(button);
+		this._behaviour_timer.arguments = button;
+		this._behaviour_timer.schedule(this._press_delay);
+	}
+	else
+	{
+		if(this._behaviour_timer.running)
+		{
+			this._behaviour_timer.cancel();
+			this._behaviour.release_immediate(button);
+		}
+		else
+		{
+			this._behaviour.release_delayed(button);
+		}
+	}
+	this.notify();
+}
 
 
 RegisteredToggledParameter = function(name, args)
@@ -1766,7 +1983,7 @@ RegisteredChordNotifier = function(name, args)
 	var self = this;
 	this._mode = 0;
 	this._default_when_cleared = true;
-	this.add_bound_properties(this, ['update', 'toggle', 'receive', 'mode', 'update_mode', 'clear_assignment', '_default_when_cleared', 'update_scroll_position']);
+	this.add_bound_properties(this, ['transpose_up', 'transpose_down', 'update', 'toggle', 'receive', 'mode', 'update_mode', 'clear_assignment', '_default_when_cleared', 'update_scroll_position']);
 	RegisteredChordNotifier.super_.call(this, name, args);
 	if(this._registry)
 	{
@@ -1807,7 +2024,7 @@ RegisteredChordNotifier.prototype.relink = function(pad)
 
 RegisteredChordNotifier.prototype.update = function()
 {
-	//debug(this._name+'.update():', arguments.callee.caller.toString());
+	debug(this._name+'.update():');//, arguments.callee.caller.toString());
 	var pad = ZoneSettings.current_edit();
 	var assgn = pad._layers[this._layer_number]._chord.getvalueof();
 	var chord_assignment = script[this._settingsobj];
@@ -1846,6 +2063,8 @@ RegisteredChordNotifier.prototype.receive = function(note, value)
 	var args = arrayfromargs(arguments);
 	//debug(this._name, 'receive:', note, value, 'arguments?:', args);
 	//debug(arguments.callee.caller.toString());
+	var pad = ZoneSettings.current_edit();
+	pad.flush();
 	if(value!=undefined)
 	{
 		if(Scales._thruMode._value)
@@ -1858,10 +2077,11 @@ RegisteredChordNotifier.prototype.receive = function(note, value)
 		{
 			case 0:
 				this.set_value(note);
+				this.notify();
 				//debug('receive mono, new_value is:', ZoneSettings.current_edit()['_layers'][this._layer_number]['_'+this._polyobj].getvalueof());
 				break;
 			case 1:
-				var pad = ZoneSettings.current_edit();
+				
 				var polyobj = pad['_layers'][this._layer_number]['_'+this._polyobj];
 				var old = polyobj.getvalueof();
 				var index = old.indexOf(note);
@@ -1910,15 +2130,13 @@ RegisteredChordNotifier.prototype.toggle = function(note, value)
 RegisteredChordNotifier.prototype.set_value = function(value)
 {
 	//value of <undefined> here causes illegal message selector
-	//debug(this._name, 'set_value:', value, typeof(value));
+	debug(this._name, 'set_value:', value, typeof(value));
 	var pad = ZoneSettings.current_edit();
 	var polyobj = pad._layers[this._layer_number]['_'+this._polyobj];
 	this._value = value === undefined ? [-1] : value;
 	polyobj.message(this._value);
-	//debug('about to fail?', this._value);
 	//this.notify();
 	storageTask = true;
-	//debug('set_value, new_value is:', polyobj.getvalueof());
 }
 
 RegisteredChordNotifier.prototype.clear_assignment = function(value)
@@ -1938,6 +2156,43 @@ RegisteredChordNotifier.prototype.update_scroll_position = function()
 	var val_lo = val - 25;
 	slider.message(Math.floor(val/12)*12);
 }
+
+RegisteredChordNotifier.prototype.transpose_up = function()
+{
+	var border = 0;
+	for(var i in this._value)
+	{
+		border += this._value[i]>126;
+	}
+	if(!border)
+	{
+		for(var i in this._value)
+		{
+			this._value[i] +=1;
+		}
+		this.set_value(this._value);
+		this.update();
+	}
+}
+
+RegisteredChordNotifier.prototype.transpose_down = function()
+{
+	var border = 0;
+	for(var i in this._value)
+	{
+		border += this._value[i]<1;
+	}
+	if(!border)
+	{
+		for(var i in this._value)
+		{
+			this._value[i] -=1;
+		}
+		this.set_value(this._value);
+		this.update();
+	}
+}
+
 
 
 CellClass = function(x, y, identifier, name, _send, args)
@@ -2003,7 +2258,7 @@ inherits(LayerClass, Bindable);
 
 var PolyVars = ['target_device', 'toggled_state', 'toggle_note', 'mod_sustain', 'mask', 'modifier_assignments', 'color', 'cc_id', 'cc_enable', 'remote_enable', 'remote_id', 'remote_scale_lo', 
 				'remote_scale_hi', 'remote_scale_exp', 'cc_scale_lo', 'cc_scale_hi', 'cc_scale_exp', 'remote_id_init_gate',
-				'breakpoint', 'breakpoint_obj', 'chord_flush', 'cc_channel', 'cc_port'];
+				'breakpoint', 'breakpoint_obj', 'chord_flush', 'cc_channel', 'cc_port', 'note_flush', 'chord_flush'];
 
 var ZONE_ON_COLOR = colors.WHITE;
 
@@ -2106,8 +2361,8 @@ ZoneClass.prototype.reassign_color = function()
 
 ZoneClass.prototype.update_color = function(suppress_block)
 {
-	var page = MainModes.current_page();
-	if((page == mainPage)&&(!mainPage._moded))
+	//var page = MainModes.current_page();
+	if((MainModes.current_page() == mainPage)&&(!mainPage._moded)&&(!mainPage._alted))
 	{
 		var toggled = Math.floor(this._toggled_state.getvalueof());
 		//debug('toggled:', toggled, this._current_color, this._current_color + toggled);
@@ -2126,6 +2381,12 @@ ZoneClass.prototype.send = function(val, suppress_block)
 		//debug(this._cells[i]._name, val);
 		this._cells[i].send(val, suppress_block);
 	}
+}
+
+ZoneClass.prototype.flush = function()
+{
+	this._note_flush.message('bang');
+	this._chord_flush.message('bang');
 }
 
 
@@ -2404,7 +2665,8 @@ SkinEditorComponent.prototype.transform_pad = function(pad)
 MiraGridComponent = function(name, args)
 {
 	var self = this;
-	this.add_bound_properties(this, ['_grid', 'set_grid', 'update', '_button_press']);
+	this._input_gate = true;
+	this.add_bound_properties(this, ['_input_gate', '_grid', 'set_grid', 'update', '_button_press']);
 	this._grid = undefined;
 	this._cells = undefined;
 	MiraGridComponent.super_.call(this, name, args);
@@ -2440,9 +2702,9 @@ MiraGridComponent.prototype._button_press = function()
 		var x = args[1]%8;
 		var y = Math.floor(args[1]/8);
 		var z = args[3] ? 127 : 0;
-		if(MainModes.current_mode() == 0)
+		if(this._input_gate)
 		{
-			main_note_input.message('list', (x + (y*8) + 36), z);
+			main_note_input.message('list', (x + (Math.abs(y-7)*8) + 36), z);
 		}
 		grid(x, y, z);
 	}
@@ -2565,19 +2827,19 @@ DictModule.prototype.refresh_window = function()
 
 
 
-var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
-			'DrumGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
-			'MidiEffectGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
-			'Other':[['None', 'None', 'None', 'None', 'None', 'None', 'None', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['None', 'None', 'None', 'None', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']],
-			'Operator':[['Osc-A Level', 'Osc-B Level', 'Osc-C Level', 'Osc-D Level', 'Transpose', 'Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Osc-A Level', 'Osc-B Level', 'Osc-C Level', 'Osc-D Level', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
-			'UltraAnalog':[['AEG1 Attack', 'AEG1 Decay', 'AEG1 Sustain', 'AEG1 Rel', 'OSC1 Semi', 'F1 Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['AEG1 Attack', 'AEG1 Decay', 'AEG1 Sustain', 'AEG1 Rel', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
-			'OriginalSimpler':[['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'Transpose', 'Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
-			'MultiSampler':[['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'Transpose', 'Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
-			'LoungeLizard':[['M Force', 'F Release', 'F Tone Decay', 'F Tone Vol', 'Semitone', 'P Distance', 'None', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['M Force', 'F Release', 'F Tone Decay', 'F Tone Vol', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
-			'StringStudio':[['E Pos', 'Exc ForceMassProt', 'Exc FricStiff', 'Exc Velocity', 'Semitone', 'Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['E Pos', 'Exc ForceMassProt', 'Exc FricStiff', 'Exc Velocity', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
-			'Collision':[['Noise Attack', 'Noise Decay', 'Noise Sustain', 'Noise Release', 'Res 1 Tune', 'Res 1 Brightness', 'None', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['Noise Attack', 'Noise Decay', 'Noise Sustain', 'Noise Release', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
-			'InstrumentImpulse':[['1 Start', '1 Envelope Decay', '1 Stretch Factor', 'Global Time', 'Global Transpose', '1 Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['1 Start', '1 Envelope Decay', '1 Stretch Factor', 'Global Time', 'ModDevice_PolyOffset', 'ModDevice_Mode', 'ModDevice_Speed', 'Mod_Chain_Vol', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']], 
-			'NoDevice':[['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_selected', 'ModDevice_note', 'ModDevice_mod_A', 'ModDevice_mod_B', 'ModDevice_mod_C', 'ModDevice_color', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1'], ['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_Channel', 'ModDevice_Groove', 'ModDevice_Random', 'ModDevice_BaseTime', 'Mod_Chain_Send_0', 'Mod_Chain_Send_1', 'Mod_Chain_Send_2', 'Mod_Chain_Send_3']]}
+var SKIN_BANKS = {'InstrumentGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']], 
+			'DrumGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']], 
+			'MidiEffectGroupDevice':[['Macro 1', 'Macro 2', 'Macro 3', 'Macro 4', 'Macro 5', 'Macro 6', 'Macro 7', 'Mod_Chain_Vol', 'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']], 
+			'Other':[['None', 'None', 'None', 'None', 'None', 'None', 'None', 'Mod_Chain_Vol', 'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']],
+			'Operator':[['Osc-A Level', 'Osc-B Level', 'Osc-C Level', 'Osc-D Level', 'Transpose', 'Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']], 
+			'UltraAnalog':[['AEG1 Attack', 'AEG1 Decay', 'AEG1 Sustain', 'AEG1 Rel', 'OSC1 Semi', 'F1 Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']], 
+			'OriginalSimpler':[['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'Transpose', 'Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']], 
+			'MultiSampler':[['Ve Attack', 'Ve Decay', 'Ve Sustain', 'Ve Release', 'Transpose', 'Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']], 
+			'LoungeLizard':[['M Force', 'F Release', 'F Tone Decay', 'F Tone Vol', 'Semitone', 'P Distance', 'None', 'Mod_Chain_Vol', 'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']], 
+			'StringStudio':[['E Pos', 'Exc ForceMassProt', 'Exc FricStiff', 'Exc Velocity', 'Semitone', 'Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']], 
+			'Collision':[['Noise Attack', 'Noise Decay', 'Noise Sustain', 'Noise Release', 'Res 1 Tune', 'Res 1 Brightness', 'None', 'Mod_Chain_Vol','ModDevice_chord_channel',  'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']], 
+			'InstrumentImpulse':[['1 Start', '1 Envelope Decay', '1 Stretch Factor', 'Global Time', 'Global Transpose', '1 Filter Freq', 'None', 'Mod_Chain_Vol', 'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']], 
+			'NoDevice':[['None', 'None', 'None', 'None', 'None', 'None', 'None', 'None', 'ModDevice_zone',  'ModDevice_color', 'ModDevice_chord_channel',  'ModDevice_modify_target', 'ModDevice_toggle_note', 'ModDevice_thru', 'ModDevice_sustain', 'ModDevice_mask']]}
 
 
 
@@ -2588,7 +2850,7 @@ DeviceModule = function(name, args)
 	this._device_id = 0;
 	this._local_menu_items = [];
 	this._menu_items = [];
-	this.add_bound_properties(this, ['_dict', '_DrumRack_container', '_menu_items', '_local_menu_items', 'select_controlled_device', 'clear_controlled_device', 'update_device_bank_options', 'setup_banks', 'update', 'setup_device', 'select_pad_device', 'detect_drumrack', 'select_parameter', 'clear_parameter', 'parameter_name_from_id', 'update_remote_targets']);
+	this.add_bound_properties(this, ['_assigned_device', 'update_note_assignment', '_dict', '_DrumRack_container', '_menu_items', '_local_menu_items', 'select_controlled_device', 'clear_controlled_device', 'update_device_bank_options', 'setup_banks', 'update', 'setup_device', 'select_pad_device', 'detect_drumrack', 'select_parameter', 'clear_parameter', 'parameter_name_from_id', 'update_remote_targets']);
 	DeviceModule.super_.call(this, name, args);
 	this._dict = new DictModule(this._name + '_Dict', {'dict_name':'device_banks', 'obj':device_banks});
 	this._global_flags = this._dict.get('Global_Flags');
@@ -2674,6 +2936,33 @@ DeviceModule.prototype.update = function()
 	this._build_device_bank();
 	this._send_current_device_bank();
 	this.update_device_component();
+}
+
+DeviceModule.prototype.update_note_assignment = function()
+{
+	this._finder.id = parseInt(mod.modClientID);
+	var id = this._finder.get('assigned_device')[1];
+	this._finder.id = parseInt(id);
+	debug('update_note_assignment:', this._finder.get('name'), 'id:', id, this._DrumRack_chain(id));
+	this._dict.set('Zone_'+zone+'::chainNumber', this._DrumRack_chain(id));
+	this.update_device_bank_options();
+	this._retrieve_device_bank();
+	this.update_bank_selection_display();
+	this._build_device_bank();
+	this._send_current_device_bank();
+	this.update_device_component();
+}
+
+DeviceModule.prototype.update_note_assignment = function(obj)
+{
+	//debug('update_note_assignment', 'note:', note);
+	var device_assignment = this._dict.getNumberSafely('Zone_'+ZoneSettings._zone_index+':id');
+	//debug('note:', obj._value);
+	if(!device_assignment)
+	{
+		mod.Send( 'send_explicit', 'receive_device_proxy', 'set_mod_drum_pad', obj._value);
+	}
+	//this.hilight_current_device();
 }
 
 DeviceModule.prototype._build_device_bank = function()
@@ -2988,6 +3277,15 @@ DeviceModule.prototype.set_global_assignments = function(num)
 	}
 }
 
+DeviceModule.prototype.hilight_current_device = function()
+{
+	this._finder.id = parseInt(mod.modClientID);
+	var id = this._finder.get('assigned_device')[1];
+	this._finder.id = parseInt(id);
+	//debug('current device is:', this._finder.get('name'));
+	this._finder.goto('live_set view');
+	this._finder.call('select_device', 'id', id);
+}
 
 //old stuff
 DeviceModule.prototype.original_detect_drumrack = function()
@@ -3023,74 +3321,6 @@ DeviceModule.prototype.select_pad_device = function(note)
 
 
 
-var Encoders = ['Encoder_0', 'Encoder_1', 'Encoder_2', 'Encoder_3', 'Encoder_4', 'Encoder_5', 'Encoder_6', 'Encoder_7', 'Encoder_8', 'Encoder_9', 'Encoder_10', 'Encoder_11', 'Encoder_12', 'Encoder_13', 'Encoder_14', 'Encoder_15'];
-
-function ParameterControlModule(name, args)
-{
-	var self = this;
-	this._controlsObjs = [];
-	this._nameObjs = [];
-	this._valueObjs = [];
-	this._defs = [];
-	this.add_bound_properties(this, ['_initialize', 'open', 'close', 'receive', 'controls', '_lcd']);
-	ParameterControlModule.super_.call(this, name, args);
-	this._initialize();
-}
-
-inherits(ParameterControlModule, Bindable);
-
-ParameterControlModule.prototype._initialize = function()
-{
-	for(var i=0;i<16;i++)
-	{
-		this._controlsObjs[Encoders[i]] = this._obj.subpatcher().getnamed('paramDial['+i+']');
-		this._nameObjs[Encoders[i]] = this._obj.subpatcher().getnamed('name['+i+']');
-		this._valueObjs[Encoders[i]] = this._obj.subpatcher().getnamed('value['+i+']');
-	}
-}
-
-ParameterControlModule.prototype.open = function()
-{
-	this._pcontrol.open();
-}
-
-ParameterControlModule.prototype.close = function()
-{
-	this._pcontrol.close();
-}
-
-ParameterControlModule.prototype.receive = function(num, val)
-{
-	debug(this._name, 'receive:', num, val);
-	mod.Send('receive_device_proxy', 'set_mod_parameter_value', num, val);
-}
-
-ParameterControlModule.prototype._lcd = function(obj, type, val)
-{
-	//post('new_lcd', obj, type, val, '\n');
-	debug('lcd', obj, type, val, '\n');
-	if((type=='lcd_name')&&(val!=undefined))
-	{
-		if(this._nameObjs[obj])
-		{
-			this._nameObjs[obj].message('set', val.replace(/_/g, ' '));
-		}
-	}
-	else if((type == 'lcd_value')&&(val!=undefined))
-	{
-		if(this._valueObjs[obj])
-		{
-			this._valueObjs[obj].message('set', val.replace(/_/g, ' '));
-		}
-	}
-	else if((type == 'encoder_value')&&(val!=undefined))
-	{
-		if(this._controlsObjs[obj])
-		{
-			this._controlsObjs[obj].message('set', val);
-		}
-	}
-}
 
 
 

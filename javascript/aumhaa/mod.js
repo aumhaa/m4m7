@@ -22,6 +22,7 @@ ModComponent = function(parent, type, unique, legacy, attrs)
 	this.FUNCTION = new RegExp(/(function)/);
 	this.PROPERTY = new RegExp(/(property)/);
 	this.WS = new RegExp('');
+	this.modClientID = 0;
 	this.modFunctions = [];
 	this.modAddresses = [];
 	this.this_device_id = 0;
@@ -118,10 +119,10 @@ ModComponent.prototype.init = function()
 						this.debug('found, focusing on', new_id);
 						this.finder.id = parseInt(new_id[1]);
 						var modclient_id = this.finder.call('add_mod', 'id', this.this_device_id);
-						
 						this.debug('modclient id is:', modclient_id);
 						this.finder.id = parseInt(modclient_id[1])
 						this.debug('client id returned is: ', this.finder.id);
+						this.modClientID = parseInt(modclient_id[1]);
 						this.finder.property = 'value';
 						var children = this.finder.info.toString().split(new RegExp("\n"));	
 						for(var item in children)

@@ -9,7 +9,7 @@
 			"modernui" : 1
 		}
 ,
-		"rect" : [ 214.0, 439.0, 315.0, 170.0 ],
+		"rect" : [ 494.0, 78.0, 317.0, 165.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 1,
 		"default_fontsize" : 12.0,
@@ -85,7 +85,7 @@
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 221.0, 388.0, 475.0, 35.0 ],
 					"style" : "",
-					"text" : "script newdefault frame mira.frame @presentation 1 @tabname Skin:Grid @taborder 1 @draw_tab_name 0 @aspect 1 @presentation_rect 1.538994 4.75 307.4 154."
+					"text" : "script newdefault frame mira.frame @presentation 1 @tabname Skin:Grid @taborder 1 @draw_tab_name 0 @aspect 5 @presentation_rect 1.538994 4.75 307.4 154."
 				}
 
 			}
@@ -471,7 +471,7 @@
 					"patching_rect" : [ 7.0, 38.75, 134.0, 133.5 ],
 					"pinch_enabled" : 0,
 					"presentation" : 1,
-					"presentation_rect" : [ 88.2388, 15.0, 134.0, 133.5 ],
+					"presentation_rect" : [ 87.2388, 14.0, 136.0, 136.5 ],
 					"remote_circles" : 0,
 					"remote_gestures" : 0,
 					"rotate_enabled" : 0,
@@ -1766,15 +1766,21 @@
 			}
 , 			{
 				"box" : 				{
+					"angle" : 270.0,
 					"border" : 2,
 					"bordercolor" : [ 0.0, 0.0, 0.0, 1.0 ],
+					"grad1" : [ 0.32549, 0.345098, 0.372549, 1.0 ],
+					"grad2" : [ 0.290196, 0.309804, 0.301961, 1.0 ],
+					"hidden" : 1,
 					"id" : "obj-73",
 					"maxclass" : "panel",
+					"mode" : 1,
 					"numinlets" : 1,
 					"numoutlets" : 0,
 					"patching_rect" : [ 147.5, 7.5, 146.0, 139.0 ],
 					"presentation" : 1,
 					"presentation_rect" : [ 82.2388, 10.25, 146.0, 144.0 ],
+					"proportion" : 0.39,
 					"style" : ""
 				}
 

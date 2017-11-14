@@ -1302,6 +1302,7 @@ class ModDeviceProxy(ControlManager, EventObject):
 	_name = 'ModDeviceProxy'
 	_parameters = []
 	_alted = False
+	_assigned_device = None
 
 	def __init__(self, parent = None, mod_device = None, *a, **k):
 		self._parent = parent
@@ -1341,15 +1342,15 @@ class ModDeviceProxy(ControlManager, EventObject):
 		return self._parameters if (not self._alted or len(self._parameters) < 9) else [self._parameters[0]] + self._parameters[9:]
 	
 
-	def current_parameters(self):
-		return self._parameters
-	
-
 	@parameters.setter
 	def parameters(self, parameters):
 		self._parameters = parameters
 		debug('parameters are now:', [parameter.name if hasattr(parameter, 'name') else None for parameter in self._parameters])
 		self.notify_parameters()
+	
+
+	def current_parameters(self):
+		return self._parameters
 	
 
 	@listenable_property
@@ -1476,6 +1477,7 @@ class LegacyModDeviceProxy(ModDeviceProxy):
 	def _assign_parameters(self, device, force = False, *a):
 		debug('_assign_parameters:', device, device.class_name if device and hasattr(device, 'class_name') else 'no name')
 		self._assigned_device = device
+		self._parent.assigned_device = device
 		new_parameters = [self._mod_device.parameters[0]]
 		for param in self._params:
 			param.parameter = None
@@ -1646,12 +1648,26 @@ class LegacyModDeviceProxy(ModDeviceProxy):
 				parameter.value = newval
 	
 
+	#@listenable_property
+	#def assigned_device(self, device):
+	#	self._parent.assigned_device = device
+	#	return self._assigned_device
+	
+
+	#@assigned_device.setter
+	#def assigned_device(self, device):
+	#	self._assigned_device = device
+	#	debug('_assigned_device is now:', self._assigned_device)
+	#	self.notify__assigned_device()
+	
+
 
 class ModClient(NotifyingControlElement):
 
 
 	__subject_events__ = (Event(name='value', signal=InputSignal, override=True),)
 	_input_signal_listener_count = 0
+	assigned_device = None
 
 	def __init__(self, parent, device, name, *a, **k):
 		super(ModClient, self).__init__(*a, **k)
@@ -1961,6 +1977,18 @@ class ModClient(NotifyingControlElement):
 				except:
 					debug('Forward method exception', method, value_list)
 	
+
+	#@listenable_property
+	#def assigned_device(self, device, *a):
+	#	#debug('parameter.setter:', parameter)
+	#	return self.assigned_device
+	
+	#@assigned_device.setter
+	#def assigned_device(self, device, *a):
+	#	#debug('parameter.setter:', parameter)
+	#	self._assigned_device = 
+	
+
 
 
 class ModRouter(CompoundComponent):
