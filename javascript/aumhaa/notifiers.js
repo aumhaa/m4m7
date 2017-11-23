@@ -437,6 +437,8 @@ ControlClass.prototype.identifier = function(){return this._id;}
 
 ControlClass.prototype._send = function(value){}//this should be overridden by subclass
 
+ControlClass.prototype._mask = function(value){}//this should be overridden by subclass
+
 ControlClass.prototype.send = function(value)
 {
 	this._last_sent_value = value;
@@ -453,7 +455,8 @@ exports.ControlClass = ControlClass;
 
 ButtonClass = function(identifier, name, _send, args)
 {
-	//lcl_debug('making buton:', name, this._bound_properties);
+	var self = this;
+	//lcl_debug('making button:', name, this._bound_properties);
 	this.add_bound_properties(this, ['set_send_function', 'pressed', 'turn_on', 'turn_off', 'set_on_off_values', 'set_translation', 'flash', 'get_coords']);
 	this._type = NOTE_TYPE;
 	this._onValue = 127;
@@ -463,6 +466,7 @@ ButtonClass = function(identifier, name, _send, args)
 	this._grid = [];
 	ButtonClass.super_.call(this, identifier, name, args);
 	this._send = !_send ? function(){lcl_debug('No _send function assigned for:', self._name);} : _send;
+	this._mask = this._mask ? this._mask : function(){lcl_debug('No _mask function assigned for:', self._name);};
 	//register_control(this);
 }
 
@@ -484,6 +488,14 @@ ButtonClass.prototype.send = function(value, flash)
 	this.flash(flash);
 	this._last_sent_value = value;
 	this._send(value);
+}
+
+ButtonClass.prototype.mask = function(value, flash)
+{
+	//midiBuffer[this._type][this._id] = [this, value];
+	//this.flash(flash);
+	//this._last_sent_value = value;
+	this._mask(value);
 }
 
 ButtonClass.prototype.turn_on = function()
@@ -629,7 +641,7 @@ exports.GUIButton = GUIButton;
 
 GridClass = function(width, height, name, args)
 {
-	this.add_bound_properties(this, ['add_control', 'controls', 'receive', 'get_button', 'reset', 'clear_buttons', 'sub_grid', 'clear_translations', 'button_coords']);
+	this.add_bound_properties(this, ['mask', 'add_control', 'controls', 'receive', 'get_button', 'reset', 'clear_buttons', 'sub_grid', 'clear_translations', 'button_coords']);
 	//lcl_debug('making GridClass:', width, height, name, args, this._bound_properties);
 	//this._bound_properties = ['receive'];
 	var contents = [];
@@ -689,6 +701,11 @@ GridClass.prototype.send = function(x, y, value)
 	this._grid[x][y].send(value);
 }
 
+GridClass.prototype.mask = function(x, y, value)
+{
+	this._grid[x][y].mask(value);
+}
+
 GridClass.prototype.get_button = function(x, y)
 {
 	var button = undefined;
@@ -705,7 +722,7 @@ GridClass.prototype.get_button = function(x, y)
 GridClass.prototype.reset = function()
 {
 	var buttons = this.controls();
-	for (index in buttons)
+	for (var index in buttons)
 	{
 		if(buttons[index] instanceof NotifierClass)
 		{
@@ -819,6 +836,41 @@ DefaultPageStackBehaviour = function(parent_mode_object)
 exports.DefaultPageStackBehaviour = DefaultPageStackBehaviour;
 
 
+CyclePageStackBehaviour = function(parent_mode_object)
+{
+	var self = this;
+	var parent = parent_mode_object;
+	this.press_immediate = function(button)
+	{
+		debug('press_immediate', parent, parent.mode_buttons);
+		debug(parent._value, parent._mode_callbacks);
+		var mode = (parent._value + 1) % parent._mode_callbacks.length;
+		debug('new_mode:', mode);
+		parent.splice_mode(mode);
+		parent.push_mode(mode);
+		parent.recalculate_mode();
+	}
+	this.press_delayed = function(button)
+	{
+		debug('press_delayed');
+	}
+	this.release_immediate = function(button)
+	{
+		debug('release_immediate');
+		parent.clean_mode_stack();
+	}
+	this.release_delayed = function(button)
+	{
+		debug('release_delayed');
+		//var mode = parent.mode_buttons.indexOf(button);
+		parent.pop_mode();
+		parent.recalculate_mode();
+	}
+}
+
+exports.CyclePageStackBehaviour = CyclePageStackBehaviour;
+
+
 
 ModeClass = function(number_of_modes, name, args)
 {
@@ -828,6 +880,7 @@ ModeClass = function(number_of_modes, name, args)
 	this._mode_stack = [];
 	this.mode_buttons = [];
 	this.mode_cycle_button = undefined;
+	this._mode_colors = [0, 1];
 	this._timered = function()
 	{
 		//debug('timered...', arguments[0]._name);
@@ -855,6 +908,34 @@ ModeClass.prototype.mode_cycle_value = function(button)
 		this.change_mode((this._value + 1) % this._mode_callbacks.length)
 		//this.notify();
 	}
+}
+
+ModeClass.prototype.mode_cycle_value = function(button)
+{
+	debug('mode_cycle_value:', button);
+	if(button.pressed())
+	{
+		if(this._behaviour_timer.running)
+		{
+			this._behaviour_timer.cancel();
+		}
+		this._behaviour.press_immediate(button);
+		this._behaviour_timer.arguments = button;
+		this._behaviour_timer.schedule(this._press_delay);
+	}
+	else
+	{
+		if(this._behaviour_timer.running)
+		{
+			this._behaviour_timer.cancel();
+			this._behaviour.release_immediate(button);
+		}
+		else
+		{
+			this._behaviour.release_delayed(button);
+		}
+	}
+	this.notify();
 }
 
 ModeClass.prototype.mode_value = function(button)
@@ -939,8 +1020,12 @@ ModeClass.prototype.update = function()
 			this.mode_buttons[i].turn_off();
 		}
 	}
+	if(this.mode_cycle_button)
+	{
+		this.mode_cycle_button.send(this._mode_colors[this._value%this._mode_colors.length]);
+	}
 }
-		
+
 ModeClass.prototype.add_mode = function(mode, callback)
 {
 	if (mode < this._mode_callbacks.length)
@@ -2106,4 +2191,253 @@ ControlRegistry = function(name)
 }
 
 exports.ControlRegistry = ControlRegistry;
+
+
+MiraGridComponent = function(name, args)
+{
+	var self = this;
+	this._input_gate = true;
+	this.add_bound_properties(this, ['_input_gate', '_grid', 'set_grid', 'update', '_button_press']);
+	this._grid = undefined;
+	this._cells = undefined;
+	MiraGridComponent.super_.call(this, name, args);
+}
+
+inherits(MiraGridComponent, Bindable);
+
+MiraGridComponent.prototype.set_grid = function(grid)
+{
+	debug('MiraGridComponent set_grid', grid);
+	if(this._grid instanceof GridClass)
+	{
+		this._grid.remove_listener(this._button_press);
+	}
+	this._grid = grid;
+	if(this._grid instanceof GridClass)
+	{
+		this._grid.add_listener(this._button_press);
+	}
+	this._update();
+}
+
+MiraGridComponent.prototype.update = function()
+{
+}
+
+MiraGridComponent.prototype._button_press = function()
+{
+	var args = arrayfromargs(arguments)
+	//debug('MiraGrid._button_press:', args);
+	if(args[0] == 'region')
+	{
+		var x = args[1]%8;
+		var y = Math.floor(args[1]/8);
+		var z = args[3] ? 127 : 0;
+		if(this._input_gate)
+		{
+			main_note_input.message('list', (x + (Math.abs(y-7)*8) + 36), z);
+		}
+		grid(x, y, z);
+	}
+}
+
+MiraGridComponent.prototype._key_press = function()
+{
+	var args = arrayfromargs(arguments)
+	//debug('MiraGrid._button_press:', args);
+	if(args[0] == 'region')
+	{
+		key(args[1], args[3] ? 127 : 0);
+	}
+}
+
+MiraGridComponent.prototype._shift_press = function()
+{
+	var args = arrayfromargs(arguments)
+	//debug('MiraGrid._button_press:', args);
+	if(args[0] == 'region')
+	{
+		shift(args[3] ? 127 : 0);
+	}
+}
+
+MiraGridComponent.prototype._alt_press = function()
+{
+	var args = arrayfromargs(arguments)
+	//debug('MiraGrid._button_press:', args);
+	if(args[0] == 'region')
+	{
+		alt(args[3] ? 127 : 0);
+	}
+}
+
+MiraGridComponent.prototype.send = function(x, y, val)
+{
+	this._cells[x + (y*8)].message('bgcolor', ROLI.PALLETTE[val]);
+}
+
+exports.MiraGridComponent = MiraGridComponent;
+
+
+DictModule = function(name, args)
+{
+	var self = this;
+	this.add_bound_properties(this, ['get', 'set', 'getNumberSafely', 'keys', '_dict', 'initialize']);
+	DictModule.super_.call(this, name, args);
+	this._dict = new Dict(this._dict_name);
+	this._dict.quiet = this._quiet ? this._quiet : false;
+	this._initialize();
+}
+
+inherits(DictModule, Bindable);
+
+DictModule.prototype._initialize = function() 
+{
+	//this._dict.clear();
+	debug('names:', this._dict.getnames());
+	debug('size:', this._dict.getsize());
+	var default_zone = '{ "Menus" : [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }';
+	for(var i=0;i<64;i++)
+	{
+		if(!this._dict.contains('Zone_'+i))
+		{
+			//debug('making Zone_'+i);
+			this._dict.replace('Zone_'+i, new Dict('Zone_'+i));
+			this._dict.setparse('Zone_'+i, default_zone);
+		}
+	}
+	if(!this._dict.contains('Global_Flags'))
+	{
+		//debug('making Global_Flags');
+		this._dict.set('Global_Flags', new Dict('Global_Flags'));
+		this._dict.setparse("Global_Flags", '{ "parameter0" : false, "parameter1" : false, "parameter2" : false, "parameter3" : false, "parameter4" : false, "parameter5" : false, "parameter6" : false, "parameter7" : false }');
+	}
+	this._keys = this._dict.getkeys();
+	debug('new_keys:', this._keys);
+}
+
+DictModule.prototype.set = function(address, value)
+{
+	try
+	{
+		this._dict.replace(address, value);
+		this.refresh_window();
+		return true;
+	}
+	catch(err)
+	{
+		return false;
+	}
+}
+
+DictModule.prototype.get = function(address)
+{
+	var value = this._dict.get(address);
+	return value;
+}
+
+DictModule.prototype.getNumberSafely = function(address)
+{
+	var value = this._dict.get(address);
+	if(isNaN(parseInt(value)))
+	{
+		value = 0;
+	}
+	return value;
+}
+
+DictModule.prototype.hasKey = function(address)
+{
+	return this._dict.contains(address);
+}
+
+DictModule.prototype.refresh_window = function()
+{
+	//VIEW_DEVICEDICT&&this._obj.message('wclose');
+	//VIEW_DEVICEDICT&&this._obj.message('edit');
+}
+
+exports.DictModule = DictModule;
+
+
+DefaultPageStackBehaviourWithModeShift = function(parent_mode_object)
+{
+	//debug('initializing DefaultPageStackBehaviourWithModeShift');
+	var self = this;
+	var parent = parent_mode_object;
+	this.press_immediate = function(button)
+	{
+		//debug('press_immediate', parent, parent.mode_buttons);
+		var mode = parent.mode_buttons.indexOf(button);
+		if(mode!=parent.current_mode())
+		{
+			parent.splice_mode(mode);
+			parent.push_mode(mode);
+			parent.recalculate_mode();
+		}
+		else
+		{
+			var page = parent.current_page();
+			parent.current_page()._mode_button_value(button);
+		}
+	}
+	this.press_delayed = function(button)
+	{
+		//debug('press_delayed');
+		
+	}
+	this.release_immediate = function(button)
+	{
+		//debug('release_immediate');
+		parent.clean_mode_stack();
+		var mode = parent.mode_buttons.indexOf(button);
+		if(mode==parent.current_mode())
+		{
+			parent.current_page()._mode_button_value(button);
+		}
+	}
+	this.release_delayed = function(button)
+	{
+		//debug('release_delayed');
+		var mode = parent.mode_buttons.indexOf(button);
+		//if(mode!=parent.current_mode())
+		//{
+			parent.pop_mode(mode);
+			parent.recalculate_mode();
+		//}
+		//else
+		//{
+			parent.current_page()._mode_button_value(button);
+		//}
+	}
+}
+
+
+ModeSwitchablePage = function(name, args)
+{
+	var self = this;
+	this._moded = false;
+	this.add_bound_properties(this, ['_moded', '_mode_button_value']);
+	ModeSwitchablePage.super_.call(this, name, args);
+}
+
+inherits(ModeSwitchablePage, Page);
+
+ModeSwitchablePage.prototype._mode_button_value = function(obj)
+{
+	//lcl_debug('old altValue');
+	//debug('_mode_button_value', obj, obj._value);
+	var new_mode = false;
+	if(obj)
+	{
+		new_mode= obj._value > 0;
+	}
+	if(new_mode != this._moded)
+	{
+		this._moded = new_mode;
+		this.update_mode();
+	}
+}
+
+exports.ModeSwitchablePage = ModeSwitchablePage;
 

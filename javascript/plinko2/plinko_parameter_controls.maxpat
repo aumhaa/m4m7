@@ -9,7 +9,7 @@
 			"modernui" : 1
 		}
 ,
-		"rect" : [ 248.0, 280.0, 500.0, 226.0 ],
+		"rect" : [ 622.0, 725.0, 500.0, 226.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 1,
 		"default_fontsize" : 12.0,
@@ -1832,23 +1832,23 @@
 			}
  ],
 		"parameters" : 		{
-			"obj-64" : [ "paramDial[11]", "paramDial[7]", 0 ],
-			"obj-5" : [ "paramDial[1]", "paramDial[1]", 0 ],
-			"obj-10" : [ "paramDial[6]", "paramDial[6]", 0 ],
-			"obj-2" : [ "paramDial[0]", "paramDial[0]", 0 ],
+			"obj-7" : [ "paramDial[3]", "paramDial[3]", 0 ],
 			"obj-54" : [ "goto", "goto", 0 ],
-			"obj-61" : [ "paramDial[10]", "paramDial[4]", 0 ],
-			"obj-60" : [ "paramDial[16]", "paramDial[3]", 0 ],
-			"obj-59" : [ "paramDial[15]", "paramDial[2]", 0 ],
 			"obj-63" : [ "paramDial[18]", "paramDial[6]", 0 ],
-			"obj-9" : [ "paramDial[5]", "paramDial[5]", 0 ],
-			"obj-11" : [ "paramDial[7]", "paramDial[7]", 0 ],
+			"obj-8" : [ "paramDial[4]", "paramDial[4]", 0 ],
 			"obj-57" : [ "paramDial[9]", "paramDial[0]", 0 ],
 			"obj-58" : [ "paramDial[14]", "paramDial[1]", 0 ],
 			"obj-62" : [ "paramDial[17]", "paramDial[5]", 0 ],
-			"obj-8" : [ "paramDial[4]", "paramDial[4]", 0 ],
-			"obj-7" : [ "paramDial[3]", "paramDial[3]", 0 ],
-			"obj-6" : [ "paramDial[2]", "paramDial[2]", 0 ]
+			"obj-60" : [ "paramDial[16]", "paramDial[3]", 0 ],
+			"obj-2" : [ "paramDial[0]", "paramDial[0]", 0 ],
+			"obj-11" : [ "paramDial[7]", "paramDial[7]", 0 ],
+			"obj-61" : [ "paramDial[10]", "paramDial[4]", 0 ],
+			"obj-5" : [ "paramDial[1]", "paramDial[1]", 0 ],
+			"obj-59" : [ "paramDial[15]", "paramDial[2]", 0 ],
+			"obj-10" : [ "paramDial[6]", "paramDial[6]", 0 ],
+			"obj-6" : [ "paramDial[2]", "paramDial[2]", 0 ],
+			"obj-64" : [ "paramDial[11]", "paramDial[7]", 0 ],
+			"obj-9" : [ "paramDial[5]", "paramDial[5]", 0 ]
 		}
 ,
 		"dependency_cache" : [  ],

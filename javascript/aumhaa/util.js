@@ -344,3 +344,19 @@ function wiki()
 }
 
 exports.wiki = wiki;
+
+function get_patcher_script_names(patcher)
+{
+	var names = [];
+	var iter_objs = function(p)
+	{
+		if(p.varname)
+		{
+			names.push(p.varname);
+		}
+	}
+	patcher.apply(iter_objs);
+	return names;
+}
+
+exports.get_patcher_script_names = get_patcher_script_names;
