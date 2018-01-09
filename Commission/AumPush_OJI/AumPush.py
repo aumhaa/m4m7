@@ -23,7 +23,7 @@ from ableton.v2.base import inject, clamp, nop, const, NamedTuple, listens, list
 from ableton.v2.control_surface import BackgroundLayer, ClipCreator, ControlSurface, DeviceBankRegistry, Layer, midi
 from ableton.v2.control_surface.components import ViewControlComponent, BackgroundComponent, M4LInterfaceComponent, ModifierBackgroundComponent, SessionNavigationComponent, SessionRingComponent, SessionOverviewComponent, ViewControlComponent
 from ableton.v2.control_surface.elements import adjust_string, ButtonElement, ButtonMatrixElement, ChoosingElement, ComboElement, DoublePressContext, MultiElement, OptionalElement, to_midi_value
-from ableton.v2.control_surface.mode import CompoundMode, AddLayerMode, LazyComponentMode, ReenterBehaviour, ModesComponent, EnablingModesComponent
+from ableton.v2.control_surface.mode import CompoundMode, AddLayerMode, ModesComponent
 from ableton.v2.control_surface.input_control_element import ParameterSlot
 
 from Push.push import Push
@@ -49,11 +49,11 @@ from pushbase.touch_encoder_element import TouchEncoderElement
 from pushbase.touch_strip_element import TouchStripElement
 from pushbase.touch_strip_controller import TouchStripControllerComponent, TouchStripEncoderConnection
 from pushbase.selection import PushSelection
-from pushbase.accent_component import AccentComponent
-from pushbase.auto_arm_component import AutoArmComponent
+#from pushbase.accent_component import AccentComponent
+#from pushbase.auto_arm_component import AutoArmComponent
 from pushbase.matrix_maps import *
 from pushbase.consts import *
-from pushbase.scrollable_list_component import ScrollableListWithTogglesComponent
+#from pushbase.scrollable_list_component import ScrollableListWithTogglesComponent
 from pushbase.device_parameter_component import DeviceParameterComponent
 from pushbase.skin_default import make_default_skin
 
