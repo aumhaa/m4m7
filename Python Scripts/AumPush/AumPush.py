@@ -23,7 +23,7 @@ from ableton.v2.base import inject, clamp, nop, const, NamedTuple, listens, list
 from ableton.v2.control_surface import BackgroundLayer, ClipCreator, ControlSurface, DeviceBankRegistry, Layer, midi
 from ableton.v2.control_surface.components import ViewControlComponent, BackgroundComponent, M4LInterfaceComponent, ModifierBackgroundComponent, SessionNavigationComponent, SessionRingComponent, SessionOverviewComponent, ViewControlComponent
 from ableton.v2.control_surface.elements import adjust_string, ButtonElement, ButtonMatrixElement, ChoosingElement, ComboElement, DoublePressContext, MultiElement, OptionalElement, to_midi_value
-from ableton.v2.control_surface.mode import CompoundMode, AddLayerMode, LazyComponentMode, ReenterBehaviour, ModesComponent, EnablingModesComponent
+from ableton.v2.control_surface.mode import CompoundMode, AddLayerMode, ModesComponent
 from ableton.v2.control_surface.input_control_element import ParameterSlot
 
 from Push.push import Push
@@ -49,11 +49,11 @@ from pushbase.touch_encoder_element import TouchEncoderElement
 from pushbase.touch_strip_element import TouchStripElement
 from pushbase.touch_strip_controller import TouchStripControllerComponent, TouchStripEncoderConnection
 from pushbase.selection import PushSelection
-from pushbase.accent_component import AccentComponent
-from pushbase.auto_arm_component import AutoArmComponent
+#from pushbase.accent_component import AccentComponent
+#from pushbase.auto_arm_component import AutoArmComponent
 from pushbase.matrix_maps import *
 from pushbase.consts import *
-from pushbase.scrollable_list_component import ScrollableListWithTogglesComponent
+#from pushbase.scrollable_list_component import ScrollableListWithTogglesComponent
 from pushbase.device_parameter_component import DeviceParameterComponent
 from pushbase.skin_default import make_default_skin
 
@@ -701,7 +701,7 @@ class AumPush(Push):
 																			nav_right_button = self.elements.nav_right_button,
 																			channel_buttons = self.elements.matrix.submatrix[:, 1:2], 
 																			nav_matrix = self.elements.matrix.submatrix[4:8, 2:6] ))
-		self.modhandler.shift_layer = AddLayerMode( self.modhandler, Layer( priority = 6,,
+		self.modhandler.shift_layer = AddLayerMode( self.modhandler, Layer( priority = 6,
 																			lock_button = self.elements.master_select_button, 
 																			name_display_line = self.elements.display_line3, 
 																			value_display_line = self.elements.display_line4 ))
