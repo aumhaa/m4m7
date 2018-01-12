@@ -2,7 +2,7 @@ autowatch = 1;
 
 aumhaa = require('_base');
 var FORCELOAD = false;
-var DEBUG = true;
+var DEBUG = false;
 aumhaa.init(this);
 var script = this;
 
@@ -191,19 +191,20 @@ function initialize(val)
 		test_stuff();
 		deprivatize_script_functions(this);
 		load_PreInitVars();
-		tasks.addTask(init_selection, [], 2);
+		tasks.addTask(init_selection, [], 6);
 		//mod.SendDirect('Forward', 'reevaluate_device');
 	}
 }
 
 function init_selection()
 {
+	debug('init_selection');
 	drumMatrix.select_pad(drumMatrix._drumpads[12]);
 }
 
 function setup_tasks()
 {
-	script['tasks'] = new TaskServer(script, 300);
+	script['tasks'] = new TaskServer(script, 100);
 }
 
 function setup_translations(){}
@@ -275,6 +276,8 @@ function setup_patcher()
 	{
 		pad_pattrs[i] = this.patcher.getnamed('pad['+i+']');
 	}
+	script['up_button'] = this.patcher.getnamed('up_button');
+	script['down_button'] = this.patcher.getnamed('down_button');
 }
 
 function setup_device()
@@ -294,6 +297,8 @@ function setup_device()
 
 function setup_notifiers()
 {
+	script['audition_delay'] = new RangedParameter('AuditionDelay', {'range':10});
+	script['audition_delay_in'] = audition_delay.receive;
 }
 
 function setup_modes()
@@ -528,6 +533,35 @@ function _shift(val)
 	debug('shifted:', shifted);
 }
 
+function _up_button_in(val)
+{
+	if(val)
+	{
+		DetentDial.receive(0);
+	}
+	//up_button.message('int', 0);
+}
+
+function _down_button_in(val)
+{
+	if(val)
+	{
+		DetentDial.receive(127);
+	}
+	//down_button.message('int', 0);
+}
+
+function delayed_makenote(note, vel, dur)
+{
+	debug('delayed_makenote', note, vel, dur);
+	makenote.message('list', note, vel, dur);
+}
+
+function delayed_outlet(note, val)
+{
+	debug('delayed_outlet', note, val);
+	outlet(0, note, val);
+}
 
 function DrumMatrix(drumrack_id, drumpads, args)
 {
@@ -822,12 +856,27 @@ DrumPad.prototype.audition_selected_sample = function(obj)
 {
 	if(obj)
 	{
-		debug('audition_selected_sample');
-		outlet(0, this._note, obj._value);
+		debug('audition_selected_sample to outlet');
+		if(!audition_delay._value)
+		{
+			outlet(0, this._note, obj._value);
+		}
+		else
+		{
+			tasks.addTask(delayed_outlet, [this._note, obj._value], audition_delay._value, false);
+		}
 	}
 	else
 	{
-		makenote.message('list', this._note, 110, NOTE_DURATION);
+		debug('audition_selected_sample to makenote');
+		if(!audition_delay._value)
+		{
+			makenote.message('list', this._note, 110, NOTE_DURATION);
+		}
+		else
+		{
+			tasks.addTask(delayed_makenote, [this._note, 110, NOTE_DURATION], audition_delay._value, false);
+		}
 	}
 }
 
