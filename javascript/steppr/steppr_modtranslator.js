@@ -30,7 +30,12 @@ var Translations = require(type+"Translations");
 var Colors = require(type+"Colors");
 include(type+'Functions', this);
 
+var finder;
+var mod;
+var found_mod;
+var mod_finder;
 var Mod = ModComponent.bind(script);
+var ModProxy = ModProxyComponent.bind(script);
 
 var gridbuf=new Array();
 var gridunique = 1;
@@ -65,17 +70,29 @@ var Mod = ModComponent.bind(script);
 
 function init()
 {
-	mod = new Mod(script, 'hex', unique, false);
+	mod = new ModProxy(script, ['Send', 'SendDirect', 'restart']);
+	found_mod = new Mod(script, (SYNTH ? 'synth' : 'drum') + 'steppr', unique, false);
 	//mod.debug = debug;
 	mod_finder = new LiveAPI(mod_callback, 'this_device');
-	mod.assign_api(mod_finder);
+	found_mod.assign_api(mod_finder);
+
+
+	deprivatize_script_functions(script);
+	setup_translations();
+	setup_modtranslations();
+	setup_mutes();
+	init_device();
+	update_all();
+	messnamed(unique+'loadbang', 'bang');
+	if(!SYNTH){ctl('pads_12', 1);}
+	mod.Send('receive_translation', 'keys2_8', 'value', 1);
 }
 
 function mod_callback(args)
 {
 	if((args[0]=='value')&&(args[1]!='bang'))
 	{
-		//debug('mod callback:', args);
+		debug('mod callback:', args);
 		if(args[1] in script)
 		{
 			//debug(script[args[1]]);
@@ -91,23 +108,15 @@ function mod_callback(args)
 function alive(val)
 {
 	initialize(val);
+	if(val)
+	{
+		Alive = 1;
+	}
 }
 
 function initialize(val)
 {
-	if(val)
-	{
-		Alive = 1;
-		deprivatize_script_functions(script);
-		setup_translations();
-		setup_modtranslations();
-		setup_mutes();
-		init_device();
-		update_all();
-		messnamed(unique+'loadbang', 'bang');
-		if(!SYNTH){ctl('pads_12', 1);}
-		mod.Send('receive_translation', 'keys2_8', 'value', 1);
-	}
+	mod = found_mod;
 }
 
 function setup_translations()
@@ -446,7 +455,7 @@ function ctl(){
 	var bval = val>0; //"bit" value - convert to 0/1
 	//var key = a.join(" "); //e.g., "key 1"
 	var key = a[0];
-	debug("\nCT->>key",key,val); 
+	//debug("\nCT->>key",key,val); 
 	if(ctlr.ctls[key]){	   
 		var msgout = ctlr.ctls[key].message;
 		var min = parseInt(ctlr.ctls[key].rangelo);
@@ -455,7 +464,7 @@ function ctl(){
 		var on = ctlr.ctls[key].vel_on;
 		var off = ctlr.ctls[key].vel_off;
 		var sval = parseInt(ctlr.ctls[key].value); //storedvalue
-		debug("\nCT->>msgout",msgout,ctlr.ctls[key].type,"v",sval);
+		//debug("\nCT->>msgout",msgout,ctlr.ctls[key].type,"v",sval);
 		switch(ctlr.ctls[key].type){
 			case 'toggle':
 			//don't care about button release:
@@ -478,7 +487,7 @@ function ctl(){
 				var x = ctlr.ctls[key].matrix_x;
 				var y = ctlr.ctls[key].matrix_y;
 				outlet(1,msgout,x,y,bval);
-				debug("\nCT-matrix--",x,y,bval);
+				//debug("\nCT-matrix--",x,y,bval);
 			}
 			break;
 			
@@ -490,9 +499,9 @@ function ctl(){
 			case 'cycle':
 			//don't want button release:
 			if(bval){
-				debug("cycle",sval,min,max);
+				//debug("cycle",sval,min,max);
 				sval = ((1+sval)+min)%max;
-				debug("...after",sval);
+				//debug("...after",sval);
 				ctlr.ctls[key].value=sval;
 				outlet(1,msgout,sval);
 			}
@@ -505,7 +514,7 @@ function ctl(){
 			break;
 		}
 	}else{
-		debug("CT-unassigned ctl");
+		//debug("CT-unassigned ctl");
 	}
 }
 
@@ -515,12 +524,12 @@ function update(){
 	var a = arrayfromargs(arguments);
 	var themess = a[0];
 	var theval = a.slice(1);
-	debug("CT-<<update",themess,"-",theval);
+	//debug("CT-<<update",themess,"-",theval);
 	//if there's something latched to this message, let's update the controller's LEDs:
 	if(ctlr.msgs[themess]){
 		//is this a matrix type? key is stored a bit differently with a matrix type:
 		if(ctlr.msgs[themess].matrix){
-			debug("CT-isMATRIX",themess,theval.length);
+			//debug("CT-isMATRIX",themess,theval.length);
 			if(theval.length==1){
 				theval = Math.max(theval, 0);
 				theval = [theval,0,1];
@@ -536,7 +545,7 @@ function update(){
 			key=ctlr.msgs[themess][theval[0]][theval[1]];
 			//store the value from the update:
 			ctlr.ctls[key].value = theval;
-			debug("CT-mtx key",key);
+			//debug("CT-mtx key",key);
 			if(theval[2]>0){
 				mval = ctlr.ctls[key].vel_on;
 			}else{
@@ -549,7 +558,7 @@ function update(){
 		
 			key = ctlr.msgs[themess].control;
 			if(key&&ctlr.ctls[key]){
-				debug("CT-<<key",key,themess);
+				//debug("CT-<<key",key,themess);
 				//store the value from the update:
 				ctlr.ctls[key].value = theval;
 				min = ctlr.ctls[key].rangelo;
@@ -561,7 +570,7 @@ function update(){
 					case 'encoder':
 					//encoder just gets sent the value for an update:
 					mval = Math.floor(127*(theval-min)/range);
-					debug("CT-mval",mval,theval,min,"....",theval-min,range);
+					//debug("CT-mval",mval,theval,min,"....",theval-min,range);
 					break;
 				
 					case 'button':
@@ -571,7 +580,7 @@ function update(){
 					}else{
 						mval = ctlr.ctls[key].vel_off;
 					}
-					debug("CT-btns",themess,theval,"--",mval);
+					//debug("CT-btns",themess,theval,"--",mval);
 					break;
 				
 					case 'toggle':
@@ -581,7 +590,7 @@ function update(){
 					}else{
 						mval = ctlr.ctls[key].vel_off;
 					}
-					debug("CT-togs",themess,theval,"--",mval);
+					//debug("CT-togs",themess,theval,"--",mval);
 					break;
 				
 					//with cycle we make a concession that it could cycle a range of, say, 2-9, so we want to  
@@ -590,7 +599,7 @@ function update(){
 					var min = ctlr.ctls[key].rangelo;
 					//for use with mods.js in Live, non-blinking colors
 					mval = colorsout[theval-min];
-					debug("CT-cycle",themess,theval,"--",mval);
+					//debug("CT-cycle",themess,theval,"--",mval);
 					break;
 				
 					}
@@ -655,14 +664,14 @@ function latch(){
 		//if this key is already assigned to a message, lets remove it:
 		if(args.type!='matrix'){
 			var remove = ctlr.ctls[key].message;
-			debug("CT-removing",remove,"from ctrlr.msgs",key);
+			//debug("CT-removing",remove,"from ctrlr.msgs",key);
 			ctlr.msgs[remove]=new Object;
 		}
 	}
 	//now make all the assignments:
 	for(p in args){
 		ctlr.ctls[key][p] = args[p];
-		debug("CT-latched",p,"-",ctlr.ctls[key][p]);
+		//debug("CT-latched",p,"-",ctlr.ctls[key][p]);
 	}
 	//now we set up the companion ctntrl.msgs object which is used to extract a mod message from a pattr message
 	if(!ctlr.msgs[mess]){
@@ -692,7 +701,7 @@ function ctlout(){
 	}
 	var keyout = a[0];
 	var valout = a[1];
-	debug('ctlout', keyout, valout);
+	//debug('ctlout', keyout, valout);
 	mod.Send('receive_translation', keyout, 'value', valout);
 	
 }
